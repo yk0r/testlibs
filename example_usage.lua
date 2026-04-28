@@ -6,7 +6,7 @@
 ]]
 
 -- ── Load Library ──────────────────────────────────────
-local Library = loadstring(game:HttpGet("YOUR_RAWGIT_URL"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/yk0r/testlibs/refs/heads/main/FriendshipUI.lua"))()
 if not Library then
     local ok, lib = pcall(function()
         return require(script.Parent:FindFirstChild("FriendshipLua"))
