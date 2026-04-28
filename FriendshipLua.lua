@@ -1541,7 +1541,7 @@ function FriendshipLib:CreateWindow(config)
                         selLabel.Text = opt
                         -- Update all option colors
                         for _, ob in ipairs(optButtons) do
-                            if ob._optName == opt then
+                            if ob.Text == opt then
                                 tween(ob, Theme.Fast, { BackgroundColor3 = Theme.AccentBG })
                                 tween(ob, Theme.Fast, { TextColor3 = Theme.Accent })
                             else
@@ -1557,17 +1557,15 @@ function FriendshipLib:CreateWindow(config)
                     end)
 
                     optBtn.MouseEnter:Connect(function()
-                        if optBtn._optName ~= selected then
+                        if optBtn.Text ~= selected then
                             tween(optBtn, Theme.Fast, { BackgroundColor3 = Color3.fromRGB(40, 42, 50) })
                         end
                     end)
                     optBtn.MouseLeave:Connect(function()
-                        if optBtn._optName ~= selected then
+                        if optBtn.Text ~= selected then
                             tween(optBtn, Theme.Fast, { BackgroundColor3 = Color3.fromRGB(30, 32, 38) })
                         end
                     end)
-
-                    optBtn._optName = opt
                     table.insert(optButtons, optBtn)
                 end
 
@@ -1596,7 +1594,7 @@ function FriendshipLib:CreateWindow(config)
                     selected = opt
                     selLabel.Text = opt
                     for _, ob in ipairs(optButtons) do
-                        if ob._optName == opt then
+                        if ob.Text == opt then
                             tween(ob, Theme.Fast, { BackgroundColor3 = Theme.AccentBG, TextColor3 = Theme.Accent })
                         else
                             tween(ob, Theme.Fast, { BackgroundColor3 = Color3.fromRGB(30, 32, 38), TextColor3 = Color3.fromRGB(160, 160, 170) })
@@ -1623,7 +1621,6 @@ function FriendshipLib:CreateWindow(config)
                         optBtn.TextXAlignment = Enum.TextXAlignment.Left
                         makeCorner(optBtn, 4)
                         makePadding(optBtn, 0, 8, 0, 8)
-                        optBtn._optName = opt
                         table.insert(optButtons, optBtn)
                     end
                     openH = closedH + math.min(#newOptions, 5) * optH + 8
