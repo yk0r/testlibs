@@ -12,7 +12,7 @@
 --  LOAD LIBRARY (when using as a single file, the 
 --  library code returns itself at the bottom)
 -- ====================================================
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/main/FriendshipLua.lua"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/yk0r/testlibs/refs/heads/main/FriendshipLua.lua"))()
 
 -- ====================================================
 --  CREATE WINDOW
