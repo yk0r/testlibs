@@ -586,7 +586,7 @@ function FriendshipLib:CreateWindow(config)
         Font = Enum.Font.GothamBold,
         TextSize = 13,
         Size = UDim2.new(0, 120, 0, 16),
-        Position = UDim2.new(0, 50, 0.5, -16),
+        Position = UDim2.new(0, 56, 0.5, -16),
         Parent = brandArea,
         ZIndex = 6,
     })
@@ -599,7 +599,7 @@ function FriendshipLib:CreateWindow(config)
             Font = Enum.Font.GothamBold,
             TextSize = 13,
             Size = UDim2.new(0, 120, 0, 16),
-            Position = UDim2.new(0, 50 + TextService:GetTextSize(title:match("^([^%.]+)"), 13, Enum.Font.GothamBold, Vector2.new(200,20)).X, 0.5, -16),
+            Position = UDim2.new(0, 56 + TextService:GetTextSize(title:match("^([^%.]+)"), 13, Enum.Font.GothamBold, Vector2.new(200,20)).X, 0.5, -16),
             Parent = brandArea,
             ZIndex = 6,
         })
@@ -612,7 +612,7 @@ function FriendshipLib:CreateWindow(config)
         Font = Enum.Font.GothamBold,
         TextSize = 8,
         Size = UDim2.new(0, 120, 0, 12),
-        Position = UDim2.new(0, 50, 0.5, 3),
+        Position = UDim2.new(0, 56, 0.5, 3),
         Parent = brandArea,
         ZIndex = 6,
     })
@@ -1174,35 +1174,8 @@ function FriendshipLib:CreateWindow(config)
                 TextColor3 = Theme.TextFaint,
                 Font = Enum.Font.GothamBold,
                 TextSize = 9,
-                Size = UDim2.new(0, 0, 1, 0),
-                Parent = sectionHeader,
-                ZIndex = 8,
-            })
-            sectionTitle.AutomaticSize = Enum.AutomaticSize.X
-
-            -- Separator line
-            local sepLine = newFrame({
-                BackgroundColor3 = Color3.fromRGB(255,255,255),
-                BackgroundTransparency = 0.9,
-                Size = UDim2.new(1, 0, 0, 1),
-                Parent = sectionHeader,
-                ZIndex = 7,
-            })
-            sepLine.AutomaticSize = Enum.AutomaticSize.None
-            -- Fill remaining width via layout
-            local sepFrame = newFrame({
-                BackgroundTransparency = 1,
                 Size = UDim2.new(1, 0, 1, 0),
                 Parent = sectionHeader,
-                ZIndex = 7,
-            })
-            sepFrame.AutomaticSize = Enum.AutomaticSize.None
-            newFrame({
-                BackgroundColor3 = Color3.fromRGB(255,255,255),
-                BackgroundTransparency = 0.9,
-                Size = UDim2.new(1, 0, 0, 1),
-                Position = UDim2.new(0, 0, 0.5, 0),
-                Parent = sepFrame,
                 ZIndex = 8,
             })
 
@@ -1215,7 +1188,7 @@ function FriendshipLib:CreateWindow(config)
                 ZIndex = 7,
             })
             elemContainer.AutomaticSize = Enum.AutomaticSize.Y
-            makeListLayout(elemContainer, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 0)
+            makeListLayout(elemContainer, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 6)
 
             -- ── SECTION OBJECT ────────────────────────────
             local Section = {}
@@ -1227,6 +1200,49 @@ function FriendshipLib:CreateWindow(config)
                 return Section._elemOrder
             end
 
+            -- ── HELPER: Element card with entry animation ──
+            local function makeCard(height)
+                local card = newFrame({
+                    BackgroundColor3 = Theme.BG_Element,
+                    Size = UDim2.new(1, 0, 0, height or 45),
+                    Parent = self._container,
+                    ZIndex = 8,
+                })
+                card.LayoutOrder = nextOrder()
+                makeCorner(card, 6)
+                local cardStroke = makeStroke(card, Color3.fromRGB(255,255,255), 1, 0.9)
+
+                -- Hover
+                card.MouseEnter:Connect(function()
+                    tween(card, Theme.Fast, { BackgroundColor3 = Theme.BG_ElementHov })
+                end)
+                card.MouseLeave:Connect(function()
+                    tween(card, Theme.Fast, { BackgroundColor3 = Theme.BG_Element })
+                end)
+
+                return card, cardStroke
+            end
+
+            local function animateEntry(card, cardStroke, ...)
+                card.BackgroundTransparency = 1
+                cardStroke.Transparency = 1
+                local labels = {...}
+                for _, l in ipairs(labels) do
+                    if l and l.TextTransparency ~= nil then
+                        l.TextTransparency = 1
+                    end
+                end
+                task.defer(function()
+                    tween(card, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0 })
+                    tween(cardStroke, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), { Transparency = 0 })
+                    for _, l in ipairs(labels) do
+                        if l and l.TextTransparency ~= nil then
+                            tween(l, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), { TextTransparency = 0 })
+                        end
+                    end
+                end)
+            end
+
             -- ── TOGGLE ────────────────────────────────────
             function Section:CreateToggle(config)
                 config = config or {}
@@ -1236,114 +1252,92 @@ function FriendshipLib:CreateWindow(config)
                 local callback = config.Callback or function() end
 
                 local checked = default
+                local cardH = desc and 55 or 45
 
-                local row = newButton({
-                    BackgroundColor3 = Color3.fromRGB(0,0,0),
-                    BackgroundTransparency = 1,
-                    Size = UDim2.new(1, 0, 0, desc and 44 or 32),
-                    Parent = self._container,
-                    ZIndex = 8,
-                })
-                row.LayoutOrder = nextOrder()
-                makeCorner(row, 4)
+                local card, cardStroke = makeCard(cardH)
 
                 local lbl = newLabel({
                     Text = label,
-                    TextColor3 = Color3.fromRGB(180,180,180),
+                    TextColor3 = Theme.Text,
                     Font = Enum.Font.GothamSemibold,
-                    TextSize = 12,
-                    Size = UDim2.new(1, -52, 1, 0),
-                    Position = UDim2.new(0, 8, 0, 0),
-                    Parent = row,
+                    TextSize = 13,
+                    Size = desc and UDim2.new(1, -70, 0, 20) or UDim2.new(1, -70, 1, 0),
+                    Position = UDim2.new(0, 12, 0, desc and 8 or 0),
+                    Parent = card,
                     ZIndex = 9,
                 })
 
                 if desc then
-                    lbl.Size = UDim2.new(1, -52, 0, 16)
-                    lbl.Position = UDim2.new(0, 8, 0, 4)
-                    newLabel({
+                    local descLbl = newLabel({
                         Text = desc,
-                        TextColor3 = Theme.TextFaint,
+                        TextColor3 = Theme.TextDim,
                         Font = Enum.Font.Gotham,
-                        TextSize = 9,
-                        Size = UDim2.new(1, -52, 0, 12),
-                        Position = UDim2.new(0, 8, 0, 22),
-                        Parent = row,
+                        TextSize = 11,
+                        Size = UDim2.new(1, -70, 0, 14),
+                        Position = UDim2.new(0, 12, 0, 28),
+                        Parent = card,
                         ZIndex = 9,
                     })
+                    animateEntry(card, cardStroke, lbl, descLbl)
+                else
+                    animateEntry(card, cardStroke, lbl)
                 end
 
-                -- Toggle switch background
-                local switchBG = newFrame({
-                    BackgroundColor3 = Color3.fromRGB(255,255,255),
-                    BackgroundTransparency = 0.95,
-                    Size = UDim2.new(0, 36, 0, 18),
-                    Position = UDim2.new(1, -44, 0.5, -9),
-                    Parent = row,
+                -- Switch frame
+                local switchFrame = newFrame({
+                    Size = UDim2.new(0, 40, 0, 22),
+                    Position = UDim2.new(1, -54, 0.5, -11),
+                    BackgroundColor3 = Color3.fromRGB(35, 35, 40),
+                    Parent = card,
                     ZIndex = 9,
                 })
-                makeCorner(switchBG, 99)
-                makeStroke(switchBG, Color3.fromRGB(255,255,255), 1, 0.9)
+                makeCorner(switchFrame, 11)
+                local switchStroke = makeStroke(switchFrame, Color3.fromRGB(80, 80, 90), 1, 0.5)
 
-                local switchThumb = newFrame({
-                    BackgroundColor3 = Color3.fromRGB(80,85,95),
-                    Size = UDim2.new(0, 12, 0, 12),
-                    Position = UDim2.new(0, 3, 0.5, -6),
-                    Parent = switchBG,
+                local indicator = newFrame({
+                    Size = UDim2.new(0, 16, 0, 16),
+                    Position = UDim2.new(0, 3, 0.5, -8),
+                    BackgroundColor3 = Color3.fromRGB(150, 150, 160),
+                    Parent = switchFrame,
                     ZIndex = 10,
                 })
-                makeCorner(switchThumb, 99)
+                makeCorner(indicator, 99)
+                local indStroke = makeStroke(indicator, Color3.fromRGB(100, 100, 110), 1, 0.5)
 
-                local function updateSwitch(state)
+                local interact = newButton({
+                    Size = UDim2.new(1, 0, 1, 0),
+                    BackgroundTransparency = 1,
+                    Text = "",
+                    Parent = card,
+                    ZIndex = 12,
+                })
+
+                local function updateToggle(state)
                     if state then
-                        tween(switchBG, Theme.Fast, {
-                            BackgroundColor3 = Theme.AccentBG,
-                            BackgroundTransparency = 0,
-                        })
-                        tween(switchThumb, Theme.Fast, {
-                            Position = UDim2.new(0, 21, 0.5, -6),
-                            BackgroundColor3 = Theme.Accent,
-                        })
-                        tween(lbl, Theme.Fast, { TextColor3 = Color3.fromRGB(210,210,215) })
+                        tween(indicator, TweenInfo.new(0.45, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.new(1, -19, 0.5, -8) })
+                        tween(indicator, Theme.Medium, { BackgroundColor3 = Theme.Accent })
+                        tween(indStroke, Theme.Medium, { Color = Theme.AccentDim })
+                        tween(switchFrame, Theme.Medium, { BackgroundColor3 = Theme.AccentBG })
+                        tween(switchStroke, Theme.Medium, { Color = Theme.AccentDim })
                     else
-                        tween(switchBG, Theme.Fast, {
-                            BackgroundColor3 = Color3.fromRGB(255,255,255),
-                            BackgroundTransparency = 0.95,
-                        })
-                        tween(switchThumb, Theme.Fast, {
-                            Position = UDim2.new(0, 3, 0.5, -6),
-                            BackgroundColor3 = Color3.fromRGB(80,85,95),
-                        })
-                        tween(lbl, Theme.Fast, { TextColor3 = Color3.fromRGB(180,180,180) })
+                        tween(indicator, TweenInfo.new(0.45, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Position = UDim2.new(0, 3, 0.5, -8) })
+                        tween(indicator, Theme.Medium, { BackgroundColor3 = Color3.fromRGB(150, 150, 160) })
+                        tween(indStroke, Theme.Medium, { Color = Color3.fromRGB(100, 100, 110) })
+                        tween(switchFrame, Theme.Medium, { BackgroundColor3 = Color3.fromRGB(35, 35, 40) })
+                        tween(switchStroke, Theme.Medium, { Color = Color3.fromRGB(80, 80, 90) })
                     end
                 end
 
-                if checked then updateSwitch(true) end
+                if checked then updateToggle(true) end
 
-                row.MouseButton1Click:Connect(function()
+                interact.MouseButton1Click:Connect(function()
                     checked = not checked
-                    updateSwitch(checked)
+                    updateToggle(checked)
                     pcall(callback, checked)
                 end)
 
-                row.MouseEnter:Connect(function()
-                    tween(row, Theme.Fast, {
-                        BackgroundColor3 = Color3.fromRGB(255,255,255),
-                        BackgroundTransparency = 0.98,
-                    })
-                end)
-                row.MouseLeave:Connect(function()
-                    tween(row, Theme.Fast, {
-                        BackgroundTransparency = 1,
-                    })
-                end)
-
                 local ToggleObj = {}
-                function ToggleObj:Set(value)
-                    checked = value
-                    updateSwitch(value)
-                    pcall(callback, value)
-                end
+                function ToggleObj:Set(value) checked = value; updateToggle(value); pcall(callback, value) end
                 function ToggleObj:Get() return checked end
 
                 return ToggleObj
@@ -1361,70 +1355,45 @@ function FriendshipLib:CreateWindow(config)
 
                 local value = clamp(default, min, max)
 
-                local wrap = newFrame({
-                    BackgroundColor3 = Color3.fromRGB(0,0,0),
-                    BackgroundTransparency = 1,
-                    Size = UDim2.new(1, 0, 0, 48),
-                    Parent = self._container,
-                    ZIndex = 8,
-                })
-                wrap.LayoutOrder = nextOrder()
-                makeCorner(wrap, 4)
-                makePadding(wrap, 4, 8, 4, 8)
-
-                -- Top row: label + value tag
-                local topRow = newFrame({
-                    BackgroundTransparency = 1,
-                    Size = UDim2.new(1, 0, 0, 18),
-                    Parent = wrap,
-                    ZIndex = 9,
-                })
+                local card, cardStroke = makeCard(45)
 
                 local lbl = newLabel({
                     Text = label,
-                    TextColor3 = Color3.fromRGB(180,180,180),
+                    TextColor3 = Theme.Text,
                     Font = Enum.Font.GothamSemibold,
-                    TextSize = 12,
-                    Size = UDim2.new(1, -60, 1, 0),
-                    Parent = topRow,
+                    TextSize = 13,
+                    Size = UDim2.new(0, 0, 1, 0),
+                    Position = UDim2.new(0, 12, 0, 0),
+                    Parent = card,
                     ZIndex = 9,
                 })
-
-                local valueTag = newFrame({
-                    BackgroundColor3 = Theme.AccentBG,
-                    Size = UDim2.new(0, 52, 0, 16),
-                    Position = UDim2.new(1, -52, 0.5, -8),
-                    Parent = topRow,
-                    ZIndex = 9,
-                })
-                makeCorner(valueTag, 3)
-                makeStroke(valueTag, Theme.AccentDim, 1, 0.5)
+                lbl.AutomaticSize = Enum.AutomaticSize.X
 
                 local valueLabel = newLabel({
                     Text = tostring(value) .. suffix,
                     TextColor3 = Theme.Accent,
                     Font = Enum.Font.GothamBold,
-                    TextSize = 10,
-                    Size = UDim2.new(1, 0, 1, 0),
-                    Parent = valueTag,
-                    ZIndex = 10,
+                    TextSize = 12,
+                    Size = UDim2.new(0, 60, 1, 0),
+                    Position = UDim2.new(1, -72, 0, 0),
+                    Parent = card,
+                    ZIndex = 9,
                 })
-                valueLabel.TextXAlignment = Enum.TextXAlignment.Center
+                valueLabel.TextXAlignment = Enum.TextXAlignment.Right
 
-                -- Track
+                animateEntry(card, cardStroke, lbl, valueLabel)
+
+                -- Track bar
                 local trackBG = newFrame({
-                    BackgroundColor3 = Color3.fromRGB(255,255,255),
-                    BackgroundTransparency = 0.95,
-                    Size = UDim2.new(1, 0, 0, 5),
-                    Position = UDim2.new(0, 0, 0, 28),
-                    Parent = wrap,
+                    BackgroundColor3 = Color3.fromRGB(40, 42, 48),
+                    Size = UDim2.new(1, -24, 0, 5),
+                    Position = UDim2.new(0, 12, 1, -14),
+                    Parent = card,
                     ZIndex = 9,
                 })
                 makeCorner(trackBG, 99)
-                makeStroke(trackBG, Color3.fromRGB(255,255,255), 1, 0.95)
 
-                local fillPct = (value - min) / (max - min)
-
+                local fillPct = (value - min) / math.max(max - min, 0.001)
                 local trackFill = newFrame({
                     BackgroundColor3 = Theme.Accent,
                     Size = UDim2.new(fillPct, 0, 1, 0),
@@ -1433,69 +1402,50 @@ function FriendshipLib:CreateWindow(config)
                 })
                 makeCorner(trackFill, 99)
 
-                -- Thumb
-                local thumb = newFrame({
-                    BackgroundColor3 = Theme.Accent,
-                    Size = UDim2.new(0, 10, 0, 10),
-                    Position = UDim2.new(fillPct, -5, 0.5, -5),
-                    Parent = trackBG,
+                -- Interact for dragging
+                local trackInteract = newButton({
+                    Size = UDim2.new(1, -24, 0, 20),
+                    Position = UDim2.new(0, 12, 1, -22),
+                    BackgroundTransparency = 1,
+                    Text = "",
+                    Parent = card,
                     ZIndex = 11,
                 })
-                makeCorner(thumb, 99)
-                makeStroke(thumb, Theme.AccentDim, 1.5, 0.3)
 
-                -- Drag logic
                 local draggingSlider = false
-
                 local function updateSlider(inputX)
-                    local trackAbsPos  = trackBG.AbsolutePosition.X
-                    local trackAbsSize = trackBG.AbsoluteSize.X
-                    local pct = clamp((inputX - trackAbsPos) / trackAbsSize, 0, 1)
+                    local pct = clamp((inputX - trackBG.AbsolutePosition.X) / trackBG.AbsoluteSize.X, 0, 1)
                     value = round(min + (max - min) * pct)
                     valueLabel.Text = tostring(value) .. suffix
                     tween(trackFill, Theme.Fast, { Size = UDim2.new(pct, 0, 1, 0) })
-                    tween(thumb, Theme.Fast, { Position = UDim2.new(pct, -5, 0.5, -5) })
                     pcall(callback, value)
                 end
 
-                trackBG.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                trackInteract.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                         draggingSlider = true
                         updateSlider(input.Position.X)
                     end
                 end)
 
                 UserInputService.InputChanged:Connect(function(input)
-                    if draggingSlider and input.UserInputType == Enum.UserInputType.MouseMovement then
+                    if draggingSlider and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
                         updateSlider(input.Position.X)
                     end
                 end)
 
                 UserInputService.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                         draggingSlider = false
                     end
-                end)
-
-                wrap.MouseEnter:Connect(function()
-                    tween(wrap, Theme.Fast, {
-                        BackgroundColor3 = Color3.fromRGB(255,255,255),
-                        BackgroundTransparency = 0.98,
-                    })
-                    tween(lbl, Theme.Fast, { TextColor3 = Color3.fromRGB(210,210,215) })
-                end)
-                wrap.MouseLeave:Connect(function()
-                    tween(wrap, Theme.Fast, { BackgroundTransparency = 1 })
-                    tween(lbl, Theme.Fast, { TextColor3 = Color3.fromRGB(180,180,180) })
                 end)
 
                 local SliderObj = {}
                 function SliderObj:Set(v)
                     value = clamp(v, min, max)
-                    local pct = (value - min) / (max - min)
+                    local pct = (value - min) / math.max(max - min, 0.001)
                     valueLabel.Text = tostring(value) .. suffix
                     tween(trackFill, Theme.Fast, { Size = UDim2.new(pct, 0, 1, 0) })
-                    tween(thumb, Theme.Fast, { Position = UDim2.new(pct, -5, 0.5, -5) })
                     pcall(callback, value)
                 end
                 function SliderObj:Get() return value end
@@ -1513,188 +1463,170 @@ function FriendshipLib:CreateWindow(config)
 
                 local selected = default
                 local isOpen   = false
+                local closedH = 45
+                local optH = 28
+                local openH = closedH + math.min(#options, 5) * optH + 8
 
-                local wrap = newFrame({
-                    BackgroundColor3 = Color3.fromRGB(0,0,0),
-                    BackgroundTransparency = 1,
-                    Size = UDim2.new(1, 0, 0, 48),
-                    Parent = self._container,
-                    ZIndex = 8,
-                })
-                wrap.LayoutOrder = nextOrder()
-                makeCorner(wrap, 4)
-                makePadding(wrap, 4, 8, 4, 8)
+                local card, cardStroke = makeCard(closedH)
+                card.ClipsDescendants = true
 
                 local lbl = newLabel({
                     Text = label,
-                    TextColor3 = Color3.fromRGB(180,180,180),
-                    Font = Enum.Font.GothamSemibold,
-                    TextSize = 12,
-                    Size = UDim2.new(1, 0, 0, 16),
-                    Parent = wrap,
-                    ZIndex = 9,
-                })
-
-                local btnRow = newButton({
-                    BackgroundColor3 = Color3.fromRGB(255,255,255),
-                    BackgroundTransparency = 0.93,
-                    Size = UDim2.new(1, 0, 0, 24),
-                    Position = UDim2.new(0, 0, 0, 20),
-                    TextColor3 = Color3.fromRGB(160,160,160),
+                    TextColor3 = Theme.TextDim,
                     Font = Enum.Font.GothamSemibold,
                     TextSize = 11,
-                    Parent = wrap,
+                    Size = UDim2.new(1, -50, 0, 16),
+                    Position = UDim2.new(0, 12, 0, 6),
+                    Parent = card,
                     ZIndex = 9,
                 })
-                makeCorner(btnRow, 4)
-                makeStroke(btnRow, Color3.fromRGB(255,255,255), 1, 0.9)
-                makePadding(btnRow, 0, 6, 0, 6)
 
                 local selLabel = newLabel({
                     Text = selected or "Select...",
-                    TextColor3 = Color3.fromRGB(160,160,160),
+                    TextColor3 = Theme.Text,
                     Font = Enum.Font.GothamSemibold,
-                    TextSize = 11,
-                    Size = UDim2.new(1, -20, 1, 0),
-                    Parent = btnRow,
-                    ZIndex = 10,
+                    TextSize = 13,
+                    Size = UDim2.new(1, -50, 0, 18),
+                    Position = UDim2.new(0, 12, 0, 20),
+                    Parent = card,
+                    ZIndex = 9,
                 })
                 selLabel.TextTruncate = Enum.TextTruncate.AtEnd
 
-                local chevronLbl = newLabel({
+                local chevron = newLabel({
                     Text = "v",
-                    TextColor3 = Color3.fromRGB(120,120,130),
+                    TextColor3 = Theme.TextDim,
                     Font = Enum.Font.GothamBold,
-                    TextSize = 9,
-                    Size = UDim2.new(0, 14, 1, 0),
-                    Position = UDim2.new(1, -16, 0, 0),
-                    Parent = btnRow,
-                    ZIndex = 10,
+                    TextSize = 10,
+                    Size = UDim2.new(0, 20, 0, 20),
+                    Position = UDim2.new(1, -30, 0, 22),
+                    Parent = card,
+                    ZIndex = 9,
                 })
 
-                -- Dropdown list — parented to mainWindow so it won't be clipped
-                local dropdownListHeight = math.min(#options, 5) * 24 + 6
+                animateEntry(card, cardStroke, lbl, selLabel)
+
+                -- Options list
                 local listFrame = newFrame({
-                    Name = "DropdownList",
-                    BackgroundColor3 = Theme.BG_Dropdown,
-                    BackgroundTransparency = 0,
-                    Size = UDim2.new(0, 0, 0, 0),
-                    Position = UDim2.new(0, 0, 0, 0),
-                    ClipsDescendants = true,
-                    ZIndex = 50,
-                    Parent = mainWindow,
+                    BackgroundTransparency = 1,
+                    Size = UDim2.new(1, 0, 0, openH - closedH),
+                    Position = UDim2.new(0, 0, 0, closedH),
+                    Parent = card,
+                    ZIndex = 9,
                 })
-                makeCorner(listFrame, 4)
-                makeStroke(listFrame, Color3.fromRGB(255,255,255), 1, 0.9)
-                makeListLayout(listFrame, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 0)
-                makePadding(listFrame, 3, 4, 3, 4)
-                listFrame.Visible = false
+                makePadding(listFrame, 0, 12, 4, 12)
+                makeListLayout(listFrame, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 2)
 
-                for _, opt in ipairs(options) do
+                local optButtons = {}
+                for i, opt in ipairs(options) do
                     local optBtn = newButton({
-                        BackgroundColor3 = Color3.fromRGB(0,0,0),
-                        BackgroundTransparency = 1,
+                        BackgroundColor3 = opt == selected and Theme.AccentBG or Color3.fromRGB(30, 32, 38),
+                        BackgroundTransparency = 0,
                         Text = opt,
-                        TextColor3 = opt == selected and Theme.Accent or Color3.fromRGB(140,140,150),
+                        TextColor3 = opt == selected and Theme.Accent or Color3.fromRGB(160, 160, 170),
                         Font = Enum.Font.GothamSemibold,
-                        TextSize = 11,
-                        Size = UDim2.new(1, 0, 0, 24),
+                        TextSize = 12,
+                        Size = UDim2.new(1, 0, 0, optH),
                         Parent = listFrame,
-                        ZIndex = 51,
+                        ZIndex = 10,
                     })
                     optBtn.TextXAlignment = Enum.TextXAlignment.Left
-                    makePadding(optBtn, 0, 0, 0, 6)
-                    makeCorner(optBtn, 3)
+                    makeCorner(optBtn, 4)
+                    makePadding(optBtn, 0, 8, 0, 8)
+                    local optStroke = makeStroke(optBtn, Color3.fromRGB(255,255,255), 1, 0.92)
+                    optStroke.Transparency = 1
 
                     optBtn.MouseButton1Click:Connect(function()
                         selected = opt
                         selLabel.Text = opt
-                        for _, child in ipairs(listFrame:GetChildren()) do
-                            if child:IsA("TextButton") then
-                                tween(child, Theme.Fast, {
-                                    TextColor3 = child.Text == opt and Theme.Accent or Color3.fromRGB(140,140,150)
-                                })
+                        -- Update all option colors
+                        for _, ob in ipairs(optButtons) do
+                            if ob._optName == opt then
+                                tween(ob, Theme.Fast, { BackgroundColor3 = Theme.AccentBG })
+                                tween(ob, Theme.Fast, { TextColor3 = Theme.Accent })
+                            else
+                                tween(ob, Theme.Fast, { BackgroundColor3 = Color3.fromRGB(30, 32, 38) })
+                                tween(ob, Theme.Fast, { TextColor3 = Color3.fromRGB(160, 160, 170) })
                             end
                         end
+                        -- Close
                         isOpen = false
-                        tween(listFrame, Theme.Fast, { Size = UDim2.new(0, btnRow.AbsoluteSize.X, 0, 0) })
-                        task.delay(0.15, function() listFrame.Visible = false end)
-                        tween(chevronLbl, Theme.Fast, { Rotation = 0 })
+                        tween(card, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { Size = UDim2.new(1, 0, 0, closedH) })
+                        tween(chevron, Theme.Fast, { Rotation = 0 })
                         pcall(callback, opt)
                     end)
 
                     optBtn.MouseEnter:Connect(function()
-                        tween(optBtn, Theme.Fast, {
-                            BackgroundColor3 = Color3.fromRGB(255,255,255),
-                            BackgroundTransparency = 0.95,
-                        })
+                        if optBtn._optName ~= selected then
+                            tween(optBtn, Theme.Fast, { BackgroundColor3 = Color3.fromRGB(40, 42, 50) })
+                        end
                     end)
                     optBtn.MouseLeave:Connect(function()
-                        tween(optBtn, Theme.Fast, { BackgroundTransparency = 1 })
+                        if optBtn._optName ~= selected then
+                            tween(optBtn, Theme.Fast, { BackgroundColor3 = Color3.fromRGB(30, 32, 38) })
+                        end
                     end)
+
+                    optBtn._optName = opt
+                    table.insert(optButtons, optBtn)
                 end
 
-                btnRow.MouseButton1Click:Connect(function()
+                local interact = newButton({
+                    Size = UDim2.new(1, 0, 0, closedH),
+                    Position = UDim2.new(0, 0, 0, 0),
+                    BackgroundTransparency = 1,
+                    Text = "",
+                    Parent = card,
+                    ZIndex = 11,
+                })
+
+                interact.MouseButton1Click:Connect(function()
                     isOpen = not isOpen
                     if isOpen then
-                        -- Position dropdown relative to mainWindow
-                        local btnPos = btnRow.AbsolutePosition
-                        local winPos = mainWindow.AbsolutePosition
-                        local relX = btnPos.X - winPos.X
-                        local relY = btnPos.Y - winPos.Y + btnRow.AbsoluteSize.Y + 2
-                        listFrame.Position = UDim2.new(0, relX, 0, relY)
-                        listFrame.Size = UDim2.new(0, btnRow.AbsoluteSize.X, 0, 0)
-                        listFrame.Visible = true
-                        tween(listFrame, Theme.Fast, {
-                            Size = UDim2.new(0, btnRow.AbsoluteSize.X, 0, dropdownListHeight)
-                        })
-                        tween(chevronLbl, Theme.Fast, { Rotation = 180 })
+                        tween(card, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { Size = UDim2.new(1, 0, 0, openH) })
+                        tween(chevron, Theme.Fast, { Rotation = 180 })
                     else
-                        tween(listFrame, Theme.Fast, { Size = UDim2.new(0, btnRow.AbsoluteSize.X, 0, 0) })
-                        task.delay(0.15, function() listFrame.Visible = false end)
-                        tween(chevronLbl, Theme.Fast, { Rotation = 0 })
+                        tween(card, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { Size = UDim2.new(1, 0, 0, closedH) })
+                        tween(chevron, Theme.Fast, { Rotation = 0 })
                     end
-                end)
-
-                wrap.MouseEnter:Connect(function()
-                    tween(wrap, Theme.Fast, {
-                        BackgroundColor3 = Color3.fromRGB(255,255,255),
-                        BackgroundTransparency = 0.98,
-                    })
-                    tween(lbl, Theme.Fast, { TextColor3 = Color3.fromRGB(210,210,215) })
-                end)
-                wrap.MouseLeave:Connect(function()
-                    tween(wrap, Theme.Fast, { BackgroundTransparency = 1 })
-                    tween(lbl, Theme.Fast, { TextColor3 = Color3.fromRGB(180,180,180) })
                 end)
 
                 local DropdownObj = {}
                 function DropdownObj:Set(opt)
                     selected = opt
                     selLabel.Text = opt
+                    for _, ob in ipairs(optButtons) do
+                        if ob._optName == opt then
+                            tween(ob, Theme.Fast, { BackgroundColor3 = Theme.AccentBG, TextColor3 = Theme.Accent })
+                        else
+                            tween(ob, Theme.Fast, { BackgroundColor3 = Color3.fromRGB(30, 32, 38), TextColor3 = Color3.fromRGB(160, 160, 170) })
+                        end
+                    end
                     pcall(callback, opt)
                 end
                 function DropdownObj:Get() return selected end
                 function DropdownObj:Refresh(newOptions)
-                    for _, child in ipairs(listFrame:GetChildren()) do
-                        if child:IsA("TextButton") then child:Destroy() end
-                    end
+                    for _, ob in ipairs(optButtons) do ob:Destroy() end
+                    optButtons = {}
                     for _, opt in ipairs(newOptions) do
                         local optBtn = newButton({
-                            BackgroundColor3 = Color3.fromRGB(0,0,0),
-                            BackgroundTransparency = 1,
+                            BackgroundColor3 = opt == selected and Theme.AccentBG or Color3.fromRGB(30, 32, 38),
+                            BackgroundTransparency = 0,
                             Text = opt,
-                            TextColor3 = opt == selected and Theme.Accent or Color3.fromRGB(140,140,150),
+                            TextColor3 = opt == selected and Theme.Accent or Color3.fromRGB(160, 160, 170),
                             Font = Enum.Font.GothamSemibold,
-                            TextSize = 11,
-                            Size = UDim2.new(1, 0, 0, 24),
+                            TextSize = 12,
+                            Size = UDim2.new(1, 0, 0, optH),
                             Parent = listFrame,
-                            ZIndex = 51,
+                            ZIndex = 10,
                         })
                         optBtn.TextXAlignment = Enum.TextXAlignment.Left
-                        makePadding(optBtn, 0, 0, 0, 6)
-                        makeCorner(optBtn, 3)
+                        makeCorner(optBtn, 4)
+                        makePadding(optBtn, 0, 8, 0, 8)
+                        optBtn._optName = opt
+                        table.insert(optButtons, optBtn)
                     end
+                    openH = closedH + math.min(#newOptions, 5) * optH + 8
                 end
 
                 return DropdownObj
@@ -1710,105 +1642,73 @@ function FriendshipLib:CreateWindow(config)
                 local currentKey = default
                 local isBinding  = false
 
-                local row = newFrame({
-                    BackgroundColor3 = Color3.fromRGB(0,0,0),
-                    BackgroundTransparency = 1,
-                    Size = UDim2.new(1, 0, 0, 32),
-                    Parent = self._container,
-                    ZIndex = 8,
-                })
-                row.LayoutOrder = nextOrder()
-                makeCorner(row, 4)
-                makePadding(row, 0, 8, 0, 8)
+                local card, cardStroke = makeCard(45)
 
                 local lbl = newLabel({
                     Text = label,
-                    TextColor3 = Color3.fromRGB(180,180,180),
+                    TextColor3 = Theme.Text,
                     Font = Enum.Font.GothamSemibold,
-                    TextSize = 12,
-                    Size = UDim2.new(1, -80, 1, 0),
-                    Parent = row,
+                    TextSize = 13,
+                    Size = UDim2.new(1, -100, 1, 0),
+                    Position = UDim2.new(0, 12, 0, 0),
+                    Parent = card,
                     ZIndex = 9,
                 })
 
-                local keyBtn = newButton({
-                    BackgroundColor3 = Color3.fromRGB(255,255,255),
-                    BackgroundTransparency = 0.95,
-                    Text = currentKey.Name,
-                    TextColor3 = Theme.TextFaint,
-                    Font = Enum.Font.GothamBold,
-                    TextSize = 9,
-                    Size = UDim2.new(0, 68, 0, 22),
-                    Position = UDim2.new(1, -76, 0.5, -11),
-                    Parent = row,
-                    ZIndex = 9,
-                })
-                makeCorner(keyBtn, 4)
-                local keyStroke = makeStroke(keyBtn, Color3.fromRGB(255,255,255), 1, 0.9)
+                local keyBox = Instance.new("TextBox")
+                keyBox.Name = "KeybindBox"
+                keyBox.BackgroundColor3 = Color3.fromRGB(30, 32, 38)
+                keyBox.BackgroundTransparency = 0
+                keyBox.BorderSizePixel = 0
+                keyBox.Size = UDim2.new(0, 70, 0, 28)
+                keyBox.Position = UDim2.new(1, -82, 0.5, -14)
+                keyBox.Text = currentKey.Name
+                keyBox.TextColor3 = Theme.TextDim
+                keyBox.PlaceholderText = ""
+                keyBox.Font = Enum.Font.GothamBold
+                keyBox.TextSize = 11
+                keyBox.TextXAlignment = Enum.TextXAlignment.Center
+                keyBox.ClearTextOnFocus = false
+                keyBox.Parent = card
+                keyBox.ZIndex = 10
+                makeCorner(keyBox, 4)
+                local keyStroke = makeStroke(keyBox, Color3.fromRGB(255,255,255), 1, 0.9)
 
-                keyBtn.MouseButton1Click:Connect(function()
-                    isBinding = not isBinding
-                    if isBinding then
-                        keyBtn.Text = "PRESS KEY..."
-                        tween(keyBtn, Theme.Fast, {
-                            BackgroundColor3 = Theme.AccentBG,
-                            BackgroundTransparency = 0,
-                            TextColor3 = Theme.Accent,
-                        })
-                        tween(keyStroke, Theme.Fast, {
-                            Color = Theme.AccentDim,
-                            Transparency = 0.3,
-                        })
-                    else
-                        keyBtn.Text = currentKey.Name
-                        tween(keyBtn, Theme.Fast, {
-                            BackgroundColor3 = Color3.fromRGB(255,255,255),
-                            BackgroundTransparency = 0.95,
-                            TextColor3 = Theme.TextFaint,
-                        })
-                        tween(keyStroke, Theme.Fast, {
-                            Color = Color3.fromRGB(255,255,255),
-                            Transparency = 0.9,
-                        })
+                animateEntry(card, cardStroke, lbl)
+
+                keyBox.Focused:Connect(function()
+                    isBinding = true
+                    keyBox.Text = ""
+                    tween(keyBox, Theme.Fast, { BackgroundColor3 = Theme.AccentBG, TextColor3 = Theme.Accent })
+                    tween(keyStroke, Theme.Fast, { Color = Theme.AccentDim, Transparency = 0.4 })
+                end)
+
+                keyBox.FocusLost:Connect(function()
+                    isBinding = false
+                    if keyBox.Text == "" then
+                        keyBox.Text = currentKey.Name
                     end
+                    tween(keyBox, Theme.Fast, { BackgroundColor3 = Color3.fromRGB(30, 32, 38), TextColor3 = Theme.TextDim })
+                    tween(keyStroke, Theme.Fast, { Color = Color3.fromRGB(255,255,255), Transparency = 0.9 })
                 end)
 
                 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-                    if isBinding and not gameProcessed then
-                        if input.UserInputType == Enum.UserInputType.Keyboard then
-                            currentKey = input.KeyCode
-                            isBinding = false
-                            keyBtn.Text = currentKey.Name
-                            tween(keyBtn, Theme.Fast, {
-                                BackgroundColor3 = Color3.fromRGB(255,255,255),
-                                BackgroundTransparency = 0.95,
-                                TextColor3 = Theme.TextFaint,
-                            })
-                            tween(keyStroke, Theme.Fast, {
-                                Color = Color3.fromRGB(255,255,255),
-                                Transparency = 0.9,
-                            })
-                            pcall(callback, currentKey)
-                        end
+                    if isBinding and not gameProcessed and input.UserInputType == Enum.UserInputType.Keyboard then
+                        currentKey = input.KeyCode
+                        keyBox.Text = currentKey.Name
+                        keyBox:ReleaseFocus()
+                        pcall(callback, currentKey)
                     end
                 end)
 
-                row.MouseEnter:Connect(function()
-                    tween(row, Theme.Fast, {
-                        BackgroundColor3 = Color3.fromRGB(255,255,255),
-                        BackgroundTransparency = 0.98,
-                    })
-                end)
-                row.MouseLeave:Connect(function()
-                    tween(row, Theme.Fast, { BackgroundTransparency = 1 })
+                -- Auto-resize key box
+                keyBox:GetPropertyChangedSignal("Text"):Connect(function()
+                    local textW = TextService:GetTextSize(keyBox.Text, 11, Enum.Font.GothamBold, Vector2.new(200, 28)).X
+                    tween(keyBox, TweenInfo.new(0.35, Enum.EasingStyle.Exponential), { Size = UDim2.new(0, textW + 24, 0, 28) })
                 end)
 
                 local KeybindObj = {}
-                function KeybindObj:Set(key)
-                    currentKey = key
-                    keyBtn.Text = key.Name
-                    pcall(callback, key)
-                end
+                function KeybindObj:Set(key) currentKey = key; keyBox.Text = key.Name; pcall(callback, key) end
                 function KeybindObj:Get() return currentKey end
 
                 return KeybindObj
@@ -1818,59 +1718,64 @@ function FriendshipLib:CreateWindow(config)
             function Section:CreateButton(config)
                 config = config or {}
                 local label    = config.Label    or "Button"
-                local variant  = config.Variant  or "primary" -- primary | secondary | danger
+                local variant  = config.Variant  or "primary"
                 local callback = config.Callback or function() end
 
                 local variantStyles = {
-                    primary   = { bg = Theme.AccentBG,                   bgH = Theme.AccentBGHov,              text = Theme.Accent,                    border = Theme.AccentDim },
-                    secondary = { bg = Color3.fromRGB(22,24,28),         bgH = Color3.fromRGB(28,30,35),       text = Color3.fromRGB(160,160,170),      border = Color3.fromRGB(60,62,70) },
-                    danger    = { bg = Color3.fromRGB(40,12,12),         bgH = Color3.fromRGB(55,16,16),       text = Theme.Danger,                     border = Color3.fromRGB(120,40,40) },
+                    primary   = { bg = Theme.AccentBG,      bgH = Theme.AccentBGHov,    text = Theme.Accent,  border = Theme.AccentDim },
+                    secondary = { bg = Color3.fromRGB(30,32,38), bgH = Color3.fromRGB(40,42,50), text = Color3.fromRGB(180,180,190), border = Color3.fromRGB(60,62,70) },
+                    danger    = { bg = Color3.fromRGB(40,12,12),  bgH = Color3.fromRGB(55,16,16), text = Theme.Danger,  border = Color3.fromRGB(120,40,40) },
                 }
                 local style = variantStyles[variant] or variantStyles.primary
 
-                local wrap = newFrame({
-                    BackgroundTransparency = 1,
-                    Size = UDim2.new(1, 0, 0, 38),
-                    Parent = self._container,
-                    ZIndex = 8,
-                })
-                wrap.LayoutOrder = nextOrder()
-                makePadding(wrap, 4, 6, 4, 6)
+                local card, cardStroke = makeCard(45)
+                card.BackgroundColor3 = style.bg
+                cardStroke.Color = style.border
+                cardStroke.Transparency = 0.5
 
-                local btn = newButton({
-                    BackgroundColor3 = style.bg,
-                    BackgroundTransparency = 0,
+                local lbl = newLabel({
                     Text = string.upper(label),
                     TextColor3 = style.text,
                     Font = Enum.Font.GothamBold,
-                    TextSize = 10,
+                    TextSize = 13,
                     Size = UDim2.new(1, 0, 1, 0),
-                    Parent = wrap,
+                    Parent = card,
                     ZIndex = 9,
                 })
-                makeCorner(btn, 5)
-                makeStroke(btn, style.border, 1, 0.4)
+                lbl.TextXAlignment = Enum.TextXAlignment.Center
 
-                btn.MouseEnter:Connect(function()
-                    tween(btn, Theme.Fast, { BackgroundColor3 = style.bgH })
-                end)
-                btn.MouseLeave:Connect(function()
-                    tween(btn, Theme.Fast, { BackgroundColor3 = style.bg })
-                end)
-                btn.MouseButton1Down:Connect(function()
-                    tween(btn, Theme.Fast, { Size = UDim2.new(0.97, 0, 0.95, 0), Position = UDim2.new(0.015, 0, 0.025, 0) })
-                end)
-                btn.MouseButton1Up:Connect(function()
-                    tween(btn, Theme.Fast, { Size = UDim2.new(1, 0, 1, 0), Position = UDim2.new(0, 0, 0, 0) })
-                end)
-                btn.MouseButton1Click:Connect(function()
+                animateEntry(card, cardStroke, lbl)
+
+                local interact = newButton({
+                    Size = UDim2.new(1, 0, 1, 0),
+                    BackgroundTransparency = 1,
+                    Text = "",
+                    Parent = card,
+                    ZIndex = 11,
+                })
+
+                interact.MouseButton1Click:Connect(function()
+                    -- Flash animation (Rayfield-style)
+                    tween(card, Theme.Fast, { BackgroundColor3 = style.bgH })
+                    tween(cardStroke, Theme.Fast, { Transparency = 1 })
+                    tween(lbl, Theme.Fast, { TextTransparency = 0.3 })
+                    task.delay(0.2, function()
+                        tween(card, Theme.Fast, { BackgroundColor3 = style.bg })
+                        tween(cardStroke, Theme.Fast, { Transparency = 0.5 })
+                        tween(lbl, Theme.Fast, { TextTransparency = 0 })
+                    end)
                     pcall(callback)
                 end)
 
+                interact.MouseEnter:Connect(function()
+                    tween(card, Theme.Fast, { BackgroundColor3 = style.bgH })
+                end)
+                interact.MouseLeave:Connect(function()
+                    tween(card, Theme.Fast, { BackgroundColor3 = style.bg })
+                end)
+
                 local BtnObj = {}
-                function BtnObj:SetLabel(text)
-                    btn.Text = string.upper(text)
-                end
+                function BtnObj:SetLabel(text) lbl.Text = string.upper(text) end
 
                 return BtnObj
             end
@@ -1884,66 +1789,56 @@ function FriendshipLib:CreateWindow(config)
 
                 local currentColor = default
                 local pickerOpen   = false
+                local closedH = 45
+                local openH = 130
 
-                local row = newFrame({
-                    BackgroundColor3 = Color3.fromRGB(0,0,0),
-                    BackgroundTransparency = 1,
-                    Size = UDim2.new(1, 0, 0, 32),
-                    Parent = self._container,
-                    ZIndex = 8,
-                })
-                row.LayoutOrder = nextOrder()
-                makeCorner(row, 4)
-                makePadding(row, 0, 8, 0, 8)
+                local card, cardStroke = makeCard(closedH)
+                card.ClipsDescendants = true
 
                 local lbl = newLabel({
                     Text = label,
-                    TextColor3 = Color3.fromRGB(180,180,180),
+                    TextColor3 = Theme.Text,
                     Font = Enum.Font.GothamSemibold,
-                    TextSize = 12,
-                    Size = UDim2.new(1, -80, 1, 0),
-                    Parent = row,
+                    TextSize = 13,
+                    Size = UDim2.new(1, -100, 1, 0),
+                    Position = UDim2.new(0, 12, 0, 0),
+                    Parent = card,
                     ZIndex = 9,
                 })
 
                 local hexLabel = newLabel({
                     Text = colorToHex(currentColor),
-                    TextColor3 = Theme.TextFaint,
+                    TextColor3 = Theme.TextDim,
                     Font = Enum.Font.GothamBold,
-                    TextSize = 8,
-                    Size = UDim2.new(0, 46, 1, 0),
-                    Position = UDim2.new(1, -72, 0, 0),
-                    Parent = row,
+                    TextSize = 9,
+                    Size = UDim2.new(0, 50, 1, 0),
+                    Position = UDim2.new(1, -90, 0, 0),
+                    Parent = card,
                     ZIndex = 9,
                 })
-                hexLabel.TextXAlignment = Enum.TextXAlignment.Right
 
                 local swatch = newButton({
                     BackgroundColor3 = currentColor,
-                    Size = UDim2.new(0, 20, 0, 20),
-                    Position = UDim2.new(1, -28, 0.5, -10),
-                    Parent = row,
+                    Size = UDim2.new(0, 24, 0, 24),
+                    Position = UDim2.new(1, -36, 0.5, -12),
+                    Parent = card,
                     ZIndex = 9,
                 })
-                makeCorner(swatch, 3)
+                makeCorner(swatch, 4)
                 makeStroke(swatch, Color3.fromRGB(255,255,255), 1, 0.85)
 
-                -- Color picker panel — also parented to mainWindow to avoid clipping
-                local pickerPanel = newFrame({
-                    BackgroundColor3 = Theme.BG_Dropdown,
-                    Size = UDim2.new(0, 0, 0, 0),
-                    Position = UDim2.new(0, 0, 0, 0),
-                    ZIndex = 40,
-                    Parent = mainWindow,
-                    ClipsDescendants = true,
-                })
-                makeCorner(pickerPanel, 5)
-                makeStroke(pickerPanel, Color3.fromRGB(255,255,255), 1, 0.9)
-                makePadding(pickerPanel, 6, 6, 6, 6)
-                pickerPanel.Visible = false
+                animateEntry(card, cardStroke, lbl)
 
-                local panelLayout = makeListLayout(pickerPanel, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 6)
-                _ = panelLayout
+                -- Picker panel (inside card, below header area)
+                local pickerPanel = newFrame({
+                    BackgroundTransparency = 1,
+                    Size = UDim2.new(1, 0, 0, openH - closedH),
+                    Position = UDim2.new(0, 0, 0, closedH),
+                    Parent = card,
+                    ZIndex = 9,
+                })
+                makePadding(pickerPanel, 4, 12, 4, 12)
+                makeListLayout(pickerPanel, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 6)
 
                 local channels = {
                     { name = "R", color = Color3.fromRGB(220,70,70),  getter = function(c) return math.floor(c.R*255) end, setter = function(c,v) return Color3.fromRGB(v, math.floor(c.G*255), math.floor(c.B*255)) end },
@@ -1956,59 +1851,59 @@ function FriendshipLib:CreateWindow(config)
                 for _, ch in ipairs(channels) do
                     local chRow = newFrame({
                         BackgroundTransparency = 1,
-                        Size = UDim2.new(1, 0, 0, 16),
+                        Size = UDim2.new(1, 0, 0, 18),
                         Parent = pickerPanel,
-                        ZIndex = 41,
+                        ZIndex = 10,
                     })
-                    makeListLayout(chRow, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Left, 4)
+                    makeListLayout(chRow, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Left, 6)
 
                     newLabel({
                         Text = ch.name,
                         TextColor3 = ch.color,
                         Font = Enum.Font.GothamBold,
-                        TextSize = 9,
-                        Size = UDim2.new(0, 8, 1, 0),
+                        TextSize = 10,
+                        Size = UDim2.new(0, 10, 1, 0),
                         Parent = chRow,
-                        ZIndex = 42,
+                        ZIndex = 11,
                     })
 
-                    local trackBG2 = newFrame({
-                        BackgroundColor3 = Color3.fromRGB(255,255,255),
-                        BackgroundTransparency = 0.9,
-                        Size = UDim2.new(1, -40, 0, 5),
+                    local chTrack = newFrame({
+                        BackgroundColor3 = Color3.fromRGB(40, 42, 48),
+                        Size = UDim2.new(1, -60, 0, 5),
                         Parent = chRow,
-                        ZIndex = 42,
+                        ZIndex = 11,
                     })
-                    makeCorner(trackBG2, 99)
+                    makeCorner(chTrack, 99)
 
-                    local fillPct2 = ch.getter(currentColor) / 255
-                    local fill2 = newFrame({
+                    local fillPct = ch.getter(currentColor) / 255
+                    local chFill = newFrame({
                         BackgroundColor3 = ch.color,
-                        Size = UDim2.new(fillPct2, 0, 1, 0),
-                        Parent = trackBG2,
-                        ZIndex = 43,
+                        Size = UDim2.new(fillPct, 0, 1, 0),
+                        Parent = chTrack,
+                        ZIndex = 12,
                     })
-                    makeCorner(fill2, 99)
+                    makeCorner(chFill, 99)
 
                     local valLbl = newLabel({
                         Text = tostring(ch.getter(currentColor)),
-                        TextColor3 = Theme.TextFaint,
+                        TextColor3 = Theme.TextDim,
                         Font = Enum.Font.GothamBold,
-                        TextSize = 8,
-                        Size = UDim2.new(0, 24, 1, 0),
+                        TextSize = 9,
+                        Size = UDim2.new(0, 30, 1, 0),
                         Parent = chRow,
-                        ZIndex = 42,
+                        ZIndex = 11,
                     })
                     valLbl.TextXAlignment = Enum.TextXAlignment.Right
 
+                    -- Drag logic
                     local draggingCh = false
-                    trackBG2.InputBegan:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    chTrack.InputBegan:Connect(function(input)
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                             draggingCh = true
-                            local pct = clamp((input.Position.X - trackBG2.AbsolutePosition.X) / trackBG2.AbsoluteSize.X, 0, 1)
+                            local pct = clamp((input.Position.X - chTrack.AbsolutePosition.X) / chTrack.AbsoluteSize.X, 0, 1)
                             local v = math.floor(pct * 255)
                             valLbl.Text = tostring(v)
-                            tween(fill2, Theme.Fast, { Size = UDim2.new(pct, 0, 1, 0) })
+                            tween(chFill, Theme.Fast, { Size = UDim2.new(pct, 0, 1, 0) })
                             currentColor = ch.setter(currentColor, v)
                             tween(swatch, Theme.Fast, { BackgroundColor3 = currentColor })
                             hexLabel.Text = colorToHex(currentColor)
@@ -2017,11 +1912,11 @@ function FriendshipLib:CreateWindow(config)
                     end)
 
                     UserInputService.InputChanged:Connect(function(input)
-                        if draggingCh and input.UserInputType == Enum.UserInputType.MouseMovement then
-                            local pct = clamp((input.Position.X - trackBG2.AbsolutePosition.X) / trackBG2.AbsoluteSize.X, 0, 1)
+                        if draggingCh and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                            local pct = clamp((input.Position.X - chTrack.AbsolutePosition.X) / chTrack.AbsoluteSize.X, 0, 1)
                             local v = math.floor(pct * 255)
                             valLbl.Text = tostring(v)
-                            tween(fill2, Theme.Fast, { Size = UDim2.new(pct, 0, 1, 0) })
+                            tween(chFill, Theme.Fast, { Size = UDim2.new(pct, 0, 1, 0) })
                             currentColor = ch.setter(currentColor, v)
                             tween(swatch, Theme.Fast, { BackgroundColor3 = currentColor })
                             hexLabel.Text = colorToHex(currentColor)
@@ -2029,46 +1924,27 @@ function FriendshipLib:CreateWindow(config)
                         end
                     end)
                     UserInputService.InputEnded:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                             draggingCh = false
                         end
                     end)
 
-                    table.insert(channelSliders, { fill = fill2, valLbl = valLbl, ch = ch })
+                    table.insert(channelSliders, { fill = chFill, valLbl = valLbl, ch = ch })
                 end
 
                 swatch.MouseButton1Click:Connect(function()
                     pickerOpen = not pickerOpen
                     if pickerOpen then
-                        -- Position picker relative to mainWindow
-                        local swPos = swatch.AbsolutePosition
-                        local winPos = mainWindow.AbsolutePosition
-                        local relX = swPos.X - winPos.X - 80
-                        local relY = swPos.Y - winPos.Y + swatch.AbsoluteSize.Y + 4
-                        pickerPanel.Position = UDim2.new(0, relX, 0, relY)
-                        pickerPanel.Size = UDim2.new(0, 160, 0, 0)
-                        pickerPanel.Visible = true
-                        -- Update sliders to current color
+                        -- Update sliders
                         for _, cs in ipairs(channelSliders) do
                             local v = cs.ch.getter(currentColor)
                             cs.valLbl.Text = tostring(v)
                             tween(cs.fill, Theme.Fast, { Size = UDim2.new(v/255, 0, 1, 0) })
                         end
-                        tween(pickerPanel, Theme.Fast, { Size = UDim2.new(0, 160, 0, 90) })
+                        tween(card, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { Size = UDim2.new(1, 0, 0, openH) })
                     else
-                        tween(pickerPanel, Theme.Fast, { Size = UDim2.new(0, 160, 0, 0) })
-                        task.delay(0.15, function() pickerPanel.Visible = false end)
+                        tween(card, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { Size = UDim2.new(1, 0, 0, closedH) })
                     end
-                end)
-
-                row.MouseEnter:Connect(function()
-                    tween(row, Theme.Fast, {
-                        BackgroundColor3 = Color3.fromRGB(255,255,255),
-                        BackgroundTransparency = 0.98,
-                    })
-                end)
-                row.MouseLeave:Connect(function()
-                    tween(row, Theme.Fast, { BackgroundTransparency = 1 })
                 end)
 
                 local ColorObj = {}
@@ -2083,7 +1959,7 @@ function FriendshipLib:CreateWindow(config)
                 return ColorObj
             end
 
-            -- ── TEXT FIELD ────────────────────────────────
+            -- ── TEXT FIELD / INPUT ────────────────────────
             function Section:CreateTextField(config)
                 config = config or {}
                 local label       = config.Label       or "Input"
@@ -2091,129 +1967,152 @@ function FriendshipLib:CreateWindow(config)
                 local default     = config.Default     or ""
                 local callback    = config.Callback    or function() end
 
-                local wrap = newFrame({
-                    BackgroundTransparency = 1,
-                    Size = UDim2.new(1, 0, 0, 48),
-                    Parent = self._container,
-                    ZIndex = 8,
-                })
-                wrap.LayoutOrder = nextOrder()
-                makePadding(wrap, 4, 8, 4, 8)
-                makeListLayout(wrap, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 3)
+                local card, cardStroke = makeCard(45)
 
-                newLabel({
+                local lbl = newLabel({
                     Text = label,
-                    TextColor3 = Color3.fromRGB(180,180,180),
+                    TextColor3 = Theme.Text,
                     Font = Enum.Font.GothamSemibold,
-                    TextSize = 12,
-                    Size = UDim2.new(1, 0, 0, 14),
-                    Parent = wrap,
+                    TextSize = 13,
+                    Size = UDim2.new(0, 0, 1, 0),
+                    Position = UDim2.new(0, 12, 0, 0),
+                    Parent = card,
                     ZIndex = 9,
                 })
+                lbl.AutomaticSize = Enum.AutomaticSize.X
 
                 local inputBox = Instance.new("TextBox")
-                inputBox.BackgroundColor3 = Color3.fromRGB(255,255,255)
-                inputBox.BackgroundTransparency = 0.93
+                inputBox.Name = "InputBox"
+                inputBox.BackgroundColor3 = Color3.fromRGB(30, 32, 38)
+                inputBox.BackgroundTransparency = 0
                 inputBox.BorderSizePixel = 0
-                inputBox.Size = UDim2.new(1, 0, 0, 22)
+                inputBox.Size = UDim2.new(0, 100, 0, 28)
+                inputBox.Position = UDim2.new(1, -112, 0.5, -14)
                 inputBox.Text = default
                 inputBox.PlaceholderText = placeholder
-                inputBox.TextColor3 = Color3.fromRGB(170,170,180)
+                inputBox.TextColor3 = Color3.fromRGB(180, 180, 190)
                 inputBox.PlaceholderColor3 = Theme.TextFaint
                 inputBox.Font = Enum.Font.GothamSemibold
                 inputBox.TextSize = 11
                 inputBox.TextXAlignment = Enum.TextXAlignment.Left
                 inputBox.ClearTextOnFocus = false
-                inputBox.Parent = wrap
-                inputBox.ZIndex = 9
-                makeCorner(inputBox, 3)
-                makeStroke(inputBox, Color3.fromRGB(255,255,255), 1, 0.9)
-                makePadding(inputBox, 0, 5, 0, 6)
+                inputBox.Parent = card
+                inputBox.ZIndex = 10
+                makeCorner(inputBox, 4)
+                local inputStroke = makeStroke(inputBox, Color3.fromRGB(255,255,255), 1, 0.9)
+                makePadding(inputBox, 0, 6, 0, 6)
+
+                animateEntry(card, cardStroke, lbl)
+
+                -- Auto-resize
+                inputBox:GetPropertyChangedSignal("Text"):Connect(function()
+                    local textW = TextService:GetTextSize(inputBox.Text, 11, Enum.Font.GothamSemibold, Vector2.new(500, 28)).X
+                    local newW = math.max(textW + 24, 60)
+                    tween(inputBox, TweenInfo.new(0.35, Enum.EasingStyle.Exponential), { Size = UDim2.new(0, newW, 0, 28) })
+                end)
 
                 inputBox.Focused:Connect(function()
-                    tween(inputBox, Theme.Fast, {
-                        BackgroundTransparency = 0.88,
-                    })
-                    -- Animate stroke color change
-                    for _, s in ipairs(inputBox:GetChildren()) do
-                        if s:IsA("UIStroke") then
-                            tween(s, Theme.Fast, {
-                                Color = Theme.AccentDim,
-                                Transparency = 0.4,
-                            })
-                        end
-                    end
+                    tween(inputBox, Theme.Fast, { BackgroundColor3 = Color3.fromRGB(38, 40, 48) })
+                    tween(inputStroke, Theme.Fast, { Color = Theme.AccentDim, Transparency = 0.4 })
                 end)
 
                 inputBox.FocusLost:Connect(function(enterPressed)
-                    tween(inputBox, Theme.Fast, { BackgroundTransparency = 0.93 })
-                    for _, s in ipairs(inputBox:GetChildren()) do
-                        if s:IsA("UIStroke") then
-                            tween(s, Theme.Fast, {
-                                Color = Color3.fromRGB(255,255,255),
-                                Transparency = 0.9,
-                            })
-                        end
-                    end
+                    tween(inputBox, Theme.Fast, { BackgroundColor3 = Color3.fromRGB(30, 32, 38) })
+                    tween(inputStroke, Theme.Fast, { Color = Color3.fromRGB(255,255,255), Transparency = 0.9 })
                     if enterPressed then
                         pcall(callback, inputBox.Text)
                     end
                 end)
 
                 local TFObj = {}
-                function TFObj:Set(text)
-                    inputBox.Text = text
-                    pcall(callback, text)
-                end
+                function TFObj:Set(text) inputBox.Text = text; pcall(callback, text) end
                 function TFObj:Get() return inputBox.Text end
 
                 return TFObj
             end
 
-            -- ── LABEL (read-only info) ─────────────────────
+            -- ── LABEL ─────────────────────────────────────
             function Section:CreateLabel(config)
                 config = config or {}
                 local text  = config.Text  or ""
-                local color = config.Color or Theme.TextDim
+                local color = config.Color
 
-                local wrap = newFrame({
-                    BackgroundTransparency = 1,
-                    Size = UDim2.new(1, 0, 0, 24),
-                    Parent = self._container,
-                    ZIndex = 8,
-                })
-                wrap.LayoutOrder = nextOrder()
-                makePadding(wrap, 2, 8, 2, 8)
+                local card, cardStroke = makeCard(32)
 
                 local lbl = newLabel({
                     Text = text,
-                    TextColor3 = color,
+                    TextColor3 = color or Theme.TextDim,
                     Font = Enum.Font.Gotham,
-                    TextSize = 11,
-                    Size = UDim2.new(1, 0, 1, 0),
-                    Parent = wrap,
+                    TextSize = 12,
+                    Size = UDim2.new(1, -24, 1, 0),
+                    Position = UDim2.new(0, 12, 0, 0),
+                    Parent = card,
                     ZIndex = 9,
                 })
                 lbl.TextWrapped = true
 
-                local LabelObj = {}
-                function LabelObj:Set(newText)
-                    lbl.Text = newText
+                if color then
+                    card.BackgroundColor3 = color
+                    card.BackgroundTransparency = 0.85
+                    cardStroke.Color = color
+                    cardStroke.Transparency = 0.7
                 end
+
+                animateEntry(card, cardStroke, lbl)
+
+                local LabelObj = {}
+                function LabelObj:Set(newText) lbl.Text = newText end
 
                 return LabelObj
             end
 
-            -- ── SEPARATOR ─────────────────────────────────
-            function Section:CreateSeparator()
-                local sep = newFrame({
-                    BackgroundColor3 = Color3.fromRGB(255,255,255),
-                    BackgroundTransparency = 0.92,
-                    Size = UDim2.new(1, -16, 0, 1),
-                    Parent = self._container,
-                    ZIndex = 8,
+            -- ── PARAGRAPH ─────────────────────────────────
+            function Section:CreateParagraph(config)
+                config = config or {}
+                local title   = config.Title   or "Paragraph"
+                local content = config.Content or ""
+
+                local card, cardStroke = makeCard(60)
+                card.AutomaticSize = Enum.AutomaticSize.Y
+
+                local titleLbl = newLabel({
+                    Text = title,
+                    TextColor3 = Theme.Text,
+                    Font = Enum.Font.GothamBold,
+                    TextSize = 13,
+                    Size = UDim2.new(1, -24, 0, 20),
+                    Position = UDim2.new(0, 12, 0, 6),
+                    Parent = card,
+                    ZIndex = 9,
                 })
-                sep.LayoutOrder = nextOrder()
+
+                local contentLbl = newLabel({
+                    Text = content,
+                    TextColor3 = Theme.TextDim,
+                    Font = Enum.Font.Gotham,
+                    TextSize = 12,
+                    Size = UDim2.new(1, -24, 0, 0),
+                    Position = UDim2.new(0, 12, 0, 26),
+                    Parent = card,
+                    ZIndex = 9,
+                })
+                contentLbl.AutomaticSize = Enum.AutomaticSize.Y
+                contentLbl.TextWrapped = true
+
+                if color then
+                    card.BackgroundColor3 = color or Theme.BG_Element
+                    cardStroke.Color = color or Color3.fromRGB(255,255,255)
+                end
+
+                animateEntry(card, cardStroke, titleLbl, contentLbl)
+
+                local ParagraphObj = {}
+                function ParagraphObj:Set(newConfig)
+                    titleLbl.Text = newConfig.Title or title
+                    contentLbl.Text = newConfig.Content or content
+                end
+
+                return ParagraphObj
             end
 
             return Section
