@@ -655,7 +655,7 @@ function FriendshipLib:CreateWindow(config)
     makeStroke(logoBox, Theme.AccentDim, 1, 0.4)
 
     newLabel({
-        Text = "WELCOME BACK",
+        Text = "",
         TextColor3 = Theme.Accent,
         Font = Enum.Font.GothamBold,
         TextSize = 16,
@@ -748,7 +748,7 @@ function FriendshipLib:CreateWindow(config)
     makePadding(sidebarBottom, 0, 0, 0, 10)
 
     newLabel({
-        Text = "Welcome back,",
+        Text = "WELCOME BACK PREIUM USER",
         TextColor3 = Color3.fromRGB(180,180,180),
         Font = Enum.Font.GothamBold,
         TextSize = 10,
