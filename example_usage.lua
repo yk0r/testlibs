@@ -1,12 +1,21 @@
 --[[
     Friendship.Lua — Example Usage
-    Load the library first via loadstring, then use as shown.
     Tab icons use Lucide names (e.g. "swords", "eye", "zap", "settings")
     Full list: https://lucide.dev/icons
 ]]
 
--- ── Load Library ──────────────────────────────────────
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/yk0r/testlibs/refs/heads/main/FriendshipUI.lua"))()
+-- ── Load Library & Icons ──────────────────────────────────
+local Library = loadstring(game:HttpGet("https://github.com/yk0r/testlibs/raw/refs/heads/main/FriendshipUI.lua"))()
+
+-- Load Lucide icon data (required for tab icons to show properly)
+-- The library will try to auto-load from GitHub, but if that fails,
+-- load it explicitly and pass it in:
+local ok, IconData = pcall(function()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/latte-soft/lucide-roblox/master/lib/Icons.luau"))()
+end)
+if ok and IconData then
+    Library:SetIconData(IconData)
+end
 
 -- ── Window ────────────────────────────────────────────
 local Window = Library:CreateWindow({
