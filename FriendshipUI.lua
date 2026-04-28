@@ -655,7 +655,7 @@ function FriendshipLib:CreateWindow(config)
     makeStroke(logoBox, Theme.AccentDim, 1, 0.4)
 
     newLabel({
-        Text = "F",
+        Text = "FFFFFFFF",
         TextColor3 = Theme.Accent,
         Font = Enum.Font.GothamBold,
         TextSize = 16,
