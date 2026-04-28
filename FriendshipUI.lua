@@ -192,8 +192,18 @@ local LucideData = nil
 local function loadLucideData()
     if LucideData then return LucideData end
 
-    -- Method 1: Try to load from a sibling script (if running locally)
+    -- Method 1: Try HttpGet from GitHub (lucide-roblox by latte-soft)
     local ok1, data1 = pcall(function()
+        local raw = game:HttpGet("https://raw.githubusercontent.com/latte-soft/lucide-roblox/master/lib/Icons.luau")
+        return loadstring(raw)()
+    end)
+    if ok1 and data1 then
+        LucideData = data1
+        return data1
+    end
+
+    -- Method 2: Try sibling script (non-loadstring environments)
+    local ok2, data2 = pcall(function()
         local iconScript = script and script.Parent and script.Parent:FindFirstChild("LucideIcons")
         if iconScript then
             if iconScript:IsA("ModuleScript") then
@@ -204,36 +214,19 @@ local function loadLucideData()
         end
         return nil
     end)
-    if ok1 and data1 then
-        LucideData = data1
-        return data1
-    end
-
-    -- Method 2: Try to load via HttpGet from URL
-    local ok2, data2 = pcall(function()
-        local raw = game:HttpGet("https://raw.githubusercontent.com/latte-soft/lucide-roblox/master/lib/Icons.luau")
-        return loadstring(raw)()
-    end)
     if ok2 and data2 then
         LucideData = data2
         return data2
     end
 
-    -- Method 3: Try _G cached
-    if rawget(_G, "LucideIconsData") then
-        LucideData = _G.LucideIconsData
-        return LucideData
-    end
-
     return nil
 end
 
--- Load icons eagerly (will be available when tabs are created)
-local _lucideLoaded = false
-local function ensureLucide()
-    if _lucideLoaded then return end
-    _lucideLoaded = true
-    loadLucideData()
+-- Explicitly set icon data (for loadstring usage where HttpGet fails)
+function FriendshipLib:SetIconData(data)
+    if type(data) == "table" then
+        LucideData = data
+    end
 end
 
 -- Create a Lucide icon ImageLabel
@@ -583,8 +576,8 @@ function FriendshipLib:CreateWindow(config)
     local position = config.Position or UDim2.new(0.5, -350, 0.5, -225)
     local toggleKey = config.ToggleKey or Enum.KeyCode.RightShift
 
-    -- Pre-load Lucide icons
-    ensureLucide()
+    -- Pre-load Lucide icons (will use SetIconData data if available, or try HttpGet)
+    loadLucideData()
 
     -- ScreenGui
     local screenGui = Instance.new("ScreenGui")
@@ -628,8 +621,7 @@ function FriendshipLib:CreateWindow(config)
         Parent = mainWindow,
         ZIndex = 4,
     })
-    -- Apply corner to sidebar to fix bottom-left corner issue
-    makeCorner(sidebar, 8)
+    -- Sidebar corners are handled by mainWindow's ClipsDescendants — no UICorner here
 
     -- Brand logo area - MOVED LEFT (padding from 18 -> 10)
     local brandArea = newFrame({
@@ -655,7 +647,7 @@ function FriendshipLib:CreateWindow(config)
     makeStroke(logoBox, Theme.AccentDim, 1, 0.4)
 
     newLabel({
-        Text = "FFFFFFFF",
+        Text = "F",
         TextColor3 = Theme.Accent,
         Font = Enum.Font.GothamBold,
         TextSize = 16,
@@ -742,13 +734,12 @@ function FriendshipLib:CreateWindow(config)
         Parent = sidebar,
         ZIndex = 5,
     })
-    -- Fix bottom-left corner: apply corner
-    makeCorner(sidebarBottom, 8)
+    -- sidebarBottom corners handled by mainWindow's ClipsDescendants — no UICorner
     makeStroke(sidebarBottom, Color3.fromRGB(255,255,255), 1, 0.95)
     makePadding(sidebarBottom, 0, 0, 0, 10)
 
     newLabel({
-        Text = "WELCOME BACK PREIUM USER",
+        Text = "Welcome back,",
         TextColor3 = Color3.fromRGB(180,180,180),
         Font = Enum.Font.GothamBold,
         TextSize = 10,
@@ -792,8 +783,7 @@ function FriendshipLib:CreateWindow(config)
         Parent = contentArea,
         ZIndex = 5,
     })
-    -- Fix top-right corner
-    makeCorner(header, 8)
+    -- Header top-right corner handled by mainWindow's ClipsDescendants — no UICorner here
     makeStroke(header, Color3.fromRGB(255,255,255), 1, 0.95)
 
     -- Breadcrumb left
@@ -970,8 +960,7 @@ function FriendshipLib:CreateWindow(config)
         Parent = contentArea,
         ZIndex = 5,
     })
-    -- Fix bottom-right corner
-    makeCorner(footer, 8)
+    -- Footer bottom-right corner handled by mainWindow's ClipsDescendants — no UICorner here
     makeStroke(footer, Color3.fromRGB(255,255,255), 1, 0.95)
 
     local footerLeft = newFrame({
@@ -2217,17 +2206,28 @@ function FriendshipLib:CreateWindow(config)
                 mainPoint.Parent = mainCP
                 mainPoint.ZIndex = 52
 
-                -- Hue bar
-                local hueBar = Instance.new("ImageLabel")
+                -- Hue bar (UIGradient rainbow — no external image dependency)
+                local hueBar = Instance.new("Frame")
                 hueBar.Name = "HueBar"
                 hueBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                 hueBar.BorderSizePixel = 0
                 hueBar.Size = UDim2.new(1, 0, 0, 10)
                 hueBar.Position = UDim2.new(0, 0, 0, 51)
-                hueBar.Image = "rbxassetid://4155801252"
                 hueBar.Parent = pickerBG
                 hueBar.ZIndex = 51
                 makeCorner(hueBar, 5)
+
+                local hueGradient = Instance.new("UIGradient")
+                hueGradient.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0,      Color3.fromRGB(255, 0, 0)),
+                    ColorSequenceKeypoint.new(0.167,  Color3.fromRGB(255, 255, 0)),
+                    ColorSequenceKeypoint.new(0.333,  Color3.fromRGB(0, 255, 0)),
+                    ColorSequenceKeypoint.new(0.5,    Color3.fromRGB(0, 255, 255)),
+                    ColorSequenceKeypoint.new(0.667,  Color3.fromRGB(0, 0, 255)),
+                    ColorSequenceKeypoint.new(0.833,  Color3.fromRGB(255, 0, 255)),
+                    ColorSequenceKeypoint.new(1,      Color3.fromRGB(255, 0, 0)),
+                })
+                hueGradient.Parent = hueBar
 
                 -- Hue point indicator
                 local huePoint = Instance.new("ImageLabel")
