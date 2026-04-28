@@ -9,10 +9,32 @@
 ]]
 
 -- ====================================================
---  LOAD LIBRARY (when using as a single file, the 
---  library code returns itself at the bottom)
+--  LOAD LIBRARY
+--  Method 1: loadstring (recommended for executors)
+--    local Library = loadstring(game:HttpGet("YOUR_RAW_URL"))()
+--  
+--  Method 2: require (if placed as a LocalScript/ModuleScript)
+--    local Library = require(script.Parent.FriendshipLua)
+--
+--  Method 3: Direct execution — after running FriendshipLua.lua,
+--    the library is available as _G.FriendshipLib
 -- ====================================================
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/yk0r/testlibs/refs/heads/main/FriendshipLua.lua"))()
+
+local Library = _G.FriendshipLib
+if not Library then
+    -- Fallback: try to load via require if it's a sibling module
+    local ok, lib = pcall(function()
+        return require(script.Parent:FindFirstChild("FriendshipLua"))
+    end)
+    if ok and lib then
+        Library = lib
+    else
+        warn("[Friendship.Lua] Failed to load library!")
+        warn("Make sure FriendshipLua.lua is executed BEFORE this script,")
+        warn("or change the loadstring URL below and use Method 1.")
+        return
+    end
+end
 
 -- ====================================================
 --  CREATE WINDOW
