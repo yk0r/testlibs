@@ -1,452 +1,229 @@
 --[[
-    Friendship.Lua - Example Usage Script
-    
-    This script demonstrates how to use FriendshipLua UI Library.
-    Paste the entire FriendshipLua.lua content above this, then use as shown.
-    
-    OR load via executor:
-        local Library = loadstring(game:HttpGet("YOUR_RAWGIT_URL"))()
+    Friendship.Lua — Example Usage
+
+    Load the library first, then use as shown below.
+    See FriendshipUI.lua header for all available options.
 ]]
 
--- ====================================================
---  LOAD LIBRARY
---  Method 1: loadstring (recommended for executors)
---    local Library = loadstring(game:HttpGet("YOUR_RAW_URL"))()
---  
---  Method 2: require (if placed as a LocalScript/ModuleScript)
---    local Library = require(script.Parent.FriendshipLua)
---
---  Method 3: Direct execution — after running FriendshipLua.lua,
---    the library is available as _G.FriendshipLib
--- ====================================================
-
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/yk0r/testlibs/refs/heads/main/FriendshipLua.lua"))()
+-- ── Load Library ──────────────────────────────────────
+local Library = _G.FriendshipLib
 if not Library then
-    -- Fallback: try to load via require if it's a sibling module
     local ok, lib = pcall(function()
         return require(script.Parent:FindFirstChild("FriendshipLua"))
     end)
-    if ok and lib then
-        Library = lib
-    else
-        warn("[Friendship.Lua] Failed to load library!")
-        warn("Make sure FriendshipLua.lua is executed BEFORE this script,")
-        warn("or change the loadstring URL below and use Method 1.")
+    if ok and lib then Library = lib else
+        warn("[Friendship.Lua] Library not found. Run FriendshipUI.lua first.")
         return
     end
 end
 
--- ====================================================
---  CREATE WINDOW
--- ====================================================
+-- ── Window ────────────────────────────────────────────
 local Window = Library:CreateWindow({
-    Title      = "Friendship.Lua",    -- displayed as "Friendship" + ".Lua" in accent
-    SubTitle   = "Premium Scripts",
-    Size       = UDim2.fromOffset(700, 450),
-    Position   = UDim2.new(0.5, -350, 0.5, -225),
-    ToggleKey  = Enum.KeyCode.RightShift,  -- key to show/hide UI
+    Title     = "Friendship.Lua",
+    SubTitle  = "Premium Scripts",
+    Size      = UDim2.fromOffset(700, 450),
+    ToggleKey = Enum.KeyCode.RightShift,
 })
 
--- ====================================================
---  TAB: COMBAT
--- ====================================================
-local CombatTab = Window:CreateTab("Combat", "")   -- leave icon "" for default dot
+-- ── Combat Tab ────────────────────────────────────────
+local CombatTab = Window:CreateTab("Combat", "")
 
--- Section: Aimbot Settings
-local AimbotSection = CombatTab:CreateSection("Aimbot Settings")
+local Aimbot = CombatTab:CreateSection("Aimbot")
 
-local aimbotEnabled = false
-local AimbotToggle = AimbotSection:CreateToggle({
-    Label       = "Enabled",
-    Description = "Automatically aim at targets",
-    Default     = false,
-    Callback    = function(value)
-        aimbotEnabled = value
-        -- your aimbot enable/disable logic here
-    end
-})
-
-local AimbotKey = AimbotSection:CreateKeybind({
-    Label    = "Aimbot Key",
-    Default  = Enum.KeyCode.Q,
-    Callback = function(key)
-        print("Aimbot key set to:", key.Name)
-    end
-})
-
-local FOVSlider = AimbotSection:CreateSlider({
-    Label    = "FOV Size",
-    Min      = 0,
-    Max      = 360,
-    Default  = 120,
-    Suffix   = "°",
-    Callback = function(value)
-        -- update your FOV circle size
-    end
-})
-
-local SmoothSlider = AimbotSection:CreateSlider({
-    Label    = "Smoothing",
-    Min      = 1,
-    Max      = 20,
-    Default  = 5,
-    Callback = function(value)
-        -- update aimbot smoothing
-    end
-})
-
-local TargetDrop = AimbotSection:CreateDropdown({
-    Label    = "Target Part",
-    Options  = {"Head", "Torso", "Random", "Nearest"},
-    Default  = "Head",
-    Callback = function(value)
-        print("Targeting:", value)
-    end
-})
-
--- Section: Trigger Bot
-local TriggerSection = CombatTab:CreateSection("Trigger Bot")
-
-TriggerSection:CreateToggle({
+Aimbot:CreateToggle({
     Label    = "Enabled",
-    Description = "Automatically shoot when target is in crosshair",
     Default  = false,
-    Callback = function(value)
-        -- trigger bot logic
-    end
+    Callback = function(v) end,
 })
 
-TriggerSection:CreateSlider({
-    Label    = "Delay",
-    Min      = 0,
-    Max      = 1000,
-    Default  = 0,
-    Suffix   = "ms",
-    Callback = function(value) end
+Aimbot:CreateKeybind({
+    Label   = "Hotkey",
+    Default = Enum.KeyCode.Q,
+    Callback = function(key) end,
 })
 
-TriggerSection:CreateToggle({
-    Label   = "Team Check",
-    Default = true,
-    Callback = function(value) end
+Aimbot:CreateSlider({
+    Label   = "FOV",
+    Min     = 0,
+    Max     = 360,
+    Default = 120,
+    Suffix  = "°",
+    Callback = function(v) end,
 })
 
--- ====================================================
---  TAB: VISUALS
--- ====================================================
+Aimbot:CreateDropdown({
+    Label    = "Target Part",
+    Options  = {"Head", "Torso", "Nearest"},
+    Default  = "Head",
+    Callback = function(v) end,
+})
+
+-- ── Visuals Tab ───────────────────────────────────────
 local VisualsTab = Window:CreateTab("Visuals", "")
 
-local ESPSection = VisualsTab:CreateSection("ESP Main")
+local ESP = VisualsTab:CreateSection("ESP")
 
-local espEnabled = true
-ESPSection:CreateToggle({
-    Label   = "ESP Enabled",
-    Default = true,
-    Callback = function(value)
-        espEnabled = value
-    end
-})
-
-ESPSection:CreateToggle({
-    Label   = "Box ESP",
-    Default = true,
-    Callback = function(value) end
-})
-
-ESPSection:CreateColorPicker({
-    Label    = "Box Color",
+ESP:CreateToggle({ Label = "Box ESP",    Default = true,  Callback = function() end })
+ESP:CreateToggle({ Label = "Tracer",     Default = false, Callback = function() end })
+ESP:CreateColorPicker({
+    Label    = "Color",
     Default  = Color3.fromRGB(76, 201, 240),
-    Callback = function(color)
-        -- update ESP box color
-    end
+    Callback = function(c) end,
 })
 
-ESPSection:CreateToggle({
-    Label   = "Tracer Lines",
-    Default = false,
-    Callback = function(value) end
+ESP:CreateDropdown({
+    Label    = "Tracer Origin",
+    Options  = {"Bottom", "Center", "Mouse"},
+    Default  = "Bottom",
+    Callback = function(v) end,
 })
 
-ESPSection:CreateDropdown({
-    Label   = "Tracer Origin",
-    Options = {"Bottom", "Center", "Mouse"},
-    Default = "Bottom",
-    Callback = function(value) end
+ESP:CreateSlider({
+    Label    = "Max Distance",
+    Min      = 100, Max = 5000, Default = 2500,
+    Suffix   = " studs",
+    Callback = function(v) end,
 })
 
-local ESPExtras = VisualsTab:CreateSection("ESP Extras")
+-- ── Movement Tab ──────────────────────────────────────
+local MoveTab = Window:CreateTab("Movement", "")
 
-ESPExtras:CreateToggle({
-    Label   = "Name ESP",
-    Default = true,
-    Callback = function(value) end
-})
+local Move = MoveTab:CreateSection("Movement")
 
-ESPExtras:CreateToggle({
-    Label   = "Health Bar",
-    Default = true,
-    Callback = function(value) end
-})
-
-ESPExtras:CreateToggle({
-    Label   = "Distance ESP",
-    Default = false,
-    Callback = function(value) end
-})
-
-ESPExtras:CreateSlider({
-    Label   = "Max Distance",
-    Min     = 100,
-    Max     = 10000,
-    Default = 2500,
-    Suffix  = " studs",
-    Callback = function(value) end
-})
-
--- ====================================================
---  TAB: MOVEMENT
--- ====================================================
-local MovementTab = Window:CreateTab("Movement", "")
-
-local MoveSection = MovementTab:CreateSection("Movement Mods")
-
-MoveSection:CreateToggle({
-    Label   = "Speed Hack",
-    Default = false,
-    Callback = function(value)
-        if value then
-            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 50
-        else
-            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
-        end
-    end
-})
-
-MoveSection:CreateSlider({
-    Label   = "Walk Speed",
-    Min     = 16,
-    Max     = 250,
-    Default = 16,
-    Callback = function(value)
+Move:CreateToggle({
+    Label    = "Speed Hack",
+    Default  = false,
+    Callback = function(v)
         pcall(function()
-            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = value
+            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = v and 50 or 16
         end)
-    end
+    end,
 })
 
-MoveSection:CreateToggle({
-    Label   = "Infinite Jump",
-    Default = false,
-    Callback = function(value)
-        game:GetService("UserInputService").JumpRequest:Connect(function()
-            if value then
-                pcall(function()
-                    game.Players.LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-                end)
-            end
+Move:CreateSlider({
+    Label    = "Walk Speed",
+    Min      = 16, Max = 250, Default = 16,
+    Callback = function(v)
+        pcall(function()
+            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = v
         end)
-    end
+    end,
 })
 
-MoveSection:CreateToggle({
-    Label   = "No Clip",
-    Default = false,
-    Callback = function(value)
-        -- noclip logic via RunService
-    end
-})
-
-MoveSection:CreateKeybind({
-    Label   = "Fly Keybind",
+Move:CreateKeybind({
+    Label   = "Fly",
     Default = Enum.KeyCode.F,
-    Callback = function(key) end
+    Callback = function(key) end,
 })
 
-local TeleportSection = MovementTab:CreateSection("Teleportation")
+local Teleport = MoveTab:CreateSection("Teleport")
 
-TeleportSection:CreateTextField({
+Teleport:CreateTextField({
     Label       = "Coordinates",
     Placeholder = "0, 0, 0",
-    Callback    = function(text)
-        print("Input:", text)
-    end
+    Callback    = function(text) end,
 })
 
-TeleportSection:CreateButton({
-    Label   = "Teleport To Center",
-    Variant = "secondary",
+Teleport:CreateButton({
+    Label    = "Go",
+    Variant  = "primary",
     Callback = function()
-        pcall(function()
-            local char = game.Players.LocalPlayer.Character
-            char:MoveTo(Vector3.new(0, 5, 0))
-        end)
-    end
+        Library:Notify({ Title = "Teleport", Content = "Moving...", Duration = 2 })
+    end,
 })
 
-TeleportSection:CreateButton({
-    Label   = "Teleport To Target",
-    Variant = "primary",
-    Callback = function()
-        -- your target teleport logic
-        Library:Notify({
-            Title    = "Teleport",
-            Content  = "Teleporting to nearest player...",
-            Duration = 2,
-        })
-    end
-})
-
--- ====================================================
---  TAB: MISC
--- ====================================================
+-- ── Misc Tab ──────────────────────────────────────────
 local MiscTab = Window:CreateTab("Misc", "")
 
-local SelfSection = MiscTab:CreateSection("Self")
+local Game = MiscTab:CreateSection("Game")
 
-SelfSection:CreateToggle({
-    Label   = "God Mode",
-    Default = false,
-    Callback = function(value) end
-})
-
-SelfSection:CreateToggle({
-    Label   = "No Fall Damage",
-    Default = true,
-    Callback = function(value) end
-})
-
-SelfSection:CreateToggle({
-    Label   = "Auto Respawn",
-    Default = false,
-    Callback = function(value) end
-})
-
-local GameSection = MiscTab:CreateSection("Game")
-
-GameSection:CreateToggle({
-    Label   = "Remove Fog",
-    Default = false,
-    Callback = function(value)
+Game:CreateToggle({
+    Label    = "Full Bright",
+    Default  = false,
+    Callback = function(v)
         pcall(function()
-            game:GetService("Lighting").FogEnd = value and 1e9 or 1000
+            local l = game:GetService("Lighting")
+            l.Brightness = v and 5 or 1
+            l.Ambient    = v and Color3.new(1,1,1) or Color3.fromRGB(127,127,127)
         end)
-    end
+    end,
 })
 
-GameSection:CreateToggle({
-    Label   = "Full Bright",
-    Default = false,
-    Callback = function(value)
+Game:CreateToggle({
+    Label    = "Remove Fog",
+    Default  = false,
+    Callback = function(v)
         pcall(function()
-            game:GetService("Lighting").Brightness = value and 5 or 1
-            game:GetService("Lighting").Ambient = value and Color3.fromRGB(255,255,255) or Color3.fromRGB(127,127,127)
+            game:GetService("Lighting").FogEnd = v and 1e9 or 1000
         end)
-    end
+    end,
 })
 
-GameSection:CreateParagraph({
-    Title = "Info",
-    Content = "These settings modify the game's rendering. Use with caution as some anti-cheat systems may detect these changes.",
+Game:CreateParagraph({
+    Title   = "Note",
+    Content = "Rendering changes may be detected by anti-cheat.",
 })
 
-GameSection:CreateButton({
-    Label   = "Rejoin Server",
-    Variant = "secondary",
+Game:CreateButton({
+    Label    = "Rejoin",
+    Variant  = "secondary",
     Callback = function()
         game:GetService("TeleportService"):Teleport(game.PlaceId)
-    end
+    end,
 })
 
-GameSection:CreateButton({
-    Label   = "Hop Server",
-    Variant = "primary",
-    Callback = function()
-        -- server hop logic
-    end
+Game:CreateButton({
+    Label    = "Server Hop",
+    Variant  = "primary",
+    Callback = function() end,
 })
 
--- ====================================================
---  TAB: SETTINGS
--- ====================================================
+-- ── Settings Tab ──────────────────────────────────────
 local SettingsTab = Window:CreateTab("Settings", "")
 
-local UISection = SettingsTab:CreateSection("Interface")
+local UI = SettingsTab:CreateSection("Interface")
 
-UISection:CreateColorPicker({
+UI:CreateColorPicker({
     Label    = "Accent Color",
     Default  = Color3.fromRGB(76, 201, 240),
-    Callback = function(color)
-        -- dynamically update accent (advanced - would require re-theming)
-    end
+    Callback = function(c) end,
 })
 
-UISection:CreateSlider({
-    Label   = "UI Transparency",
-    Min     = 0,
-    Max     = 100,
-    Default = 5,
-    Suffix  = "%",
-    Callback = function(value) end
+UI:CreateSlider({
+    Label    = "Transparency",
+    Min      = 0, Max = 100, Default = 5,
+    Suffix   = "%",
+    Callback = function(v) end,
 })
 
-UISection:CreateToggle({
-    Label   = "Blur Background",
-    Default = true,
-    Callback = function(value) end
-})
+UI:CreateToggle({ Label = "Blur Background", Default = true, Callback = function() end })
 
-local ConfigSection = SettingsTab:CreateSection("Configuration")
+local Config = SettingsTab:CreateSection("Config")
 
-ConfigSection:CreateButton({
-    Label   = "Save Config",
-    Variant = "primary",
+Config:CreateButton({
+    Label    = "Save",
+    Variant  = "primary",
     Callback = function()
-        -- save to writefile / config system
-        Library:Notify({
-            Title   = "Config",
-            Content = "Configuration saved successfully.",
-            Duration = 3,
-        })
-    end
+        Library:Notify({ Title = "Config", Content = "Saved.", Duration = 2 })
+    end,
 })
 
-ConfigSection:CreateButton({
-    Label   = "Load Config",
-    Variant = "secondary",
+Config:CreateButton({
+    Label    = "Load",
+    Variant  = "secondary",
     Callback = function()
-        Library:Notify({
-            Title   = "Config",
-            Content = "Configuration loaded.",
-            Duration = 3,
-        })
-    end
+        Library:Notify({ Title = "Config", Content = "Loaded.", Duration = 2 })
+    end,
 })
 
-ConfigSection:CreateButton({
-    Label   = "Reset Defaults",
-    Variant = "danger",
+Config:CreateButton({
+    Label    = "Reset",
+    Variant  = "danger",
     Callback = function()
-        Library:Notify({
-            Title   = "Config",
-            Content = "Settings reset to defaults.",
-            Duration = 3,
-        })
-    end
+        Library:Notify({ Title = "Config", Content = "Reset to defaults.", Duration = 2 })
+    end,
 })
 
--- ====================================================
---  STARTUP NOTIFICATIONS
--- ====================================================
-task.wait(1)
-Library:Notify({
-    Title   = "System",
-    Content = "Friendship.Lua Loaded Successfully",
-    Duration = 4,
-})
-
+-- ── Startup ───────────────────────────────────────────
 task.wait(0.5)
-Library:Notify({
-    Title   = "System",
-    Content = "Welcome back, " .. game.Players.LocalPlayer.Name,
-    Duration = 4,
-})
+Library:Notify({ Title = "Friendship.Lua", Content = "Loaded ✓", Duration = 3 })
