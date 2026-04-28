@@ -1158,7 +1158,7 @@ function FriendshipLib:CreateWindow(config)
             makeStroke(sectionInner, Color3.fromRGB(255,255,255), 1, 0.93)
             makeListLayout(sectionInner, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 4)
 
-            makePadding(sectionInner, 8, 8, 8, 8)
+            makePadding(sectionInner, 10, 10, 10, 10)
 
             -- Section header
             local sectionHeader = newFrame({
@@ -1188,7 +1188,7 @@ function FriendshipLib:CreateWindow(config)
                 ZIndex = 7,
             })
             elemContainer.AutomaticSize = Enum.AutomaticSize.Y
-            makeListLayout(elemContainer, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 6)
+            makeListLayout(elemContainer, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 4)
 
             -- ── SECTION OBJECT ────────────────────────────
             local Section = {}
@@ -1200,32 +1200,29 @@ function FriendshipLib:CreateWindow(config)
                 return Section._elemOrder
             end
 
-            -- ── HELPER: Element card with entry animation ──
-            local function makeCard(height)
-                local card = newFrame({
-                    BackgroundColor3 = Theme.BG_Element,
-                    Size = UDim2.new(1, 0, 0, height or 45),
+            -- ── HELPER: Element with hover effect (matches web: hover:bg-white/[0.02]) ──
+            local function makeElement(height)
+                local el = newFrame({
+                    BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                    BackgroundTransparency = 1,
+                    Size = UDim2.new(1, 0, 0, height or 40),
                     Parent = Section._container,
                     ZIndex = 8,
                 })
-                card.LayoutOrder = nextOrder()
-                makeCorner(card, 6)
-                local cardStroke = makeStroke(card, Color3.fromRGB(255,255,255), 1, 0.9)
+                el.LayoutOrder = nextOrder()
+                makeCorner(el, 6)
 
-                -- Hover
-                card.MouseEnter:Connect(function()
-                    tween(card, Theme.Fast, { BackgroundColor3 = Theme.BG_ElementHov })
+                el.MouseEnter:Connect(function()
+                    tween(el, Theme.Fast, { BackgroundTransparency = 0.98 })
                 end)
-                card.MouseLeave:Connect(function()
-                    tween(card, Theme.Fast, { BackgroundColor3 = Theme.BG_Element })
+                el.MouseLeave:Connect(function()
+                    tween(el, Theme.Fast, { BackgroundTransparency = 1 })
                 end)
 
-                return card, cardStroke
+                return el
             end
 
-            local function animateEntry(card, cardStroke, ...)
-                card.BackgroundTransparency = 1
-                cardStroke.Transparency = 1
+            local function animateEntry(el, ...)
                 local labels = {...}
                 for _, l in ipairs(labels) do
                     if l and l.TextTransparency ~= nil then
@@ -1233,8 +1230,6 @@ function FriendshipLib:CreateWindow(config)
                     end
                 end
                 task.defer(function()
-                    tween(card, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0 })
-                    tween(cardStroke, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), { Transparency = 0 })
                     for _, l in ipairs(labels) do
                         if l and l.TextTransparency ~= nil then
                             tween(l, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), { TextTransparency = 0 })
@@ -1244,7 +1239,7 @@ function FriendshipLib:CreateWindow(config)
             end
 
             -- ── TOGGLE ────────────────────────────────────
-            -- Strictly aligned with Rayfield CreateToggle logic
+            -- Matches web: pill switch with sliding indicator
             function Section:CreateToggle(config)
                 config = config or {}
                 local label       = config.Label       or "Toggle"
@@ -1255,18 +1250,19 @@ function FriendshipLib:CreateWindow(config)
                 local callback    = config.Callback    or function() end
 
                 local currentValue = default
-                local cardH = desc and 55 or 45
+                local elH = desc and 50 or 40
 
-                local card, cardStroke = makeCard(cardH)
+                local el = makeElement(elH)
 
+                -- Label
                 local lbl = newLabel({
                     Text = label,
-                    TextColor3 = Theme.Text,
+                    TextColor3 = Color3.fromRGB(200, 200, 210),
                     Font = Enum.Font.GothamSemibold,
                     TextSize = 13,
-                    Size = desc and UDim2.new(1, -70, 0, 20) or UDim2.new(1, -70, 1, 0),
-                    Position = UDim2.new(0, 12, 0, desc and 8 or 0),
-                    Parent = card,
+                    Size = desc and UDim2.new(1, -60, 0, 20) or UDim2.new(1, -60, 1, 0),
+                    Position = UDim2.new(0, 12, 0, desc and 6 or 0),
+                    Parent = el,
                     ZIndex = 9,
                 })
 
@@ -1274,111 +1270,88 @@ function FriendshipLib:CreateWindow(config)
                 if desc then
                     descLbl = newLabel({
                         Text = desc,
-                        TextColor3 = Theme.TextDim,
+                        TextColor3 = Color3.fromRGB(80, 80, 90),
                         Font = Enum.Font.Gotham,
-                        TextSize = 11,
-                        Size = UDim2.new(1, -70, 0, 14),
-                        Position = UDim2.new(0, 12, 0, 28),
-                        Parent = card,
+                        TextSize = 10,
+                        Size = UDim2.new(1, -60, 0, 14),
+                        Position = UDim2.new(0, 12, 0, 26),
+                        Parent = el,
                         ZIndex = 9,
                     })
                 end
 
-                animateEntry(card, cardStroke, lbl, descLbl)
+                animateEntry(el, lbl, descLbl)
 
-                -- Switch frame (Rayfield-style: outer frame + indicator that slides)
+                -- Switch pill: 40x20px (web: w-10 h-5 rounded-full p-[3px])
                 local switchFrame = newFrame({
-                    Size = UDim2.new(0, 40, 0, 22),
-                    Position = UDim2.new(1, -54, 0.5, -11),
-                    BackgroundColor3 = Theme.ToggleBackground or Color3.fromRGB(35, 35, 40),
-                    Parent = card,
+                    Size = UDim2.new(0, 40, 0, 20),
+                    Position = UDim2.new(1, -52, 0.5, -10),
+                    Parent = el,
                     ZIndex = 9,
                 })
-                makeCorner(switchFrame, 11)
-                local switchStroke = makeStroke(switchFrame, Color3.fromRGB(80, 80, 90), 1, 0.5)
+                makeCorner(switchFrame, 10)
+                local switchStroke = makeStroke(switchFrame, Color3.fromRGB(255,255,255), 1, 0.9)
 
-                -- Indicator (Rayfield: slides between Position UDim2.new(1,-40,0.5,0) and UDim2.new(1,-20,0.5,0))
+                -- Indicator: 14x14 circle (web: w-3.5 h-3.5 rounded-full)
                 local indicator = newFrame({
-                    Size = UDim2.new(0, 17, 0, 17),
-                    BackgroundColor3 = Theme.ToggleDisabled or Color3.fromRGB(150, 150, 160),
+                    Size = UDim2.new(0, 14, 0, 14),
+                    BackgroundColor3 = Color3.fromRGB(60, 60, 70),
                     Parent = switchFrame,
                     ZIndex = 10,
                 })
-                makeCorner(indicator, 99)
-                local indStroke = makeStroke(indicator, Color3.fromRGB(100, 100, 110), 1, 0.5)
+                makeCorner(indicator, 7)
+                indicator.AnchorPoint = Vector2.new(0, 0.5)
 
-                -- Rayfield-style initial state: disabled = right-40, enabled = right-20
+                -- Web: indicator slides x from 3 (OFF) to 23 (ON)
                 local function setToggleVisual(enabled, animated)
-                    local info = animated and TweenInfo.new(0.45, Enum.EasingStyle.Quart, Enum.EasingDirection.Out) or TweenInfo.new(0)
+                    local info = animated and TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out) or TweenInfo.new(0)
                     if enabled then
-                        tween(indicator, info, { Position = UDim2.new(1, -20, 0.5, 0), AnchorPoint = Vector2.new(0, 0.5) })
-                        tween(indicator, TweenInfo.new(0.8, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), { BackgroundColor3 = Theme.ToggleEnabled or Theme.Accent })
-                        tween(indStroke, TweenInfo.new(0.55, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), { Color = Theme.ToggleEnabledStroke or Theme.AccentDim })
-                        tween(switchStroke, TweenInfo.new(0.55, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), { Color = Theme.ToggleEnabledOuterStroke or Theme.AccentDim })
+                        -- ON: bg=cyan/10, border=cyan/50, indicator=cyan-400 at right
+                        tween(switchFrame, info, { BackgroundColor3 = Theme.AccentBG })
+                        tween(switchStroke, info, { Color = Theme.AccentDim, Transparency = 0.5 })
+                        tween(indicator, info, { Position = UDim2.new(0, 23, 0.5, 0) })
+                        tween(indicator, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), { BackgroundColor3 = Theme.Accent })
                     else
-                        tween(indicator, info, { Position = UDim2.new(1, -40, 0.5, 0), AnchorPoint = Vector2.new(0, 0.5) })
-                        tween(indicator, TweenInfo.new(0.8, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), { BackgroundColor3 = Theme.ToggleDisabled or Color3.fromRGB(150, 150, 160) })
-                        tween(indStroke, TweenInfo.new(0.55, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), { Color = Theme.ToggleDisabledStroke or Color3.fromRGB(100, 100, 110) })
-                        tween(switchStroke, TweenInfo.new(0.55, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), { Color = Theme.ToggleDisabledOuterStroke or Color3.fromRGB(80, 80, 90) })
+                        -- OFF: bg=white/5, border=white/10, indicator=white/20 at left
+                        tween(switchFrame, info, { BackgroundColor3 = Color3.fromRGB(13, 13, 15) })
+                        tween(switchStroke, info, { Color = Color3.fromRGB(255, 255, 255), Transparency = 0.9 })
+                        tween(indicator, info, { Position = UDim2.new(0, 3, 0.5, 0) })
+                        tween(indicator, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), { BackgroundColor3 = Color3.fromRGB(60, 60, 70) })
                     end
                 end
 
-                -- Set initial position without animation
+                -- Set initial state
                 if currentValue then
-                    indicator.Position = UDim2.new(1, -20, 0.5, 0)
-                    indicator.AnchorPoint = Vector2.new(0, 0.5)
-                    indicator.BackgroundColor3 = Theme.ToggleEnabled or Theme.Accent
-                    indStroke.Color = Theme.ToggleEnabledStroke or Theme.AccentDim
-                    switchStroke.Color = Theme.ToggleEnabledOuterStroke or Theme.AccentDim
+                    switchFrame.BackgroundColor3 = Theme.AccentBG
+                    switchStroke.Color = Theme.AccentDim
+                    switchStroke.Transparency = 0.5
+                    indicator.Position = UDim2.new(0, 23, 0.5, 0)
+                    indicator.BackgroundColor3 = Theme.Accent
                 else
-                    indicator.Position = UDim2.new(1, -40, 0.5, 0)
-                    indicator.AnchorPoint = Vector2.new(0, 0.5)
+                    switchFrame.BackgroundColor3 = Color3.fromRGB(13, 13, 15)
+                    indicator.Position = UDim2.new(0, 3, 0.5, 0)
+                    indicator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
                 end
 
-                -- Rayfield-style click: flash bg + stroke, then toggle, then restore
+                -- Click handler
                 local interact = newButton({
                     Size = UDim2.new(1, 0, 1, 0),
                     BackgroundTransparency = 1,
                     Text = "",
-                    Parent = card,
+                    Parent = el,
                     ZIndex = 12,
                 })
 
                 interact.MouseButton1Click:Connect(function()
                     currentValue = not currentValue
-                    -- Rayfield: flash hover then restore
-                    tween(card, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { BackgroundColor3 = Theme.BG_ElementHov })
-                    tween(cardStroke, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Transparency = 1 })
-
                     setToggleVisual(currentValue, true)
-
-                    task.defer(function()
-                        task.wait(0.3)
-                        tween(card, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { BackgroundColor3 = Theme.BG_Element })
-                        tween(cardStroke, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Transparency = 0 })
-                    end)
-
                     pcall(callback, currentValue)
                 end)
 
                 local ToggleObj = {}
                 function ToggleObj:Set(newValue)
                     currentValue = newValue
-                    -- Rayfield-style :Set with size bounce (12→17 indicator)
-                    tween(indicator, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 12, 0, 12) })
-                    tween(card, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { BackgroundColor3 = Theme.BG_ElementHov })
-                    tween(cardStroke, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Transparency = 1 })
-
                     setToggleVisual(currentValue, true)
-
-                    task.defer(function()
-                        task.wait(0.1)
-                        tween(indicator, TweenInfo.new(0.45, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(0, 17, 0, 17) })
-                        task.wait(0.3)
-                        tween(card, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { BackgroundColor3 = Theme.BG_Element })
-                        tween(cardStroke, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Transparency = 0 })
-                    end)
-
                     pcall(callback, currentValue)
                 end
                 function ToggleObj:Get() return currentValue end
@@ -1387,13 +1360,12 @@ function FriendshipLib:CreateWindow(config)
             end
 
             -- ── SLIDER ────────────────────────────────────
-            -- Strictly aligned with Rayfield CreateSlider logic (RunService.Stepped dragging)
+            -- Matches web: value badge + thin track with fill
             function Section:CreateSlider(config)
                 config = config or {}
                 local label       = config.Label       or "Slider"
-                local range       = config.Range       or {config.Min or 0, config.Max or 100}
-                local min         = range[1]
-                local max         = range[2]
+                local min         = config.Min         or 0
+                local max         = config.Max         or 100
                 local default     = config.CurrentValue
                 if default == nil then default = config.Default end
                 if default == nil then default = min end
@@ -1403,139 +1375,110 @@ function FriendshipLib:CreateWindow(config)
 
                 local currentValue = clamp(default, min, max)
 
-                local card, cardStroke = makeCard(45)
+                local el = makeElement(55)
 
+                -- Label
                 local lbl = newLabel({
                     Text = label,
-                    TextColor3 = Theme.Text,
+                    TextColor3 = Color3.fromRGB(200, 200, 210),
                     Font = Enum.Font.GothamSemibold,
                     TextSize = 13,
-                    Size = UDim2.new(0, 0, 1, 0),
-                    Position = UDim2.new(0, 12, 0, 0),
-                    Parent = card,
+                    Size = UDim2.new(0, 0, 0, 20),
+                    Position = UDim2.new(0, 12, 0, 6),
+                    Parent = el,
                     ZIndex = 9,
                 })
                 lbl.AutomaticSize = Enum.AutomaticSize.X
 
+                -- Value badge (web: text-xs font-mono text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20)
+                local badgeFrame = newFrame({
+                    BackgroundColor3 = Theme.AccentBG,
+                    Size = UDim2.new(0, 50, 0, 18),
+                    Position = UDim2.new(1, -62, 0, 7),
+                    Parent = el,
+                    ZIndex = 9,
+                })
+                makeCorner(badgeFrame, 4)
+                makeStroke(badgeFrame, Theme.AccentDim, 1, 0.7)
+
                 local valueLabel = newLabel({
-                    Text = tostring(currentValue) .. (suffix ~= "" and " " .. suffix or ""),
+                    Text = tostring(currentValue) .. (suffix ~= "" and suffix or ""),
                     TextColor3 = Theme.Accent,
                     Font = Enum.Font.GothamBold,
-                    TextSize = 12,
-                    Size = UDim2.new(0, 60, 1, 0),
-                    Position = UDim2.new(1, -72, 0, 0),
-                    Parent = card,
-                    ZIndex = 9,
-                })
-                valueLabel.TextXAlignment = Enum.TextXAlignment.Right
-
-                animateEntry(card, cardStroke, lbl, valueLabel)
-
-                -- Slider track (Rayfield-style: Main frame with Progress child)
-                local sliderMain = newFrame({
-                    BackgroundColor3 = Theme.SliderBackground or Color3.fromRGB(40, 42, 48),
-                    Size = UDim2.new(1, -24, 0, 5),
-                    Position = UDim2.new(0, 12, 1, -14),
-                    Parent = card,
-                    ZIndex = 9,
-                })
-                makeCorner(sliderMain, 99)
-                local sliderMainStroke = makeStroke(sliderMain, Theme.SliderStroke or Color3.fromRGB(60, 62, 68), 1, 0.4)
-
-                local progressWidth = sliderMain.AbsoluteSize.X * ((currentValue - min) / math.max(max - min, 0.001))
-                if progressWidth < 5 then progressWidth = 5 end
-
-                local sliderProgress = newFrame({
-                    BackgroundColor3 = Theme.SliderProgress or Theme.Accent,
-                    Size = UDim2.new(0, progressWidth, 1, 0),
-                    Parent = sliderMain,
+                    TextSize = 11,
+                    Size = UDim2.new(1, 0, 1, 0),
+                    Parent = badgeFrame,
                     ZIndex = 10,
                 })
-                makeCorner(sliderProgress, 99)
-                local sliderProgressStroke = makeStroke(sliderProgress, Theme.SliderStroke or Color3.fromRGB(60, 62, 68), 1, 0.3)
+                valueLabel.TextXAlignment = Enum.TextXAlignment.Center
 
-                -- Rayfield-style: Interact button for dragging
+                animateEntry(el, lbl, valueLabel)
+
+                -- Track (web: h-1.5 bg-white/5 rounded-full border border-white/5)
+                local track = newFrame({
+                    BackgroundColor3 = Color3.fromRGB(13, 13, 15),
+                    Size = UDim2.new(1, -24, 0, 6),
+                    Position = UDim2.new(0, 12, 1, -14),
+                    Parent = el,
+                    ZIndex = 9,
+                })
+                makeCorner(track, 3)
+                makeStroke(track, Color3.fromRGB(255,255,255), 1, 0.95)
+
+                -- Fill (web: bg-cyan-500, width = percentage)
+                local pct = (currentValue - min) / math.max(max - min, 0.001)
+                local fill = newFrame({
+                    BackgroundColor3 = Theme.Accent,
+                    Size = UDim2.new(pct, 0, 1, 0),
+                    Parent = track,
+                    ZIndex = 10,
+                })
+                makeCorner(fill, 3)
+
+                -- Interact area for dragging
                 local sliderInteract = newButton({
                     Size = UDim2.new(1, -24, 0, 20),
                     Position = UDim2.new(0, 12, 1, -22),
                     BackgroundTransparency = 1,
                     Text = "",
-                    Parent = card,
+                    Parent = el,
                     ZIndex = 11,
                 })
 
                 local SLDragging = false
 
-                -- Rayfield logic: InputBegan starts drag + hides strokes
                 sliderInteract.InputBegan:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                        tween(sliderMainStroke, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Transparency = 1 })
-                        tween(sliderProgressStroke, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Transparency = 1 })
                         SLDragging = true
                     end
                 end)
 
-                -- Rayfield logic: InputEnded stops drag + restores strokes
                 sliderInteract.InputEnded:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                        tween(sliderMainStroke, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Transparency = 0.4 })
-                        tween(sliderProgressStroke, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Transparency = 0.3 })
                         SLDragging = false
                     end
                 end)
 
-                -- Rayfield logic: MouseButton1Down starts Stepped loop
                 sliderInteract.MouseButton1Down:Connect(function()
-                    local Current = sliderProgress.AbsolutePosition.X + sliderProgress.AbsoluteSize.X
-                    local Start = Current
-                    local Location = UserInputService:GetMouseLocation().X
-
                     local Loop
                     Loop = RunService.Stepped:Connect(function()
                         if SLDragging then
-                            Location = UserInputService:GetMouseLocation().X
-                            Current = Current + 0.025 * (Location - Start)
-
-                            if Location < sliderMain.AbsolutePosition.X then
-                                Location = sliderMain.AbsolutePosition.X
-                            elseif Location > sliderMain.AbsolutePosition.X + sliderMain.AbsoluteSize.X then
-                                Location = sliderMain.AbsolutePosition.X + sliderMain.AbsoluteSize.X
-                            end
-
-                            if Current < sliderMain.AbsolutePosition.X + 5 then
-                                Current = sliderMain.AbsolutePosition.X + 5
-                            elseif Current > sliderMain.AbsolutePosition.X + sliderMain.AbsoluteSize.X then
-                                Current = sliderMain.AbsolutePosition.X + sliderMain.AbsoluteSize.X
-                            end
-
-                            if Current <= Location and (Location - Start) < 0 then
-                                Start = Location
-                            elseif Current >= Location and (Location - Start) > 0 then
-                                Start = Location
-                            end
-
-                            tween(sliderProgress, TweenInfo.new(0.45, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {
-                                Size = UDim2.new(0, Current - sliderMain.AbsolutePosition.X, 1, 0)
-                            })
-
-                            local NewValue = min + (Location - sliderMain.AbsolutePosition.X) / sliderMain.AbsoluteSize.X * (max - min)
-                            -- Rayfield increment rounding
+                            local mouseLocation = UserInputService:GetMouseLocation().X
+                            local relX = math.clamp(mouseLocation - track.AbsolutePosition.X, 0, track.AbsoluteSize.X)
+                            local newPct = relX / track.AbsoluteSize.X
+                            local NewValue = min + newPct * (max - min)
                             NewValue = math.floor(NewValue / increment + 0.5) * (increment * 10000000) / 10000000
                             NewValue = math.clamp(NewValue, min, max)
 
-                            valueLabel.Text = tostring(NewValue) .. (suffix ~= "" and " " .. suffix or "")
+                            local finalPct = (NewValue - min) / math.max(max - min, 0.001)
+                            tween(fill, TweenInfo.new(0.15, Enum.EasingStyle.Quart), { Size = UDim2.new(finalPct, 0, 1, 0) })
+                            valueLabel.Text = tostring(NewValue) .. (suffix ~= "" and suffix or "")
 
                             if currentValue ~= NewValue then
                                 pcall(callback, NewValue)
                                 currentValue = NewValue
                             end
                         else
-                            -- Rayfield: snap to final position when released
-                            local finalPos = Location - sliderMain.AbsolutePosition.X
-                            if finalPos < 5 then finalPos = 5 end
-                            tween(sliderProgress, TweenInfo.new(0.3, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {
-                                Size = UDim2.new(0, finalPos, 1, 0)
-                            })
                             Loop:Disconnect()
                         end
                     end)
@@ -1544,15 +1487,11 @@ function FriendshipLib:CreateWindow(config)
                 local SliderObj = {}
                 function SliderObj:Set(newVal)
                     newVal = math.clamp(newVal, min, max)
-                    local pct = (newVal - min) / math.max(max - min, 0.001)
-                    local newW = sliderMain.AbsoluteSize.X * pct
-                    if newW < 5 then newW = 5 end
-                    tween(sliderProgress, TweenInfo.new(0.45, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {
-                        Size = UDim2.new(0, newW, 1, 0)
-                    })
-                    valueLabel.Text = tostring(newVal) .. (suffix ~= "" and " " .. suffix or "")
-                    pcall(callback, newVal)
                     currentValue = newVal
+                    local p = (newVal - min) / math.max(max - min, 0.001)
+                    tween(fill, TweenInfo.new(0.3, Enum.EasingStyle.Quart), { Size = UDim2.new(p, 0, 1, 0) })
+                    valueLabel.Text = tostring(newVal) .. (suffix ~= "" and suffix or "")
+                    pcall(callback, newVal)
                 end
                 function SliderObj:Get() return currentValue end
 
@@ -1560,7 +1499,7 @@ function FriendshipLib:CreateWindow(config)
             end
 
             -- ── DROPDOWN ──────────────────────────────────
-            -- Strictly aligned with Rayfield CreateDropdown logic (debounce, animated open/close, MultiOption support)
+            -- Matches web: column layout with select button, expand for options
             function Section:CreateDropdown(config)
                 config = config or {}
                 local label           = config.Name or config.Label or "Dropdown"
@@ -1568,50 +1507,66 @@ function FriendshipLib:CreateWindow(config)
                 local multipleOptions = config.MultipleOptions or false
                 local callback        = config.Callback or function() end
 
-                -- Rayfield-style CurrentOption as table
                 local currentOption = config.CurrentOption or config.Default
-                if currentOption == nil then
-                    currentOption = options[1]
-                end
-                if type(currentOption) == "string" then
-                    currentOption = {currentOption}
-                end
-                if not multipleOptions and type(currentOption) == "table" then
-                    currentOption = {currentOption[1]}
-                end
+                if currentOption == nil then currentOption = options[1] end
+                if type(currentOption) == "string" then currentOption = {currentOption} end
+                if not multipleOptions and type(currentOption) == "table" then currentOption = {currentOption[1]} end
                 if currentOption == nil then currentOption = {} end
 
-                local closedH = 45
+                local closedH = 58
+                local opened = false
                 local Debounce = false
 
-                local card, cardStroke = makeCard(closedH)
-                card.ClipsDescendants = true
+                local el = makeElement(closedH)
+                el.ClipsDescendants = true
 
+                -- Label (web: text-sm font-semibold text-white/80)
                 local lbl = newLabel({
                     Text = label,
-                    TextColor3 = Theme.TextDim,
+                    TextColor3 = Color3.fromRGB(200, 200, 210),
                     Font = Enum.Font.GothamSemibold,
-                    TextSize = 11,
-                    Size = UDim2.new(1, -50, 0, 16),
-                    Position = UDim2.new(0, 12, 0, 6),
-                    Parent = card,
+                    TextSize = 13,
+                    Size = UDim2.new(1, -24, 0, 16),
+                    Position = UDim2.new(0, 12, 0, 4),
+                    Parent = el,
                     ZIndex = 9,
                 })
 
-                -- Rayfield-style Selected text
-                local selLabel = newLabel({
-                    Text = "None",
-                    TextColor3 = Theme.Text,
-                    Font = Enum.Font.GothamSemibold,
-                    TextSize = 13,
-                    Size = UDim2.new(1, -50, 0, 18),
-                    Position = UDim2.new(0, 12, 0, 20),
-                    Parent = card,
+                -- Select button (web: px-3 py-2 bg-white/5 border border-white/10 rounded-md text-xs text-white/70)
+                local selectBtn = newFrame({
+                    BackgroundColor3 = Color3.fromRGB(13, 13, 15),
+                    Size = UDim2.new(1, -24, 0, 28),
+                    Position = UDim2.new(0, 12, 0, 24),
+                    Parent = el,
                     ZIndex = 9,
+                })
+                makeCorner(selectBtn, 5)
+                makeStroke(selectBtn, Color3.fromRGB(255,255,255), 1, 0.9)
+
+                local selLabel = newLabel({
+                    Text = currentOption[1] or "None",
+                    TextColor3 = Color3.fromRGB(160, 160, 170),
+                    Font = Enum.Font.GothamSemibold,
+                    TextSize = 12,
+                    Size = UDim2.new(1, -30, 1, 0),
+                    Position = UDim2.new(0, 10, 0, 0),
+                    Parent = selectBtn,
+                    ZIndex = 10,
                 })
                 selLabel.TextTruncate = Enum.TextTruncate.AtEnd
 
-                -- Rayfield logic for display text
+                -- Chevron (web: ChevronDown icon, rotates on open)
+                local chevron = newLabel({
+                    Text = "▾",
+                    TextColor3 = Color3.fromRGB(100, 100, 110),
+                    Font = Enum.Font.GothamBold,
+                    TextSize = 10,
+                    Size = UDim2.new(0, 20, 1, 0),
+                    Position = UDim2.new(1, -24, 0, 0),
+                    Parent = selectBtn,
+                    ZIndex = 10,
+                })
+
                 local function updateSelectedText()
                     if multipleOptions then
                         if #currentOption == 1 then
@@ -1627,56 +1582,42 @@ function FriendshipLib:CreateWindow(config)
                 end
                 updateSelectedText()
 
-                local chevron = newLabel({
-                    Text = "v",
-                    TextColor3 = Theme.TextDim,
-                    Font = Enum.Font.GothamBold,
-                    TextSize = 10,
-                    Size = UDim2.new(0, 20, 0, 20),
-                    Position = UDim2.new(1, -30, 0, 22),
-                    Parent = card,
-                    ZIndex = 9,
-                })
+                animateEntry(el, lbl, selLabel)
 
-                animateEntry(card, cardStroke, lbl, selLabel)
-
-                -- Options list (Rayfield-style: ScrollingFrame with option frames)
+                -- Options list
                 local listFrame = Instance.new("ScrollingFrame")
                 listFrame.Name = "List"
                 listFrame.BackgroundTransparency = 1
-                listFrame.Size = UDim2.new(1, 0, 0, 130)
-                listFrame.Position = UDim2.new(0, 0, 0, closedH)
+                listFrame.Size = UDim2.new(1, -24, 0, 100)
+                listFrame.Position = UDim2.new(0, 12, 0, closedH)
                 listFrame.BorderSizePixel = 0
                 listFrame.ScrollBarThickness = 2
                 listFrame.ScrollBarImageTransparency = 0.7
                 listFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
                 listFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
                 listFrame.Visible = false
-                listFrame.Parent = card
+                listFrame.Parent = el
                 listFrame.ZIndex = 9
-                makePadding(listFrame, 0, 10, 2, 10)
+                makePadding(listFrame, 0, 0, 2, 0)
                 makeListLayout(listFrame, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 2)
 
-                local DropdownUnselected = Color3.fromRGB(30, 32, 38)
                 local DropdownSelected = Theme.AccentBG
+                local DropdownUnselected = Color3.fromRGB(20, 22, 26)
 
-                -- Rayfield-style SetDropdownOptions function
                 local function SetDropdownOptions()
                     for _, Option in ipairs(options) do
                         local optFrame = newFrame({
                             Name = Option,
                             BackgroundColor3 = table.find(currentOption, Option) and DropdownSelected or DropdownUnselected,
-                            BackgroundTransparency = 0,
-                            Size = UDim2.new(1, 0, 0, 28),
+                            Size = UDim2.new(1, 0, 0, 26),
                             Parent = listFrame,
                             ZIndex = 10,
                         })
                         makeCorner(optFrame, 4)
-                        local optStroke = makeStroke(optFrame, Color3.fromRGB(255,255,255), 1, 0.9)
 
                         local optTitle = newLabel({
                             Text = Option,
-                            TextColor3 = table.find(currentOption, Option) and Theme.Accent or Color3.fromRGB(160, 160, 170),
+                            TextColor3 = table.find(currentOption, Option) and Theme.Accent or Color3.fromRGB(140, 140, 150),
                             Font = Enum.Font.GothamSemibold,
                             TextSize = 12,
                             Size = UDim2.new(1, -16, 1, 0),
@@ -1684,7 +1625,6 @@ function FriendshipLib:CreateWindow(config)
                             Parent = optFrame,
                             ZIndex = 11,
                         })
-                        optTitle.TextXAlignment = Enum.TextXAlignment.Left
 
                         local optInteract = newButton({
                             Size = UDim2.new(1, 0, 1, 0),
@@ -1695,52 +1635,42 @@ function FriendshipLib:CreateWindow(config)
                         })
 
                         optInteract.MouseButton1Click:Connect(function()
-                            -- Rayfield: if already selected and single-select, return
-                            if not multipleOptions and table.find(currentOption, Option) then
-                                return
-                            end
+                            if not multipleOptions and table.find(currentOption, Option) then return end
 
-                            -- Rayfield: toggle selection
                             if table.find(currentOption, Option) then
                                 table.remove(currentOption, table.find(currentOption, Option))
                             else
-                                if not multipleOptions then
-                                    table.clear(currentOption)
-                                end
+                                if not multipleOptions then table.clear(currentOption) end
                                 table.insert(currentOption, Option)
-                                tween(optStroke, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { Transparency = 1 })
-                                tween(optFrame, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { BackgroundColor3 = DropdownSelected })
-                                Debounce = true
                             end
 
                             updateSelectedText()
                             pcall(callback, currentOption)
 
-                            -- Rayfield: update all option colors
+                            -- Update option colors
                             for _, droption in ipairs(listFrame:GetChildren()) do
-                                if droption:IsA("Frame") and droption.Name ~= "Placeholder" then
-                                    if not table.find(currentOption, droption.Name) then
-                                        tween(droption, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { BackgroundColor3 = DropdownUnselected })
-                                    end
+                                if droption:IsA("Frame") and droption.Name ~= "UIPadding" then
+                                    local isSelected = table.find(currentOption, droption.Name)
+                                    droption.BackgroundColor3 = isSelected and DropdownSelected or DropdownUnselected
+                                    local t = droption:FindFirstChildOfClass("TextLabel")
+                                    if t then t.TextColor3 = isSelected and Theme.Accent or Color3.fromRGB(140, 140, 150) end
                                 end
                             end
 
-                            -- Rayfield: if single-select, auto-close after selection
+                            -- Auto-close for single select
                             if not multipleOptions then
                                 task.wait(0.1)
-                                tween(card, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { Size = UDim2.new(1, 0, 0, closedH) })
+                                opened = false
+                                tween(el, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 0, closedH) })
+                                tween(chevron, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { Rotation = 0 })
                                 for _, DropdownOpt in ipairs(listFrame:GetChildren()) do
-                                    if DropdownOpt:IsA("Frame") and DropdownOpt.Name ~= "Placeholder" then
-                                        tween(DropdownOpt, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { BackgroundTransparency = 1 })
-                                        local s = DropdownOpt:FindFirstChildOfClass("UIStroke")
-                                        if s then tween(s, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { Transparency = 1 }) end
+                                    if DropdownOpt:IsA("Frame") and DropdownOpt.Name ~= "UIPadding" then
+                                        tween(DropdownOpt, TweenInfo.new(0.2), { BackgroundTransparency = 1 })
                                         local t = DropdownOpt:FindFirstChildOfClass("TextLabel")
-                                        if t then tween(t, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { TextTransparency = 1 }) end
+                                        if t then tween(t, TweenInfo.new(0.2), { TextTransparency = 1 }) end
                                     end
                                 end
-                                tween(listFrame, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { ScrollBarImageTransparency = 1 })
-                                tween(chevron, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), { Rotation = 180 })
-                                task.wait(0.35)
+                                task.wait(0.2)
                                 listFrame.Visible = false
                             end
                             Debounce = false
@@ -1749,62 +1679,48 @@ function FriendshipLib:CreateWindow(config)
                 end
                 SetDropdownOptions()
 
-                -- Rayfield-style Interact for open/close toggle
+                -- Click to toggle
                 local interact = newButton({
-                    Size = UDim2.new(1, 0, 1, 0),
-                    Position = UDim2.new(0, 0, 0, 0),
+                    Size = UDim2.new(1, 0, 0, closedH),
                     BackgroundTransparency = 1,
                     Text = "",
-                    Parent = card,
+                    Parent = el,
                     ZIndex = 11,
                 })
 
-                -- Rayfield: initial chevron rotation (closed = 180)
-                chevron.Rotation = 180
-
                 interact.MouseButton1Click:Connect(function()
-                    -- Rayfield: flash animation
-                    tween(card, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), { BackgroundColor3 = Theme.BG_ElementHov })
-                    tween(cardStroke, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), { Transparency = 1 })
-                    task.wait(0.1)
-                    tween(card, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), { BackgroundColor3 = Theme.BG_Element })
-                    tween(cardStroke, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), { Transparency = 0 })
-
                     if Debounce then return end
 
-                    if listFrame.Visible then
+                    if opened then
                         -- Close
                         Debounce = true
-                        tween(card, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { Size = UDim2.new(1, 0, 0, closedH) })
+                        opened = false
+                        tween(el, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 0, closedH) })
+                        tween(chevron, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { Rotation = 0 })
                         for _, DropdownOpt in ipairs(listFrame:GetChildren()) do
-                            if DropdownOpt:IsA("Frame") and DropdownOpt.Name ~= "Placeholder" then
-                                tween(DropdownOpt, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { BackgroundTransparency = 1 })
-                                local s = DropdownOpt:FindFirstChildOfClass("UIStroke")
-                                if s then tween(s, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { Transparency = 1 }) end
+                            if DropdownOpt:IsA("Frame") and DropdownOpt.Name ~= "UIPadding" then
+                                tween(DropdownOpt, TweenInfo.new(0.2), { BackgroundTransparency = 1 })
                                 local t = DropdownOpt:FindFirstChildOfClass("TextLabel")
-                                if t then tween(t, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { TextTransparency = 1 }) end
+                                if t then tween(t, TweenInfo.new(0.2), { TextTransparency = 1 }) end
                             end
                         end
-                        tween(listFrame, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { ScrollBarImageTransparency = 1 })
-                        tween(chevron, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), { Rotation = 180 })
-                        task.wait(0.35)
+                        task.wait(0.25)
                         listFrame.Visible = false
                         Debounce = false
                     else
                         -- Open
-                        tween(card, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), { Size = UDim2.new(1, 0, 0, 180) })
+                        opened = true
+                        local optCount = 0
+                        for _ in ipairs(options) do optCount = optCount + 1 end
+                        local openH = closedH + math.min(optCount * 28, 100) + 8
+                        tween(el, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 0, openH) })
+                        tween(chevron, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { Rotation = 180 })
                         listFrame.Visible = true
-                        tween(listFrame, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { ScrollBarImageTransparency = 0.7 })
-                        tween(chevron, TweenInfo.new(0.7, Enum.EasingStyle.Exponential), { Rotation = 0 })
                         for _, DropdownOpt in ipairs(listFrame:GetChildren()) do
-                            if DropdownOpt:IsA("Frame") and DropdownOpt.Name ~= "Placeholder" then
-                                if DropdownOpt.Name ~= selLabel.Text then
-                                    local s = DropdownOpt:FindFirstChildOfClass("UIStroke")
-                                    if s then tween(s, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { Transparency = 0 }) end
-                                end
-                                tween(DropdownOpt, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0 })
+                            if DropdownOpt:IsA("Frame") and DropdownOpt.Name ~= "UIPadding" then
+                                DropdownOpt.BackgroundTransparency = 0
                                 local t = DropdownOpt:FindFirstChildOfClass("TextLabel")
-                                if t then tween(t, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { TextTransparency = 0 }) end
+                                if t then t.TextTransparency = 0 end
                             end
                         end
                     end
@@ -1812,23 +1728,17 @@ function FriendshipLib:CreateWindow(config)
 
                 local DropdownObj = {}
                 function DropdownObj:Set(newOption)
-                    if typeof(newOption) == "string" then
-                        newOption = {newOption}
-                    end
+                    if typeof(newOption) == "string" then newOption = {newOption} end
                     currentOption = newOption
-                    if not multipleOptions then
-                        currentOption = {currentOption[1]}
-                    end
+                    if not multipleOptions then currentOption = {currentOption[1]} end
                     updateSelectedText()
                     pcall(callback, currentOption)
-                    -- Update option colors
                     for _, droption in ipairs(listFrame:GetChildren()) do
-                        if droption:IsA("Frame") and droption.Name ~= "Placeholder" then
-                            if not table.find(currentOption, droption.Name) then
-                                droption.BackgroundColor3 = DropdownUnselected
-                            else
-                                droption.BackgroundColor3 = DropdownSelected
-                            end
+                        if droption:IsA("Frame") and droption.Name ~= "UIPadding" then
+                            local isSelected = table.find(currentOption, droption.Name)
+                            droption.BackgroundColor3 = isSelected and DropdownSelected or DropdownUnselected
+                            local t = droption:FindFirstChildOfClass("TextLabel")
+                            if t then t.TextColor3 = isSelected and Theme.Accent or Color3.fromRGB(140, 140, 150) end
                         end
                     end
                 end
@@ -1836,42 +1746,16 @@ function FriendshipLib:CreateWindow(config)
                 function DropdownObj:Refresh(optionsTable)
                     options = optionsTable
                     for _, opt in ipairs(listFrame:GetChildren()) do
-                        if opt:IsA("Frame") and opt.Name ~= "Placeholder" then
-                            opt:Destroy()
-                        end
+                        if opt:IsA("Frame") and opt.Name ~= "UIPadding" then opt:Destroy() end
                     end
                     SetDropdownOptions()
-                    -- Apply colors
-                    for _, droption in ipairs(listFrame:GetChildren()) do
-                        if droption:IsA("Frame") and droption.Name ~= "Placeholder" then
-                            if not table.find(currentOption, droption.Name) then
-                                droption.BackgroundColor3 = DropdownUnselected
-                            else
-                                droption.BackgroundColor3 = DropdownSelected
-                            end
-                        end
-                    end
-                    -- If open, make visible immediately
-                    if listFrame.Visible then
-                        for _, DropdownOpt in ipairs(listFrame:GetChildren()) do
-                            if DropdownOpt:IsA("Frame") and DropdownOpt.Name ~= "Placeholder" then
-                                DropdownOpt.BackgroundTransparency = 0
-                                local t = DropdownOpt:FindFirstChildOfClass("TextLabel")
-                                if t then t.TextTransparency = 0 end
-                                if not table.find(currentOption, DropdownOpt.Name) then
-                                    local s = DropdownOpt:FindFirstChildOfClass("UIStroke")
-                                    if s then s.Transparency = 0 end
-                                end
-                            end
-                        end
-                    end
                 end
 
                 return DropdownObj
             end
 
             -- ── KEYBIND ───────────────────────────────────
-            -- Strictly aligned with Rayfield CreateKeybind logic (FocusLost, InputBegan, HoldToInteract, CallOnChange)
+            -- Matches web: simple pill button for key display
             function Section:CreateKeybind(config)
                 config = config or {}
                 local label           = config.Name or config.Label or "Keybind"
@@ -1889,83 +1773,71 @@ function FriendshipLib:CreateWindow(config)
 
                 local CheckingForKey = false
 
-                local card, cardStroke = makeCard(45)
+                local el = makeElement(40)
 
                 local lbl = newLabel({
                     Text = label,
-                    TextColor3 = Theme.Text,
+                    TextColor3 = Color3.fromRGB(200, 200, 210),
                     Font = Enum.Font.GothamSemibold,
                     TextSize = 13,
                     Size = UDim2.new(1, -100, 1, 0),
                     Position = UDim2.new(0, 12, 0, 0),
-                    Parent = card,
+                    Parent = el,
                     ZIndex = 9,
                 })
 
-                -- Rayfield-style: KeybindFrame containing KeybindBox TextBox
-                local keybindFrame = newFrame({
-                    BackgroundColor3 = Theme.InputBackground or Color3.fromRGB(30, 32, 38),
-                    Size = UDim2.new(0, 70, 0, 30),
-                    Position = UDim2.new(1, -82, 0.5, -15),
-                    Parent = card,
+                -- Key button (web: px-3 py-1 rounded-sm text-[10px] font-mono border uppercase tracking-widest)
+                local keyBtn = newButton({
+                    Name = "KeyBtn",
+                    Text = string.upper(currentKeybind),
+                    TextColor3 = Color3.fromRGB(100, 100, 110),
+                    Font = Enum.Font.GothamBold,
+                    TextSize = 10,
+                    Size = UDim2.new(0, 50, 0, 24),
+                    Position = UDim2.new(1, -62, 0.5, -12),
+                    BackgroundColor3 = Color3.fromRGB(13, 13, 15),
+                    BackgroundTransparency = 0,
+                    Parent = el,
                     ZIndex = 10,
                 })
-                makeCorner(keybindFrame, 4)
-                local keyStroke = makeStroke(keybindFrame, Theme.InputStroke or Color3.fromRGB(255,255,255), 1, 0.9)
+                makeCorner(keyBtn, 4)
+                makeStroke(keyBtn, Color3.fromRGB(255,255,255), 1, 0.9)
 
-                local keybindBox = Instance.new("TextBox")
-                keybindBox.Name = "KeybindBox"
-                keybindBox.BackgroundTransparency = 1
-                keybindBox.BorderSizePixel = 0
-                keybindBox.Size = UDim2.new(1, 0, 1, 0)
-                keybindBox.Position = UDim2.new(0, 0, 0, 0)
-                keybindBox.Text = currentKeybind
-                keybindBox.TextColor3 = Theme.TextDim
-                keybindBox.PlaceholderText = ""
-                keybindBox.Font = Enum.Font.GothamBold
-                keybindBox.TextSize = 11
-                keybindBox.TextXAlignment = Enum.TextXAlignment.Center
-                keybindBox.ClearTextOnFocus = false
-                keybindBox.Parent = keybindFrame
-                keybindBox.ZIndex = 11
+                animateEntry(el, lbl)
 
-                -- Rayfield-style: initial size based on text
-                keybindFrame.Size = UDim2.new(0, keybindBox.TextBounds.X + 24, 0, 30)
-
-                animateEntry(card, cardStroke, lbl)
-
-                -- Rayfield logic: Focused = start listening
-                keybindBox.Focused:Connect(function()
-                    CheckingForKey = true
-                    keybindBox.Text = ""
-                end)
-
-                -- Rayfield logic: FocusLost = stop listening, restore if empty
-                keybindBox.FocusLost:Connect(function()
-                    CheckingForKey = false
-                    if keybindBox.Text == nil or keybindBox.Text == "" then
-                        keybindBox.Text = currentKeybind
+                -- Click to start listening
+                keyBtn.MouseButton1Click:Connect(function()
+                    CheckingForKey = not CheckingForKey
+                    if CheckingForKey then
+                        -- Active: cyan style
+                        tween(keyBtn, Theme.Fast, { BackgroundColor3 = Theme.AccentBG })
+                        tween(keyBtn, Theme.Fast, { TextColor3 = Theme.Accent })
+                        keyBtn.Text = "..."
+                    else
+                        -- Default: white/5 style
+                        tween(keyBtn, Theme.Fast, { BackgroundColor3 = Color3.fromRGB(13, 13, 15) })
+                        tween(keyBtn, Theme.Fast, { TextColor3 = Color3.fromRGB(100, 100, 110) })
+                        keyBtn.Text = string.upper(currentKeybind)
                     end
                 end)
 
-                -- Rayfield logic: InputBegan handles both binding and key activation
-                local keybindConnection
-                keybindConnection = UserInputService.InputBegan:Connect(function(input, processed)
+                -- Key input handling
+                UserInputService.InputBegan:Connect(function(input, processed)
                     if CheckingForKey then
-                        -- Binding mode: capture new key
                         if input.KeyCode ~= Enum.KeyCode.Unknown then
                             local SplitMessage = string.split(tostring(input.KeyCode), ".")
                             local NewKeyNoEnum = SplitMessage[3]
-                            keybindBox.Text = tostring(NewKeyNoEnum)
+                            keyBtn.Text = string.upper(tostring(NewKeyNoEnum))
                             currentKeybind = tostring(NewKeyNoEnum)
-                            keybindBox:ReleaseFocus()
-
+                            CheckingForKey = false
+                            -- Restore default style
+                            tween(keyBtn, Theme.Fast, { BackgroundColor3 = Color3.fromRGB(13, 13, 15) })
+                            tween(keyBtn, Theme.Fast, { TextColor3 = Color3.fromRGB(100, 100, 110) })
                             if callOnChange then
                                 pcall(callback, tostring(NewKeyNoEnum))
                             end
                         end
                     elseif not callOnChange and currentKeybind ~= nil and input.KeyCode == Enum.KeyCode[currentKeybind] and not processed then
-                        -- Activation mode: key was pressed
                         local Held = true
                         local Connection
                         Connection = input.Changed:Connect(function(prop)
@@ -1994,18 +1866,18 @@ function FriendshipLib:CreateWindow(config)
                     end
                 end)
 
-                -- Rayfield-style: auto-resize frame based on text
-                keybindBox:GetPropertyChangedSignal("Text"):Connect(function()
-                    tween(keybindFrame, TweenInfo.new(0.55, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {
-                        Size = UDim2.new(0, keybindBox.TextBounds.X + 24, 0, 30)
+                -- Auto-resize button based on text
+                keyBtn:GetPropertyChangedSignal("Text"):Connect(function()
+                    local textW = TextService:GetTextSize(keyBtn.Text, 10, Enum.Font.GothamBold, Vector2.new(200, 24)).X
+                    tween(keyBtn, TweenInfo.new(0.25, Enum.EasingStyle.Exponential), {
+                        Size = UDim2.new(0, textW + 20, 0, 24)
                     })
                 end)
 
                 local KeybindObj = {}
                 function KeybindObj:Set(newKeybind)
-                    keybindBox.Text = tostring(newKeybind)
+                    keyBtn.Text = string.upper(tostring(newKeybind))
                     currentKeybind = tostring(newKeybind)
-                    keybindBox:ReleaseFocus()
                     if callOnChange then
                         pcall(callback, tostring(newKeybind))
                     end
@@ -2016,358 +1888,332 @@ function FriendshipLib:CreateWindow(config)
             end
 
             -- ── BUTTON ────────────────────────────────────
-            -- Strictly aligned with Rayfield CreateButton logic (flash animation, callback error handling)
+            -- Matches web: full-width styled button with variants (primary/secondary/danger)
             function Section:CreateButton(config)
                 config = config or {}
                 local label    = config.Name or config.Label or "Button"
+                local variant  = config.Variant or "primary" -- primary / secondary / danger
                 local callback = config.Callback or function() end
 
-                local card, cardStroke = makeCard(45)
+                local el = makeElement(40)
+                -- Override hover for button - handled by the button itself
+                el.BackgroundTransparency = 1
 
-                local lbl = newLabel({
-                    Text = label,
-                    TextColor3 = Theme.Text,
-                    Font = Enum.Font.GothamSemibold,
-                    TextSize = 13,
-                    Size = UDim2.new(1, -40, 1, 0),
-                    Position = UDim2.new(0, 12, 0, 0),
-                    Parent = card,
-                    ZIndex = 9,
-                })
+                -- Variant colors (web: primary=cyan, secondary=white, danger=red)
+                local bgColors = {
+                    primary   = Theme.AccentBG,
+                    secondary = Color3.fromRGB(13, 13, 15),
+                    danger    = Color3.fromRGB(60, 15, 15),
+                }
+                local borderColors = {
+                    primary   = Theme.AccentDim,
+                    secondary = Color3.fromRGB(255,255,255),
+                    danger    = Color3.fromRGB(200, 60, 60),
+                }
+                local borderTransparencies = {
+                    primary   = 0.5,
+                    secondary = 0.9,
+                    danger    = 0.5,
+                }
+                local textColors = {
+                    primary   = Theme.Accent,
+                    secondary = Color3.fromRGB(150, 150, 160),
+                    danger    = Color3.fromRGB(240, 100, 100),
+                }
+                local hoverBgColors = {
+                    primary   = Theme.AccentBGHov,
+                    secondary = Color3.fromRGB(25, 25, 30),
+                    danger    = Color3.fromRGB(80, 20, 20),
+                }
 
-                -- Rayfield-style: ElementIndicator (right side dot/indicator)
-                local indicator = newLabel({
-                    Text = "→",
-                    TextColor3 = Theme.TextDim,
+                -- Full-width button
+                local btn = newButton({
+                    Name = "Btn",
+                    Text = string.upper(label),
+                    TextColor3 = textColors[variant] or textColors.primary,
                     Font = Enum.Font.GothamBold,
-                    TextSize = 12,
-                    Size = UDim2.new(0, 20, 1, 0),
-                    Position = UDim2.new(1, -30, 0, 0),
-                    Parent = card,
+                    TextSize = 11,
+                    Size = UDim2.new(1, -24, 0, 34),
+                    Position = UDim2.new(0, 12, 0.5, -17),
+                    BackgroundColor3 = bgColors[variant] or bgColors.primary,
+                    BackgroundTransparency = 0,
+                    Parent = el,
                     ZIndex = 9,
                 })
-                indicator.TextTransparency = 0.9
+                makeCorner(btn, 6)
+                makeStroke(btn, borderColors[variant] or borderColors.primary, 1, borderTransparencies[variant] or 0.5)
 
-                animateEntry(card, cardStroke, lbl)
+                animateEntry(el)
 
-                -- Rayfield-style: Interact button
-                local interact = newButton({
-                    Size = UDim2.new(1, 0, 1, 0),
-                    BackgroundTransparency = 1,
-                    Text = "",
-                    Parent = card,
-                    ZIndex = 11,
-                })
+                -- Hover effects
+                btn.MouseEnter:Connect(function()
+                    tween(btn, Theme.Fast, { BackgroundColor3 = hoverBgColors[variant] or hoverBgColors.primary })
+                end)
+                btn.MouseLeave:Connect(function()
+                    tween(btn, Theme.Fast, { BackgroundColor3 = bgColors[variant] or bgColors.primary })
+                end)
 
-                interact.MouseButton1Click:Connect(function()
+                -- Click with callback error handling
+                btn.MouseButton1Click:Connect(function()
                     local Success, Response = pcall(callback)
 
                     if not Success then
-                        -- Rayfield: error state - red background, hide indicator
-                        tween(card, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { BackgroundColor3 = Color3.fromRGB(85, 0, 0) })
-                        tween(indicator, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { TextTransparency = 1 })
-                        tween(cardStroke, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Transparency = 1 })
-                        lbl.Text = "Callback Error"
+                        tween(btn, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { BackgroundColor3 = Color3.fromRGB(85, 0, 0) })
+                        btn.Text = "CALLBACK ERROR"
                         task.wait(0.5)
-                        lbl.Text = label
-                        tween(card, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { BackgroundColor3 = Theme.BG_Element })
-                        tween(indicator, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { TextTransparency = 0.9 })
-                        tween(cardStroke, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Transparency = 0 })
+                        btn.Text = string.upper(label)
+                        tween(btn, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { BackgroundColor3 = bgColors[variant] or bgColors.primary })
                     else
-                        -- Rayfield: success - flash hover, hide indicator/stroke, then restore
-                        tween(card, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { BackgroundColor3 = Theme.BG_ElementHov })
-                        tween(indicator, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { TextTransparency = 1 })
-                        tween(cardStroke, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Transparency = 1 })
-                        task.wait(0.2)
-                        tween(card, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { BackgroundColor3 = Theme.BG_Element })
-                        tween(indicator, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { TextTransparency = 0.9 })
-                        tween(cardStroke, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Transparency = 0 })
+                        -- Flash effect
+                        tween(btn, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { BackgroundColor3 = hoverBgColors[variant] or hoverBgColors.primary })
+                        task.wait(0.15)
+                        tween(btn, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { BackgroundColor3 = bgColors[variant] or bgColors.primary })
                     end
-                end)
-
-                -- Rayfield-style hover
-                card.MouseEnter:Connect(function()
-                    tween(card, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { BackgroundColor3 = Theme.BG_ElementHov })
-                    tween(indicator, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { TextTransparency = 0.7 })
-                end)
-                card.MouseLeave:Connect(function()
-                    tween(card, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { BackgroundColor3 = Theme.BG_Element })
-                    tween(indicator, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { TextTransparency = 0.9 })
                 end)
 
                 local BtnObj = {}
                 function BtnObj:Set(newLabel)
-                    lbl.Text = newLabel
+                    btn.Text = string.upper(newLabel)
                 end
 
                 return BtnObj
             end
 
             -- ── COLOR PICKER ──────────────────────────────
-            -- Strictly aligned with Rayfield CreateColorPicker logic (HSV dragging, hex input, RGB inputs)
+            -- Matches web: label + hex text + swatch, click to expand HSV picker
+            -- FIXED: hue bar uses ImageLabel (TextButton has no Image property!)
             function Section:CreateColorPicker(config)
                 config = config or {}
                 local label    = config.Name or config.Label or "Color"
                 local default  = config.Color or config.Default or Color3.fromRGB(76, 201, 240)
                 local callback = config.Callback or function() end
 
-                config.Color = default
-
-                local closedH = 45
+                local currentValue = default
+                local closedH = 40
                 local opened = false
 
-                local card, cardStroke = makeCard(closedH)
-                card.ClipsDescendants = true
+                local el = makeElement(closedH)
+                el.ClipsDescendants = true
 
+                -- Label
                 local lbl = newLabel({
                     Text = label,
-                    TextColor3 = Theme.Text,
+                    TextColor3 = Color3.fromRGB(200, 200, 210),
                     Font = Enum.Font.GothamSemibold,
                     TextSize = 13,
-                    Size = UDim2.new(1, -100, 1, 0),
+                    Size = UDim2.new(1, -120, 1, 0),
                     Position = UDim2.new(0, 12, 0, 0),
-                    Parent = card,
+                    Parent = el,
                     ZIndex = 9,
                 })
 
-                -- Rayfield-style: CPBackground (display swatch that expands into picker)
-                local cpBackground = newFrame({
-                    BackgroundColor3 = default,
-                    BackgroundTransparency = 0,
-                    Size = UDim2.new(0, 39, 0, 22),
-                    Position = UDim2.new(1, -51, 0.5, -11),
-                    Parent = card,
+                -- Hex text (web: text-[10px] font-mono text-white/30 uppercase)
+                local hexLabel = newLabel({
+                    Text = colorToHex(default),
+                    TextColor3 = Color3.fromRGB(80, 80, 90),
+                    Font = Enum.Font.GothamBold,
+                    TextSize = 10,
+                    Size = UDim2.new(0, 60, 1, 0),
+                    Position = UDim2.new(1, -100, 0, 0),
+                    Parent = el,
                     ZIndex = 9,
                 })
-                makeCorner(cpBackground, 4)
+                hexLabel.TextXAlignment = Enum.TextXAlignment.Right
 
-                -- Display (small color square, fades when picker opens)
-                local display = newFrame({
+                -- Color swatch (web: w-6 h-6 rounded border border-white/10)
+                local swatch = newFrame({
                     BackgroundColor3 = default,
-                    BackgroundTransparency = 0,
-                    Size = UDim2.new(1, 0, 1, 0),
-                    Parent = cpBackground,
-                    ZIndex = 10,
+                    Size = UDim2.new(0, 24, 0, 24),
+                    Position = UDim2.new(1, -36, 0.5, -12),
+                    Parent = el,
+                    ZIndex = 9,
                 })
-                makeCorner(display, 4)
+                makeCorner(swatch, 4)
+                makeStroke(swatch, Color3.fromRGB(255,255,255), 1, 0.9)
 
-                animateEntry(card, cardStroke, lbl)
+                animateEntry(el, lbl, hexLabel)
 
-                -- ── Picker area (inside card, below closedH) ──
+                -- ── Picker area (below closedH, absolute positioned) ──
                 local pickerArea = newFrame({
                     BackgroundTransparency = 1,
-                    Size = UDim2.new(1, 0, 0, 75),
-                    Position = UDim2.new(0, 0, 0, closedH),
-                    Parent = card,
+                    Size = UDim2.new(1, -24, 0, 70),
+                    Position = UDim2.new(0, 12, 0, closedH),
+                    Parent = el,
                     ZIndex = 9,
                 })
-                makePadding(pickerArea, 4, 12, 4, 12)
-                makeListLayout(pickerArea, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 4)
 
-                -- HSV Main picker area (ImageLabel for saturation-value)
+                -- Saturation-Value area (ImageLabel - correct type for Image property!)
                 local mainCP = Instance.new("ImageLabel")
                 mainCP.Name = "MainCP"
                 mainCP.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-                mainCP.BackgroundTransparency = 1
                 mainCP.BorderSizePixel = 0
-                mainCP.Size = UDim2.new(1, 0, 0, 40)
+                mainCP.Size = UDim2.new(1, 0, 0, 45)
                 mainCP.Position = UDim2.new(0, 0, 0, 0)
                 mainCP.Image = "rbxassetid://4155801252"
                 mainCP.ImageTransparency = 1
                 mainCP.ScaleType = Enum.ScaleType.Stretch
                 mainCP.Parent = pickerArea
                 mainCP.ZIndex = 10
+                makeCorner(mainCP, 4)
 
+                -- Main point indicator
                 local mainPoint = Instance.new("ImageLabel")
-                mainPoint.Name = "MainPoint"
                 mainPoint.BackgroundTransparency = 1
                 mainPoint.Size = UDim2.new(0, 10, 0, 10)
-                mainPoint.Position = UDim2.new(0, 0, 0, 0)
                 mainPoint.Image = "rbxassetid://6279300645"
                 mainPoint.ImageColor3 = Color3.fromRGB(255, 255, 255)
                 mainPoint.ImageTransparency = 1
+                mainPoint.AnchorPoint = Vector2.new(0.5, 0.5)
                 mainPoint.Parent = mainCP
                 mainPoint.ZIndex = 11
 
-                -- Hue slider bar
-                local colorSlider = Instance.new("TextButton")
-                colorSlider.Name = "ColorSlider"
-                colorSlider.BackgroundTransparency = 1
-                colorSlider.BorderSizePixel = 0
-                colorSlider.Size = UDim2.new(1, 0, 0, 10)
-                colorSlider.Position = UDim2.new(0, 0, 0, 44)
-                colorSlider.Text = ""
-                colorSlider.Image = "rbxassetid://4155801252"
-                colorSlider.Parent = pickerArea
-                colorSlider.ZIndex = 10
+                -- Hue bar (ImageLabel, NOT TextButton - that was the bug!)
+                local hueBar = Instance.new("ImageLabel")
+                hueBar.Name = "HueBar"
+                hueBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                hueBar.BorderSizePixel = 0
+                hueBar.Size = UDim2.new(1, 0, 0, 10)
+                hueBar.Position = UDim2.new(0, 0, 0, 51)
+                hueBar.Image = "rbxassetid://4155801252"
+                hueBar.ImageTransparency = 1
+                hueBar.Parent = pickerArea
+                hueBar.ZIndex = 10
+                makeCorner(hueBar, 5)
 
-                local sliderPoint = Instance.new("ImageLabel")
-                sliderPoint.Name = "SliderPoint"
-                sliderPoint.BackgroundTransparency = 1
-                sliderPoint.Size = UDim2.new(0, 10, 0, 10)
-                sliderPoint.Position = UDim2.new(0, 0, 0.5, 0)
-                sliderPoint.AnchorPoint = Vector2.new(0, 0.5)
-                sliderPoint.Image = "rbxassetid://6279300645"
-                sliderPoint.ImageColor3 = Color3.fromRGB(255, 255, 255)
-                sliderPoint.Parent = colorSlider
-                sliderPoint.ZIndex = 11
+                -- Hue point indicator
+                local huePoint = Instance.new("ImageLabel")
+                huePoint.BackgroundTransparency = 1
+                huePoint.Size = UDim2.new(0, 10, 0, 10)
+                huePoint.Image = "rbxassetid://6279300645"
+                huePoint.ImageColor3 = Color3.fromRGB(255, 255, 255)
+                huePoint.ImageTransparency = 1
+                huePoint.AnchorPoint = Vector2.new(0.5, 0.5)
+                huePoint.Parent = hueBar
+                huePoint.ZIndex = 11
 
-                -- Hex input row
-                local hexRow = newFrame({
-                    BackgroundTransparency = 1,
-                    Size = UDim2.new(1, 0, 0, 22),
-                    Parent = pickerArea,
-                    ZIndex = 10,
-                })
-                makeListLayout(hexRow, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Left, 6)
-
-                -- RGB inputs row (3 small boxes)
-                local rgbRow = newFrame({
-                    BackgroundTransparency = 1,
-                    Size = UDim2.new(1, 0, 0, 22),
-                    Parent = pickerArea,
-                    ZIndex = 10,
-                })
-                makeListLayout(rgbRow, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Left, 4)
-
-                -- ── HSV state ──
+                -- HSV state
                 local h, s, v = default:ToHSV()
                 local mouse = Players.LocalPlayer:GetMouse()
                 local mainDragging = false
                 local sliderDragging = false
 
-                local function setDisplay()
-                    mainPoint.Position = UDim2.new(s, -mainPoint.AbsoluteSize.X/2, 1-v, -mainPoint.AbsoluteSize.Y/2)
+                local function updateDisplay()
+                    -- Main point position (scale-based for responsiveness)
+                    mainPoint.Position = UDim2.new(s, 0, 1 - v, 0)
                     mainPoint.ImageColor3 = Color3.fromHSV(h, s, v)
-                    cpBackground.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
-                    display.BackgroundColor3 = Color3.fromHSV(h, s, v)
-                    -- Slider point
-                    local x = h * colorSlider.AbsoluteSize.X
-                    sliderPoint.Position = UDim2.new(0, x - sliderPoint.AbsoluteSize.X/2, 0.5, 0)
-                    sliderPoint.ImageColor3 = Color3.fromHSV(h, 1, 1)
+                    -- Hue point position
+                    huePoint.Position = UDim2.new(h, 0, 0.5, 0)
+                    huePoint.ImageColor3 = Color3.fromHSV(h, 1, 1)
+                    -- MainCP background = pure hue
+                    mainCP.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
+                    -- Update swatch + hex
+                    currentValue = Color3.fromHSV(h, s, v)
+                    swatch.BackgroundColor3 = currentValue
+                    hexLabel.Text = colorToHex(currentValue)
                 end
-                setDisplay()
+                updateDisplay()
 
-                -- Rayfield-style: mouse release connection
-                local colorPickerInputConnection
-                colorPickerInputConnection = UserInputService.InputEnded:Connect(function(input, gameProcessed)
+                -- Interaction overlays (invisible TextButtons for click/drag)
+                local mainInteract = Instance.new("TextButton")
+                mainInteract.BackgroundTransparency = 1
+                mainInteract.Size = UDim2.new(1, 0, 1, 0)
+                mainInteract.Text = ""
+                mainInteract.AutoButtonColor = false
+                mainInteract.Parent = mainCP
+                mainInteract.ZIndex = 12
+
+                local hueInteract = Instance.new("TextButton")
+                hueInteract.BackgroundTransparency = 1
+                hueInteract.Size = UDim2.new(1, 0, 1, 0)
+                hueInteract.Text = ""
+                hueInteract.AutoButtonColor = false
+                hueInteract.Parent = hueBar
+                hueInteract.ZIndex = 12
+
+                -- Mouse release
+                UserInputService.InputEnded:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                         mainDragging = false
                         sliderDragging = false
                     end
                 end)
 
-                mainCP.InputBegan:Connect(function(input)
+                mainInteract.InputBegan:Connect(function(input)
                     if opened and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
                         mainDragging = true
                     end
                 end)
-                colorSlider.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+
+                hueInteract.InputBegan:Connect(function(input)
+                    if opened and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
                         sliderDragging = true
                     end
                 end)
 
-                -- Rayfield-style: RenderStepped drag loop
-                local colorPickerRenderConnection
-                colorPickerRenderConnection = RunService.RenderStepped:Connect(function()
+                -- RenderStepped drag loop
+                local renderConn
+                renderConn = RunService.RenderStepped:Connect(function()
                     if mainDragging then
                         local localX = math.clamp(mouse.X - mainCP.AbsolutePosition.X, 0, mainCP.AbsoluteSize.X)
                         local localY = math.clamp(mouse.Y - mainCP.AbsolutePosition.Y, 0, mainCP.AbsoluteSize.Y)
-                        mainPoint.Position = UDim2.new(0, localX - mainPoint.AbsoluteSize.X/2, 0, localY - mainPoint.AbsoluteSize.Y/2)
                         s = localX / mainCP.AbsoluteSize.X
                         v = 1 - (localY / mainCP.AbsoluteSize.Y)
-                        display.BackgroundColor3 = Color3.fromHSV(h, s, v)
-                        mainPoint.ImageColor3 = Color3.fromHSV(h, s, v)
-                        cpBackground.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
-                        config.Color = Color3.fromHSV(h, s, v)
-                        pcall(callback, Color3.fromHSV(h, s, v))
+                        updateDisplay()
+                        pcall(callback, currentValue)
                     end
                     if sliderDragging then
-                        local localX = math.clamp(mouse.X - colorSlider.AbsolutePosition.X, 0, colorSlider.AbsoluteSize.X)
-                        h = localX / colorSlider.AbsoluteSize.X
-                        display.BackgroundColor3 = Color3.fromHSV(h, s, v)
-                        sliderPoint.Position = UDim2.new(0, localX - sliderPoint.AbsoluteSize.X/2, 0.5, 0)
-                        sliderPoint.ImageColor3 = Color3.fromHSV(h, 1, 1)
-                        cpBackground.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
-                        mainPoint.ImageColor3 = Color3.fromHSV(h, s, v)
-                        config.Color = Color3.fromHSV(h, s, v)
-                        pcall(callback, Color3.fromHSV(h, s, v))
+                        local localX = math.clamp(mouse.X - hueBar.AbsolutePosition.X, 0, hueBar.AbsoluteSize.X)
+                        h = localX / hueBar.AbsoluteSize.X
+                        updateDisplay()
+                        pcall(callback, currentValue)
                     end
                 end)
 
-                -- Rayfield-style: Interact to open/close
+                -- Click to open/close
                 local interact = newButton({
-                    Size = UDim2.new(1, 0, 1, 0),
-                    Position = UDim2.new(0.5, 0, 0.5, 0),
+                    Size = UDim2.new(1, 0, 0, closedH),
                     BackgroundTransparency = 1,
                     Text = "",
-                    Parent = card,
-                    ZIndex = 12,
+                    Parent = el,
+                    ZIndex = 13,
                 })
 
-                interact.MouseButton1Down:Connect(function()
-                    task.spawn(function()
-                        tween(card, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { BackgroundColor3 = Theme.BG_ElementHov })
-                        tween(cardStroke, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Transparency = 1 })
-                        task.wait(0.2)
-                        tween(card, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { BackgroundColor3 = Theme.BG_Element })
-                        tween(cardStroke, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Transparency = 0 })
-                    end)
-
+                interact.MouseButton1Click:Connect(function()
                     if not opened then
                         opened = true
-                        -- Rayfield: animate display shrink, card expand, show picker
-                        tween(cpBackground, TweenInfo.new(0.45, Enum.EasingStyle.Exponential), { Size = UDim2.new(0, 18, 0, 15) })
-                        task.wait(0.1)
-                        tween(card, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Size = UDim2.new(1, 0, 0, 120) })
-                        tween(cpBackground, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Size = UDim2.new(0, 173, 0, 86) })
-                        tween(display, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { BackgroundTransparency = 1 })
-                        tween(interact, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Size = UDim2.new(0.574, 0, 1, 0) })
-                        tween(interact, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Position = UDim2.new(0.289, 0, 0.5, 0) })
-                        tween(mainPoint, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), { ImageTransparency = 0 })
-                        tween(mainCP, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), { ImageTransparency = 0.1 })
-                        tween(cpBackground, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0 })
+                        tween(el, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 0, closedH + 70 + 8) })
+                        tween(mainCP, TweenInfo.new(0.25, Enum.EasingStyle.Exponential), { ImageTransparency = 0 })
+                        tween(mainPoint, TweenInfo.new(0.25, Enum.EasingStyle.Exponential), { ImageTransparency = 0 })
+                        tween(hueBar, TweenInfo.new(0.25, Enum.EasingStyle.Exponential), { ImageTransparency = 0 })
+                        tween(huePoint, TweenInfo.new(0.25, Enum.EasingStyle.Exponential), { ImageTransparency = 0 })
                     else
                         opened = false
-                        tween(card, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Size = UDim2.new(1, 0, 0, closedH) })
-                        tween(cpBackground, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Size = UDim2.new(0, 39, 0, 22) })
-                        tween(interact, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Size = UDim2.new(1, 0, 1, 0) })
-                        tween(interact, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Position = UDim2.new(0.5, 0, 0.5, 0) })
-                        tween(display, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0 })
-                        tween(mainPoint, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), { ImageTransparency = 1 })
+                        tween(el, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 0, closedH) })
                         tween(mainCP, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), { ImageTransparency = 1 })
-                        tween(cpBackground, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { BackgroundTransparency = 1 })
+                        tween(mainPoint, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), { ImageTransparency = 1 })
+                        tween(hueBar, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), { ImageTransparency = 1 })
+                        tween(huePoint, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), { ImageTransparency = 1 })
                     end
-                end)
-
-                -- Rayfield-style: hover
-                card.MouseEnter:Connect(function()
-                    tween(card, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { BackgroundColor3 = Theme.BG_ElementHov })
-                end)
-                card.MouseLeave:Connect(function()
-                    tween(card, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { BackgroundColor3 = Theme.BG_Element })
                 end)
 
                 -- Cleanup on destroy
-                card.Destroying:Connect(function()
-                    if colorPickerRenderConnection then colorPickerRenderConnection:Disconnect() end
-                    if colorPickerInputConnection then colorPickerInputConnection:Disconnect() end
+                el.Destroying:Connect(function()
+                    if renderConn then renderConn:Disconnect() end
                 end)
 
                 local ColorObj = {}
                 function ColorObj:Set(rgbColor)
-                    config.Color = rgbColor
+                    currentValue = rgbColor
                     h, s, v = rgbColor:ToHSV()
-                    setDisplay()
+                    updateDisplay()
                 end
-                function ColorObj:Get() return config.Color end
+                function ColorObj:Get() return currentValue end
 
                 return ColorObj
             end
 
             -- ── INPUT / TEXT FIELD ────────────────────────
-            -- Strictly aligned with Rayfield CreateInput logic (auto-resize InputFrame, callback error, RemoveTextAfterFocusLost)
+            -- Matches web: column layout with label on top, input below
             function Section:CreateTextField(config)
                 config = config or {}
                 local label       = config.Name or config.Label or "Input"
@@ -2376,75 +2222,66 @@ function FriendshipLib:CreateWindow(config)
                 local callback    = config.Callback or function() end
                 local removeTextAfterFocusLost = config.RemoveTextAfterFocusLost or false
 
-                local card, cardStroke = makeCard(45)
+                local el = makeElement(62)
 
+                -- Label on top
                 local lbl = newLabel({
                     Text = label,
-                    TextColor3 = Theme.Text,
+                    TextColor3 = Color3.fromRGB(200, 200, 210),
                     Font = Enum.Font.GothamSemibold,
                     TextSize = 13,
-                    Size = UDim2.new(0, 0, 1, 0),
-                    Position = UDim2.new(0, 12, 0, 0),
-                    Parent = card,
+                    Size = UDim2.new(1, -24, 0, 18),
+                    Position = UDim2.new(0, 12, 0, 4),
+                    Parent = el,
                     ZIndex = 9,
                 })
-                lbl.AutomaticSize = Enum.AutomaticSize.X
 
-                -- Rayfield-style: InputFrame container
+                -- Input field below
                 local inputFrame = newFrame({
-                    BackgroundColor3 = Theme.InputBackground or Color3.fromRGB(30, 32, 38),
-                    Size = UDim2.new(0, 100, 0, 30),
-                    Position = UDim2.new(1, -112, 0.5, -15),
-                    Parent = card,
+                    BackgroundColor3 = Color3.fromRGB(13, 13, 15),
+                    Size = UDim2.new(1, -24, 0, 28),
+                    Position = UDim2.new(0, 12, 0, 26),
+                    Parent = el,
                     ZIndex = 10,
                 })
-                makeCorner(inputFrame, 4)
-                local inputStroke = makeStroke(inputFrame, Theme.InputStroke or Color3.fromRGB(255,255,255), 1, 0.9)
+                makeCorner(inputFrame, 5)
+                local inputStroke = makeStroke(inputFrame, Color3.fromRGB(255,255,255), 1, 0.9)
 
                 local inputBox = Instance.new("TextBox")
                 inputBox.Name = "InputBox"
                 inputBox.BackgroundTransparency = 1
                 inputBox.BorderSizePixel = 0
-                inputBox.Size = UDim2.new(1, 0, 1, 0)
+                inputBox.Size = UDim2.new(1, -12, 1, 0)
+                inputBox.Position = UDim2.new(0, 6, 0, 0)
                 inputBox.Text = default
                 inputBox.PlaceholderText = placeholder
-                inputBox.TextColor3 = Color3.fromRGB(180, 180, 190)
-                inputBox.PlaceholderColor3 = Theme.TextFaint
+                inputBox.TextColor3 = Color3.fromRGB(160, 160, 170)
+                inputBox.PlaceholderColor3 = Color3.fromRGB(60, 60, 70)
                 inputBox.Font = Enum.Font.GothamSemibold
-                inputBox.TextSize = 11
+                inputBox.TextSize = 12
                 inputBox.TextXAlignment = Enum.TextXAlignment.Left
                 inputBox.ClearTextOnFocus = false
                 inputBox.Parent = inputFrame
                 inputBox.ZIndex = 11
-                makePadding(inputBox, 0, 6, 0, 6)
 
-                -- Rayfield-style: initial size
-                inputFrame.Size = UDim2.new(0, inputBox.TextBounds.X + 24, 0, 30)
+                animateEntry(el, lbl)
 
-                animateEntry(card, cardStroke, lbl)
-
-                -- Rayfield-style: auto-resize InputFrame
-                inputBox:GetPropertyChangedSignal("Text"):Connect(function()
-                    tween(inputFrame, TweenInfo.new(0.55, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), {
-                        Size = UDim2.new(0, inputBox.TextBounds.X + 24, 0, 30)
-                    })
+                -- Focus effect: accent border
+                inputBox.Focused:Connect(function()
+                    tween(inputStroke, Theme.Fast, { Color = Theme.AccentDim, Transparency = 0.5 })
                 end)
-
-                -- Rayfield-style: FocusLost with callback error handling
                 inputBox.FocusLost:Connect(function()
-                    local Success, Response = pcall(function()
+                    tween(inputStroke, Theme.Fast, { Color = Color3.fromRGB(255,255,255), Transparency = 0.9 })
+                    local Success = pcall(function()
                         callback(inputBox.Text)
-                        config.CurrentValue = inputBox.Text
                     end)
 
                     if not Success then
-                        tween(card, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { BackgroundColor3 = Color3.fromRGB(85, 0, 0) })
-                        tween(cardStroke, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Transparency = 1 })
+                        tween(inputFrame, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { BackgroundColor3 = Color3.fromRGB(85, 0, 0) })
                         lbl.Text = "Callback Error"
                         task.wait(0.5)
                         lbl.Text = label
-                        tween(card, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { BackgroundColor3 = Theme.BG_Element })
-                        tween(cardStroke, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { Transparency = 0 })
+                        tween(inputFrame, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { BackgroundColor3 = Color3.fromRGB(13, 13, 15) })
                     end
 
                     if removeTextAfterFocusLost then
@@ -2452,18 +2289,9 @@ function FriendshipLib:CreateWindow(config)
                     end
                 end)
 
-                -- Rayfield-style: hover
-                card.MouseEnter:Connect(function()
-                    tween(card, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { BackgroundColor3 = Theme.BG_ElementHov })
-                end)
-                card.MouseLeave:Connect(function()
-                    tween(card, TweenInfo.new(0.6, Enum.EasingStyle.Exponential), { BackgroundColor3 = Theme.BG_Element })
-                end)
-
                 local TFObj = {}
                 function TFObj:Set(text)
                     inputBox.Text = text
-                    config.CurrentValue = text
                     pcall(callback, text)
                 end
                 function TFObj:Get() return inputBox.Text end
@@ -2472,49 +2300,40 @@ function FriendshipLib:CreateWindow(config)
             end
 
             -- ── LABEL ─────────────────────────────────────
-            -- Strictly aligned with Rayfield CreateLabel logic (SecondaryElementBackground style, optional icon/color)
+            -- Matches web: simple text element
             function Section:CreateLabel(config)
                 config = config or {}
                 local text        = config.Text or ""
                 local color       = config.Color
 
-                local card, cardStroke = makeCard(32)
-
-                -- Rayfield-style: uses SecondaryElementBackground when no color override
-                if color then
-                    card.BackgroundColor3 = color
-                    card.BackgroundTransparency = 0.8
-                    cardStroke.Color = color
-                    cardStroke.Transparency = 0.7
-                else
-                    card.BackgroundColor3 = Theme.BG_ElementHov or Color3.fromRGB(30, 32, 38)
-                end
+                local el = makeElement(32)
 
                 local lbl = newLabel({
                     Text = text,
-                    TextColor3 = color and Color3.fromRGB(255,255,255) or Theme.TextDim,
+                    TextColor3 = color or Color3.fromRGB(130, 130, 140),
                     Font = Enum.Font.GothamSemibold,
                     TextSize = 12,
                     Size = UDim2.new(1, -24, 1, 0),
                     Position = UDim2.new(0, 12, 0, 0),
-                    Parent = card,
+                    Parent = el,
                     ZIndex = 9,
                 })
                 lbl.TextWrapped = true
 
-                -- Rayfield-style: entry animation (transparency fade in)
                 if color then
-                    animateEntry(card, cardStroke, lbl)
-                else
-                    animateEntry(card, cardStroke, lbl)
+                    el.BackgroundColor3 = color
+                    el.BackgroundTransparency = 0.85
                 end
+
+                animateEntry(el, lbl)
 
                 local LabelObj = {}
                 function LabelObj:Set(newText, newColor)
                     lbl.Text = newText or text
                     if newColor then
-                        card.BackgroundColor3 = newColor
-                        cardStroke.Color = newColor
+                        el.BackgroundColor3 = newColor
+                        el.BackgroundTransparency = 0.85
+                        lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
                     end
                 end
 
@@ -2522,43 +2341,40 @@ function FriendshipLib:CreateWindow(config)
             end
 
             -- ── PARAGRAPH ─────────────────────────────────
-            -- Strictly aligned with Rayfield CreateParagraph logic (Title + Content, SecondaryElementBackground)
+            -- Matches web: Title + Content layout
             function Section:CreateParagraph(config)
                 config = config or {}
                 local title   = config.Title   or "Paragraph"
                 local content = config.Content or ""
 
-                local card, cardStroke = makeCard(60)
-                card.AutomaticSize = Enum.AutomaticSize.Y
-
-                -- Rayfield-style: SecondaryElementBackground
-                card.BackgroundColor3 = Theme.BG_ElementHov or Color3.fromRGB(30, 32, 38)
+                local el = makeElement(60)
+                el.AutomaticSize = Enum.AutomaticSize.Y
 
                 local titleLbl = newLabel({
                     Text = title,
-                    TextColor3 = Theme.Text,
+                    TextColor3 = Color3.fromRGB(200, 200, 210),
                     Font = Enum.Font.GothamBold,
                     TextSize = 13,
                     Size = UDim2.new(1, -24, 0, 20),
                     Position = UDim2.new(0, 12, 0, 6),
-                    Parent = card,
+                    Parent = el,
                     ZIndex = 9,
                 })
 
                 local contentLbl = newLabel({
                     Text = content,
-                    TextColor3 = Theme.TextDim,
+                    TextColor3 = Color3.fromRGB(130, 130, 140),
                     Font = Enum.Font.Gotham,
                     TextSize = 12,
                     Size = UDim2.new(1, -24, 0, 0),
                     Position = UDim2.new(0, 12, 0, 26),
-                    Parent = card,
+                    Parent = el,
                     ZIndex = 9,
                 })
                 contentLbl.AutomaticSize = Enum.AutomaticSize.Y
                 contentLbl.TextWrapped = true
 
-                animateEntry(card, cardStroke, titleLbl, contentLbl)
+                animateEntry(el, titleLbl, contentLbl)
 
                 local ParagraphObj = {}
                 function ParagraphObj:Set(newConfig)
