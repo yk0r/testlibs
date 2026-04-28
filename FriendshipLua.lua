@@ -524,7 +524,7 @@ function FriendshipLib:CreateWindow(config)
         ZIndex = 3,
         ClipsDescendants = true,
     })
-    makeCorner(mainWindow, 10)
+    makeCorner(mainWindow, 12)
     makeStroke(mainWindow, Color3.fromRGB(255,255,255), 1, 0.9)
 
     -- ── SIDEBAR ──────────────────────────────────────────────
@@ -586,7 +586,7 @@ function FriendshipLib:CreateWindow(config)
         Font = Enum.Font.GothamBold,
         TextSize = 13,
         Size = UDim2.new(0, 120, 0, 16),
-        Position = UDim2.new(0, 54, 0.5, -16),
+        Position = UDim2.new(0, 50, 0.5, -16),
         Parent = brandArea,
         ZIndex = 6,
     })
@@ -599,7 +599,7 @@ function FriendshipLib:CreateWindow(config)
             Font = Enum.Font.GothamBold,
             TextSize = 13,
             Size = UDim2.new(0, 120, 0, 16),
-            Position = UDim2.new(0, 54 + TextService:GetTextSize(title:match("^([^%.]+)"), 13, Enum.Font.GothamBold, Vector2.new(200,20)).X, 0.5, -16),
+            Position = UDim2.new(0, 50 + TextService:GetTextSize(title:match("^([^%.]+)"), 13, Enum.Font.GothamBold, Vector2.new(200,20)).X, 0.5, -16),
             Parent = brandArea,
             ZIndex = 6,
         })
@@ -612,7 +612,7 @@ function FriendshipLib:CreateWindow(config)
         Font = Enum.Font.GothamBold,
         TextSize = 8,
         Size = UDim2.new(0, 120, 0, 12),
-        Position = UDim2.new(0, 54, 0.5, 3),
+        Position = UDim2.new(0, 50, 0.5, 3),
         Parent = brandArea,
         ZIndex = 6,
     })
@@ -835,12 +835,12 @@ function FriendshipLib:CreateWindow(config)
         Parent = footer,
         ZIndex = 6,
     })
-    makeListLayout(footerLeft, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Left, 10)
 
     -- Status indicator
     local statusDot = newFrame({
         BackgroundColor3 = Theme.Success,
         Size = UDim2.new(0, 5, 0, 5),
+        Position = UDim2.new(0, 0, 0.5, -2.5),
         Parent = footerLeft,
         ZIndex = 7,
     })
@@ -852,6 +852,7 @@ function FriendshipLib:CreateWindow(config)
         Font = Enum.Font.GothamBold,
         TextSize = 8,
         Size = UDim2.new(0, 100, 1, 0),
+        Position = UDim2.new(0, 10, 0, 0),
         Parent = footerLeft,
         ZIndex = 6,
     })
@@ -863,6 +864,7 @@ function FriendshipLib:CreateWindow(config)
         Font = Enum.Font.GothamBold,
         TextSize = 8,
         Size = UDim2.new(0, 6, 1, 0),
+        Position = UDim2.new(0, 110, 0, 0),
         Parent = footerLeft,
         ZIndex = 6,
     })
@@ -874,22 +876,24 @@ function FriendshipLib:CreateWindow(config)
         Font = Enum.Font.GothamBold,
         TextSize = 8,
         Size = UDim2.new(0, 100, 1, 0),
+        Position = UDim2.new(0, 122, 0, 0),
         Parent = footerLeft,
         ZIndex = 6,
     })
     _ = buildLabel
 
-    -- Footer right (branding)
-    newLabel({
+    -- Footer right (branding) — anchored to bottom-right of footer
+    local footerBrand = newLabel({
         Text = string.upper(title),
         TextColor3 = Theme.TextFaint,
         Font = Enum.Font.GothamBold,
         TextSize = 8,
-        Size = UDim2.new(0.4, 0, 1, 0),
-        Position = UDim2.new(0.6, 0, 0, 0),
+        Size = UDim2.new(0, 120, 1, 0),
+        Position = UDim2.new(1, -132, 0, 0),
         Parent = footer,
         ZIndex = 6,
-    }).TextXAlignment = Enum.TextXAlignment.Right
+    })
+    footerBrand.TextXAlignment = Enum.TextXAlignment.Right
 
     -- Make header draggable
     makeDraggable(mainWindow, header)
@@ -1152,6 +1156,7 @@ function FriendshipLib:CreateWindow(config)
             sectionInner.AutomaticSize = Enum.AutomaticSize.Y
             makeCorner(sectionInner, 8)
             makeStroke(sectionInner, Color3.fromRGB(255,255,255), 1, 0.93)
+            makeListLayout(sectionInner, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 4)
 
             makePadding(sectionInner, 8, 8, 8, 8)
 
@@ -1557,10 +1562,10 @@ function FriendshipLib:CreateWindow(config)
                 selLabel.TextTruncate = Enum.TextTruncate.AtEnd
 
                 local chevronLbl = newLabel({
-                    Text = "▾",
+                    Text = "v",
                     TextColor3 = Color3.fromRGB(120,120,130),
                     Font = Enum.Font.GothamBold,
-                    TextSize = 10,
+                    TextSize = 9,
                     Size = UDim2.new(0, 14, 1, 0),
                     Position = UDim2.new(1, -16, 0, 0),
                     Parent = btnRow,
