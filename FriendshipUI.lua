@@ -1005,7 +1005,7 @@ function FriendshipLib:CreateWindow(config)
     })
 
     local buildLabel = newLabel({
-        Text = "BUILD: V1.0.5A",
+        Text = "BUILD: V1.0.5A ScriptDeveloper: 50Master yk0r Mikbray",
         TextColor3 = Theme.TextFaint,
         Font = Enum.Font.GothamBold,
         TextSize = 8,
