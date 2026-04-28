@@ -222,12 +222,7 @@ local function loadLucideData()
     return nil
 end
 
--- Explicitly set icon data (for loadstring usage where HttpGet fails)
-function FriendshipLib:SetIconData(data)
-    if type(data) == "table" then
-        LucideData = data
-    end
-end
+
 
 -- Create a Lucide icon ImageLabel
 local function createLucideIcon(iconName, size, color)
@@ -342,6 +337,13 @@ local FriendshipLib = {}
 FriendshipLib.__index = FriendshipLib
 FriendshipLib._notifQueue = {}
 FriendshipLib._windows    = {}
+
+-- Explicitly set icon data (for loadstring usage where HttpGet fails)
+function FriendshipLib:SetIconData(data)
+    if type(data) == "table" then
+        LucideData = data
+    end
+end
 
 -- ============================================================
 --  NOTIFICATION SYSTEM
