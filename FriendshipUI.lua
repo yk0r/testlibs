@@ -1,39 +1,23 @@
 --[[
     Friendship.Lua UI Library
     Roblox Executor Script UI Library
-    
+
     Design System:
     - Theme: Dark cyberpunk / hacker aesthetic
     - Accent: Cyan (#4CC9F0)
     - Background: Near-black (#08090A)
-    - Style: Sharp edges, subtle glow, grid overlay
-    
-    Components: Window, Tab, Section, Toggle, Slider, 
-                Dropdown, Keybind, Button, ColorPicker, 
-                TextField, Notification
-    
-    Usage:
-        local Library = loadstring(...)()
-        -- OR if local:
-        local Library = require(script.FriendshipLua)
-        
+    - Icons: Lucide (lucide-roblox by latte-soft)
+
+    Usage (loadstring only):
+        local Library = loadstring(game:HttpGet("YOUR_RAW_URL/FriendshipUI.lua"))()
         local Window = Library:CreateWindow({
             Title = "My Script",
             SubTitle = "Premium Scripts",
             Size = UDim2.fromOffset(700, 450),
         })
-        
-        local Tab = Window:CreateTab("Combat", "rbxassetid://...")
+        local Tab = Window:CreateTab("Combat", "swords")  -- Lucide icon name
         local Section = Tab:CreateSection("Aimbot Settings")
-        
         Section:CreateToggle({ Label = "Enabled", Default = false, Callback = function(v) end })
-        Section:CreateSlider({ Label = "FOV", Min = 0, Max = 360, Default = 120, Suffix = "°", Callback = function(v) end })
-        Section:CreateDropdown({ Label = "Target Part", Options = {"Head","Torso","Random"}, Default = "Head", Callback = function(v) end })
-        Section:CreateKeybind({ Label = "Aimbot Key", Default = Enum.KeyCode.Q, Callback = function(key) end })
-        Section:CreateButton({ Label = "Execute", Callback = function() end })
-        Section:CreateColorPicker({ Label = "ESP Color", Default = Color3.fromRGB(76,201,240), Callback = function(c) end })
-        Section:CreateTextField({ Label = "Coordinates", Placeholder = "0, 0, 0", Callback = function(v) end })
-        
         Library:Notify({ Title = "System", Content = "Loaded!", Duration = 3 })
 ]]
 
@@ -53,6 +37,7 @@ local Players          = getService("Players")
 local RunService       = getService("RunService")
 local CoreGui          = getService("CoreGui")
 local TextService      = getService("TextService")
+local HttpService      = getService("HttpService")
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -128,14 +113,6 @@ local function makeListLayout(parent, dir, align, padding)
     return l
 end
 
-local function makeSizeConstraint(parent, minX, minY, maxX, maxY)
-    local c = Instance.new("UISizeConstraint")
-    c.MinSize = Vector2.new(minX or 0, minY or 0)
-    c.MaxSize = Vector2.new(maxX or math.huge, maxY or math.huge)
-    c.Parent = parent
-    return c
-end
-
 -- Create a Frame helper
 local function newFrame(props)
     local f = Instance.new("Frame")
@@ -196,9 +173,130 @@ local function newImage(props)
     i.ImageTransparency = props.ImageTransparency or 0
     i.Size = props.Size or UDim2.new(0, 20, 0, 20)
     i.Position = props.Position or UDim2.new(0,0,0,0)
+    if props.ScaleType then i.ScaleType = props.ScaleType end
+    if props.ImageRectSize then i.ImageRectSize = props.ImageRectSize end
+    if props.ImageRectOffset then i.ImageRectOffset = props.ImageRectOffset end
     if props.Name then i.Name = props.Name end
     if props.Parent then i.Parent = props.Parent end
+    if props.ZIndex then i.ZIndex = props.ZIndex end
     return i
+end
+
+-- ============================================================
+--  LUCIDE ICON LOADER
+--  Compatible with lucide-roblox by latte-soft
+--  Loads icon data from separate file via loadstring or URL
+-- ============================================================
+local LucideData = nil
+
+local function loadLucideData()
+    if LucideData then return LucideData end
+
+    -- Method 1: Try to load from a sibling script (if running locally)
+    local ok1, data1 = pcall(function()
+        local iconScript = script and script.Parent and script.Parent:FindFirstChild("LucideIcons")
+        if iconScript then
+            if iconScript:IsA("ModuleScript") then
+                return require(iconScript)
+            elseif iconScript:IsA("StringValue") then
+                return loadstring(iconScript.Value)()
+            end
+        end
+        return nil
+    end)
+    if ok1 and data1 then
+        LucideData = data1
+        return data1
+    end
+
+    -- Method 2: Try to load via HttpGet from URL
+    local ok2, data2 = pcall(function()
+        local raw = game:HttpGet("https://raw.githubusercontent.com/latte-soft/lucide-roblox/master/lib/Icons.luau")
+        return loadstring(raw)()
+    end)
+    if ok2 and data2 then
+        LucideData = data2
+        return data2
+    end
+
+    -- Method 3: Try _G cached
+    if rawget(_G, "LucideIconsData") then
+        LucideData = _G.LucideIconsData
+        return LucideData
+    end
+
+    return nil
+end
+
+-- Load icons eagerly (will be available when tabs are created)
+local _lucideLoaded = false
+local function ensureLucide()
+    if _lucideLoaded then return end
+    _lucideLoaded = true
+    loadLucideData()
+end
+
+-- Create a Lucide icon ImageLabel
+local function createLucideIcon(iconName, size, color)
+    size = size or 48
+    color = color or Color3.fromRGB(255,255,255)
+
+    local data = loadLucideData()
+    if not data then
+        -- Fallback: return a simple dot if icons can't be loaded
+        local dot = Instance.new("Frame")
+        dot.Size = UDim2.new(0, 5, 0, 5)
+        dot.BackgroundColor3 = color
+        dot.BackgroundTransparency = 0
+        dot.BorderSizePixel = 0
+        makeCorner(dot, 99)
+        return dot, false
+    end
+
+    local sizeKey = size <= 48 and "48px" or "256px"
+    local iconDict = data[sizeKey]
+    if not iconDict then
+        local dot = Instance.new("Frame")
+        dot.Size = UDim2.new(0, 5, 0, 5)
+        dot.BackgroundColor3 = color
+        dot.BackgroundTransparency = 0
+        dot.BorderSizePixel = 0
+        makeCorner(dot, 99)
+        return dot, false
+    end
+
+    -- Normalize icon name: lowercase, trim spaces
+    local normalizedName = string.match(string.lower(iconName), "^%s*(.*)%s*$") or iconName
+
+    local iconEntry = iconDict[normalizedName]
+    if not iconEntry then
+        -- Fallback dot
+        local dot = Instance.new("Frame")
+        dot.Size = UDim2.new(0, 5, 0, 5)
+        dot.BackgroundColor3 = color
+        dot.BackgroundTransparency = 0
+        dot.BorderSizePixel = 0
+        makeCorner(dot, 99)
+        return dot, false
+    end
+
+    local id = iconEntry[1]
+    local rectSize = iconEntry[2]
+    local rectOffset = iconEntry[3]
+
+    local img = Instance.new("ImageLabel")
+    img.Name = normalizedName
+    img.Size = UDim2.fromOffset(size, size)
+    img.BackgroundColor3 = Color3.new(0,0,0)
+    img.BackgroundTransparency = 1
+    img.BorderSizePixel = 0
+    img.Image = "rbxassetid://" .. tostring(id)
+    img.ImageRectSize = Vector2.new(rectSize[1], rectSize[2])
+    img.ImageRectOffset = Vector2.new(rectOffset[1], rectOffset[2])
+    img.ImageColor3 = color
+    img.ScaleType = Enum.ScaleType.Fit
+
+    return img, true
 end
 
 -- ============================================================
@@ -209,7 +307,7 @@ local Theme = {
     BG_Main        = Color3.fromRGB(8,   9,   10),
     BG_Window      = Color3.fromRGB(12,  13,  15),
     BG_Sidebar     = Color3.fromRGB(6,   7,   9),
-    BG_Header      = Color3.fromRGB(0,   0,   0),   -- bg-black/20
+    BG_Header      = Color3.fromRGB(0,   0,   0),
     BG_Footer      = Color3.fromRGB(0,   0,   0),
     BG_Element     = Color3.fromRGB(18,  20,  23),
     BG_ElementHov  = Color3.fromRGB(22,  24,  28),
@@ -229,7 +327,7 @@ local Theme = {
     TextAccent     = Color3.fromRGB(76,  201, 240),
 
     -- Borders
-    Border         = Color3.fromRGB(255, 255, 255),   -- use with transparency
+    Border         = Color3.fromRGB(255, 255, 255),
     BorderAccent   = Color3.fromRGB(76,  201, 240),
 
     -- Status
@@ -249,7 +347,6 @@ local Theme = {
 -- ============================================================
 local FriendshipLib = {}
 FriendshipLib.__index = FriendshipLib
-
 FriendshipLib._notifQueue = {}
 FriendshipLib._windows    = {}
 
@@ -285,16 +382,14 @@ function FriendshipLib:Notify(config)
     local title    = config.Title    or "Notification"
     local content  = config.Content  or ""
     local duration = config.Duration or 3
-    local icon     = config.Icon     or nil -- accent dot by default
 
     self._notifCount = (self._notifCount or 0) + 1
     local order = self._notifCount
 
-    -- Notif card
     local card = newFrame({
         Name = "Notif_" .. order,
         BackgroundColor3 = Color3.fromRGB(15, 16, 19),
-        Size = UDim2.new(1, 0, 0, 0),      -- height auto via AutomaticSize
+        Size = UDim2.new(1, 0, 0, 0),
         BackgroundTransparency = 0,
         Parent = self._notifContainer,
         ZIndex = 101,
@@ -304,9 +399,8 @@ function FriendshipLib:Notify(config)
     card.ClipsDescendants = false
 
     makeCorner(card, 6)
-    local stroke = makeStroke(card, Theme.AccentDim, 1, 0.5)
+    makeStroke(card, Theme.AccentDim, 1, 0.5)
 
-    -- Left accent bar
     local bar = newFrame({
         Name = "AccentBar",
         BackgroundColor3 = Theme.Accent,
@@ -317,7 +411,6 @@ function FriendshipLib:Notify(config)
     })
     makeCorner(bar, 2)
 
-    -- Inner content layout
     local inner = newFrame({
         BackgroundTransparency = 1,
         Size = UDim2.new(1, -16, 0, 0),
@@ -329,7 +422,6 @@ function FriendshipLib:Notify(config)
     makePadding(inner, 10, 6, 10, 4)
     makeListLayout(inner, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 3)
 
-    -- Dot + title row
     local titleRow = newFrame({
         BackgroundTransparency = 1,
         Size = UDim2.new(1, 0, 0, 14),
@@ -339,24 +431,21 @@ function FriendshipLib:Notify(config)
     makeListLayout(titleRow, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Left, 6)
     titleRow.AutomaticSize = Enum.AutomaticSize.XY
 
-    local dot = newFrame({
-        Name = "Dot",
-        BackgroundColor3 = Theme.Accent,
-        Size = UDim2.new(0, 6, 0, 6),
-        Parent = titleRow,
-        ZIndex = 103,
-    })
-    dot.AnchorPoint = Vector2.new(0, 0.5)
-    makeCorner(dot, 99)
-
-    -- Align dot vertically
     local dotWrap = newFrame({
         BackgroundTransparency = 1,
         Size = UDim2.new(0, 6, 0, 14),
         Parent = titleRow,
         ZIndex = 103,
     })
-    dot.Parent = dotWrap
+    local dot = newFrame({
+        Name = "Dot",
+        BackgroundColor3 = Theme.Accent,
+        Size = UDim2.new(0, 6, 0, 6),
+        Parent = dotWrap,
+        ZIndex = 103,
+    })
+    dot.AnchorPoint = Vector2.new(0, 0.5)
+    makeCorner(dot, 99)
 
     local titleLabel = newLabel({
         Text = string.upper(title),
@@ -381,7 +470,6 @@ function FriendshipLib:Notify(config)
     contentLabel.AutomaticSize = Enum.AutomaticSize.Y
     contentLabel.TextWrapped = true
 
-    -- Progress bar (duration indicator)
     local progressBG = newFrame({
         BackgroundColor3 = Color3.fromRGB(255,255,255),
         BackgroundTransparency = 0.95,
@@ -397,20 +485,17 @@ function FriendshipLib:Notify(config)
         ZIndex = 104,
     })
 
-    -- Slide in animation
     card.Position = UDim2.new(1, 20, 0, 0)
     card.BackgroundTransparency = 1
     tween(card, Theme.Medium, { BackgroundTransparency = 0 })
     tween(card, Theme.Medium, { Position = UDim2.new(0, 0, 0, 0) })
 
-    -- Progress tween
     task.delay(0.3, function()
         tween(progressBar, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
             Size = UDim2.new(0, 0, 1, 0)
         })
     end)
 
-    -- Auto dismiss
     task.delay(duration + 0.3, function()
         tween(card, Theme.Medium, { BackgroundTransparency = 1 })
         tween(card, Theme.Medium, { Position = UDim2.new(1, 20, 0, 0) })
@@ -464,6 +549,30 @@ local function makeDraggable(frame, handle)
 end
 
 -- ============================================================
+--  ROUNDED CORNERS FIX (Rayfield method: ImageLabel mask)
+--  Uses a 9-slice rounded corner image to clip the window
+-- ============================================================
+local CORNER_IMAGE = "rbxassetid://5344479619" -- Rayfield-style rounded corner mask
+
+local function applyWindowCorners(frame, radius)
+    -- Method: Use an ImageLabel as a clipping mask overlay
+    -- This image is a white rounded rectangle on transparent background
+    -- We set it as the last child with ZIndex higher than content
+    -- and use it as a BlendSource if supported, or use ClipsDescendants
+    -- with UICorner (the simpler Roblox-native approach)
+    --
+    -- Actually, the proper Rayfield method for corners is:
+    -- The window frame uses ClipsDescendants = true + UICorner
+    -- But sidebar/content area children can break corners if they
+    -- extend to edges. The fix: apply UICorner to BOTH the parent
+    -- AND any edge-touching children (sidebar, header, footer).
+    --
+    -- For the window itself:
+    makeCorner(frame, radius or 8)
+    frame.ClipsDescendants = true
+end
+
+-- ============================================================
 --  WINDOW
 -- ============================================================
 function FriendshipLib:CreateWindow(config)
@@ -474,6 +583,9 @@ function FriendshipLib:CreateWindow(config)
     local position = config.Position or UDim2.new(0.5, -350, 0.5, -225)
     local toggleKey = config.ToggleKey or Enum.KeyCode.RightShift
 
+    -- Pre-load Lucide icons
+    ensureLucide()
+
     -- ScreenGui
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "FriendshipLua_" .. title:gsub("%s","")
@@ -481,7 +593,6 @@ function FriendshipLib:CreateWindow(config)
     screenGui.DisplayOrder = 999
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-    -- Try CoreGui, fallback to PlayerGui
     local ok = pcall(function()
         if syn then
             syn.protect_gui(screenGui)
@@ -494,26 +605,6 @@ function FriendshipLib:CreateWindow(config)
 
     self._screenGui = screenGui
 
-    -- Background overlay (behind window)
-    local bgOverlay = newFrame({
-        Name = "BG_Overlay",
-        BackgroundColor3 = Theme.BG_Main,
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1,
-        Parent = screenGui,
-        ZIndex = 1,
-    })
-
-    -- Grid overlay effect
-    local gridOverlay = newFrame({
-        Name = "GridOverlay",
-        BackgroundColor3 = Color3.fromRGB(0,0,0),
-        BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 1, 0),
-        Parent = screenGui,
-        ZIndex = 2,
-    })
-
     -- Main window frame
     local mainWindow = newFrame({
         Name = "MainWindow",
@@ -524,7 +615,8 @@ function FriendshipLib:CreateWindow(config)
         ZIndex = 3,
         ClipsDescendants = true,
     })
-    makeCorner(mainWindow, 12)
+    -- Rayfield-style corners: use proper radius + ClipsDescendants
+    makeCorner(mainWindow, 8)
     makeStroke(mainWindow, Color3.fromRGB(255,255,255), 1, 0.9)
 
     -- ── SIDEBAR ──────────────────────────────────────────────
@@ -536,8 +628,10 @@ function FriendshipLib:CreateWindow(config)
         Parent = mainWindow,
         ZIndex = 4,
     })
+    -- Apply corner to sidebar to fix bottom-left corner issue
+    makeCorner(sidebar, 8)
 
-    -- Brand logo area
+    -- Brand logo area - MOVED LEFT (padding from 18 -> 10)
     local brandArea = newFrame({
         Name = "BrandArea",
         BackgroundTransparency = 1,
@@ -546,13 +640,14 @@ function FriendshipLib:CreateWindow(config)
         Parent = sidebar,
         ZIndex = 5,
     })
-    makePadding(brandArea, 0, 0, 0, 18)
+    makePadding(brandArea, 0, 0, 0, 10)
 
+    -- Logo box moved left (from 18 -> 10)
     local logoBox = newFrame({
         Name = "LogoBox",
         BackgroundColor3 = Theme.AccentBG,
         Size = UDim2.new(0, 28, 0, 28),
-        Position = UDim2.new(0, 18, 0.5, -14),
+        Position = UDim2.new(0, 10, 0.5, -14),
         Parent = brandArea,
         ZIndex = 6,
     })
@@ -569,7 +664,6 @@ function FriendshipLib:CreateWindow(config)
         ZIndex = 7,
     }).TextXAlignment = Enum.TextXAlignment.Center
 
-    -- Dot indicator on logo
     local logoDot = newFrame({
         BackgroundColor3 = Theme.Accent,
         Size = UDim2.new(0, 6, 0, 6),
@@ -579,14 +673,14 @@ function FriendshipLib:CreateWindow(config)
     })
     makeCorner(logoDot, 99)
 
-    -- Title text
+    -- Title moved left (from 56 -> 48)
     local titleLabel = newLabel({
         Text = title:match("^([^%.]+)") or title,
         TextColor3 = Color3.fromRGB(220,220,220),
         Font = Enum.Font.GothamBold,
         TextSize = 13,
         Size = UDim2.new(0, 120, 0, 16),
-        Position = UDim2.new(0, 56, 0.5, -16),
+        Position = UDim2.new(0, 48, 0.5, -16),
         Parent = brandArea,
         ZIndex = 6,
     })
@@ -599,11 +693,10 @@ function FriendshipLib:CreateWindow(config)
             Font = Enum.Font.GothamBold,
             TextSize = 13,
             Size = UDim2.new(0, 120, 0, 16),
-            Position = UDim2.new(0, 56 + TextService:GetTextSize(title:match("^([^%.]+)"), 13, Enum.Font.GothamBold, Vector2.new(200,20)).X, 0.5, -16),
+            Position = UDim2.new(0, 48 + TextService:GetTextSize(title:match("^([^%.]+)"), 13, Enum.Font.GothamBold, Vector2.new(200,20)).X, 0.5, -16),
             Parent = brandArea,
             ZIndex = 6,
         })
-        _ = extLabel -- suppress unused warning
     end
 
     local subLabel = newLabel({
@@ -612,22 +705,20 @@ function FriendshipLib:CreateWindow(config)
         Font = Enum.Font.GothamBold,
         TextSize = 8,
         Size = UDim2.new(0, 120, 0, 12),
-        Position = UDim2.new(0, 56, 0.5, 3),
+        Position = UDim2.new(0, 48, 0.5, 3),
         Parent = brandArea,
         ZIndex = 6,
     })
-    _ = subLabel
 
     -- Sidebar separator
     local sidebarSep = newFrame({
         BackgroundColor3 = Color3.fromRGB(255,255,255),
         BackgroundTransparency = 0.95,
-        Size = UDim2.new(1, -28, 0, 1),
-        Position = UDim2.new(0, 14, 0, 60),
+        Size = UDim2.new(1, -20, 0, 1),
+        Position = UDim2.new(0, 10, 0, 60),
         Parent = sidebar,
         ZIndex = 5,
     })
-    _ = sidebarSep
 
     -- Tab nav container
     local navContainer = newFrame({
@@ -651,15 +742,17 @@ function FriendshipLib:CreateWindow(config)
         Parent = sidebar,
         ZIndex = 5,
     })
+    -- Fix bottom-left corner: apply corner
+    makeCorner(sidebarBottom, 8)
     makeStroke(sidebarBottom, Color3.fromRGB(255,255,255), 1, 0.95)
-    makePadding(sidebarBottom, 0, 0, 0, 18)
+    makePadding(sidebarBottom, 0, 0, 0, 10)
 
     newLabel({
-        Text = "WELCOME",
+        Text = "Welcome back,",
         TextColor3 = Color3.fromRGB(180,180,180),
         Font = Enum.Font.GothamBold,
         TextSize = 10,
-        Size = UDim2.new(1, -18, 0, 12),
+        Size = UDim2.new(1, -10, 0, 12),
         Position = UDim2.new(0, 0, 0, 10),
         Parent = sidebarBottom,
         ZIndex = 6,
@@ -673,7 +766,7 @@ function FriendshipLib:CreateWindow(config)
         TextColor3 = Theme.TextAccent,
         Font = Enum.Font.GothamBold,
         TextSize = 9,
-        Size = UDim2.new(1, -18, 0, 12),
+        Size = UDim2.new(1, -10, 0, 12),
         Position = UDim2.new(0, 0, 0, 24),
         Parent = sidebarBottom,
         ZIndex = 6,
@@ -689,7 +782,7 @@ function FriendshipLib:CreateWindow(config)
         ZIndex = 4,
     })
 
-    -- Header
+    -- Header (NO close/minimize buttons — replaced with search bar)
     local header = newFrame({
         Name = "Header",
         BackgroundColor3 = Color3.fromRGB(0,0,0),
@@ -699,6 +792,8 @@ function FriendshipLib:CreateWindow(config)
         Parent = contentArea,
         ZIndex = 5,
     })
+    -- Fix top-right corner
+    makeCorner(header, 8)
     makeStroke(header, Color3.fromRGB(255,255,255), 1, 0.95)
 
     -- Breadcrumb left
@@ -732,7 +827,6 @@ function FriendshipLib:CreateWindow(config)
         Parent = breadcrumbContainer,
         ZIndex = 6,
     })
-    _ = chevron
 
     local breadcrumbActive = newLabel({
         Name = "BreadcrumbActive",
@@ -746,60 +840,111 @@ function FriendshipLib:CreateWindow(config)
     })
     breadcrumbActive.AutomaticSize = Enum.AutomaticSize.X
 
-    -- Close button (top right of header)
-    local closeBtn = newButton({
-        Name = "CloseBtn",
-        Text = "×",
-        BackgroundColor3 = Color3.fromRGB(0,0,0),
+    -- ── SEARCH BAR (Rayfield style, replaces close/minimize) ──
+    local searchContainer = newFrame({
+        Name = "SearchContainer",
         BackgroundTransparency = 1,
-        TextColor3 = Theme.TextDim,
-        Font = Enum.Font.GothamBold,
-        TextSize = 16,
-        Size = UDim2.new(0, 24, 0, 24),
-        Position = UDim2.new(1, -34, 0.5, -12),
+        Size = UDim2.new(0, 200, 1, 0),
+        Position = UDim2.new(1, -216, 0, 0),
         Parent = header,
         ZIndex = 6,
     })
-    closeBtn.MouseEnter:Connect(function()
-        tween(closeBtn, Theme.Fast, { TextColor3 = Theme.Danger })
-    end)
-    closeBtn.MouseLeave:Connect(function()
-        tween(closeBtn, Theme.Fast, { TextColor3 = Theme.TextDim })
-    end)
-    closeBtn.MouseButton1Click:Connect(function()
-        tween(mainWindow, Theme.Medium, { Size = UDim2.fromOffset(size.X.Offset, 0) })
-        task.delay(0.3, function()
-            mainWindow.Visible = false
-        end)
-    end)
+    makePadding(searchContainer, 10, 8, 10, 8)
 
-    -- Minimize button
-    local minBtn = newButton({
-        Name = "MinBtn",
-        Text = "—",
-        BackgroundTransparency = 1,
-        TextColor3 = Theme.TextDim,
-        Font = Enum.Font.GothamBold,
-        TextSize = 11,
-        Size = UDim2.new(0, 24, 0, 24),
-        Position = UDim2.new(1, -62, 0.5, -12),
-        Parent = header,
-        ZIndex = 6,
+    local searchFrame = newFrame({
+        Name = "SearchFrame",
+        BackgroundColor3 = Color3.fromRGB(13, 13, 15),
+        Size = UDim2.new(1, 0, 1, 0),
+        Parent = searchContainer,
+        ZIndex = 7,
     })
-    minBtn.MouseEnter:Connect(function()
-        tween(minBtn, Theme.Fast, { TextColor3 = Theme.Accent })
+    makeCorner(searchFrame, 6)
+    local searchStroke = makeStroke(searchFrame, Color3.fromRGB(255,255,255), 1, 0.9)
+
+    -- Search icon (Lucide "search")
+    local searchIconFrame = newFrame({
+        BackgroundTransparency = 1,
+        Size = UDim2.new(0, 18, 0, 18),
+        Position = UDim2.new(0, 8, 0.5, -9),
+        Parent = searchFrame,
+        ZIndex = 8,
+    })
+    local searchIconImg, searchIconIsLucide = createLucideIcon("search", 48, Theme.TextFaint)
+    if searchIconIsLucide then
+        searchIconImg.Size = UDim2.new(0, 18, 0, 18)
+        searchIconImg.Position = UDim2.new(0, 0, 0, 0)
+        searchIconImg.Parent = searchIconFrame
+        searchIconImg.ZIndex = 8
+    else
+        searchIconImg.Parent = searchIconFrame
+    end
+
+    local searchBox = Instance.new("TextBox")
+    searchBox.Name = "SearchBox"
+    searchBox.BackgroundTransparency = 1
+    searchBox.Size = UDim2.new(1, -34, 1, 0)
+    searchBox.Position = UDim2.new(0, 30, 0, 0)
+    searchBox.Text = ""
+    searchBox.PlaceholderText = "Search..."
+    searchBox.PlaceholderColor3 = Theme.TextFaint
+    searchBox.TextColor3 = Theme.Text
+    searchBox.Font = Enum.Font.GothamSemibold
+    searchBox.TextSize = 11
+    searchBox.TextXAlignment = Enum.TextXAlignment.Left
+    searchBox.ClearTextOnFocus = false
+    searchBox.Parent = searchFrame
+    searchBox.ZIndex = 8
+
+    -- Search focus effect
+    searchBox.Focused:Connect(function()
+        tween(searchStroke, Theme.Fast, { Color = Theme.AccentDim, Transparency = 0.5 })
     end)
-    minBtn.MouseLeave:Connect(function()
-        tween(minBtn, Theme.Fast, { TextColor3 = Theme.TextDim })
+    searchBox.FocusLost:Connect(function()
+        tween(searchStroke, Theme.Fast, { Color = Color3.fromRGB(255,255,255), Transparency = 0.9 })
     end)
 
-    local minimized = false
-    minBtn.MouseButton1Click:Connect(function()
-        minimized = not minimized
-        if minimized then
-            tween(mainWindow, Theme.Medium, { Size = UDim2.fromOffset(size.X.Offset, 48) })
-        else
-            tween(mainWindow, Theme.Spring, { Size = size })
+    -- ── SEARCH FUNCTIONALITY (Rayfield style) ──
+    -- Searches through all tabs and their sections/elements
+    local allTabs = {} -- will be populated as tabs are created
+
+    searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+        local query = string.lower(searchBox.Text)
+        for _, tabData in ipairs(allTabs) do
+            if query == "" then
+                -- Show all sections and elements
+                for _, section in ipairs(tabData._sections) do
+                    section._wrapper.Visible = true
+                    for _, el in ipairs(section._elements) do
+                        el.Visible = true
+                    end
+                end
+            else
+                for _, section in ipairs(tabData._sections) do
+                    local sectionMatch = false
+                    local sectionTitle = string.lower(section._title)
+                    if string.find(sectionTitle, query, 1, true) then
+                        sectionMatch = true
+                    end
+
+                    local anyElementMatch = false
+                    for _, el in ipairs(section._elements) do
+                        local elText = string.lower(el.Name)
+                        if string.find(elText, query, 1, true) then
+                            el.Visible = true
+                            anyElementMatch = true
+                        else
+                            el.Visible = false
+                        end
+                    end
+
+                    section._wrapper.Visible = sectionMatch or anyElementMatch
+                    if sectionMatch then
+                        for _, el in ipairs(section._elements) do
+                            el.Visible = true
+                        end
+                    end
+                end
+            end
         end
     end)
 
@@ -825,9 +970,10 @@ function FriendshipLib:CreateWindow(config)
         Parent = contentArea,
         ZIndex = 5,
     })
+    -- Fix bottom-right corner
+    makeCorner(footer, 8)
     makeStroke(footer, Color3.fromRGB(255,255,255), 1, 0.95)
 
-    -- Footer left
     local footerLeft = newFrame({
         BackgroundTransparency = 1,
         Size = UDim2.new(0.5, 0, 1, 0),
@@ -836,7 +982,6 @@ function FriendshipLib:CreateWindow(config)
         ZIndex = 6,
     })
 
-    -- Status indicator
     local statusDot = newFrame({
         BackgroundColor3 = Theme.Success,
         Size = UDim2.new(0, 5, 0, 5),
@@ -856,7 +1001,6 @@ function FriendshipLib:CreateWindow(config)
         Parent = footerLeft,
         ZIndex = 6,
     })
-    _ = statusLabel
 
     local dividerDot = newLabel({
         Text = "·",
@@ -868,10 +1012,9 @@ function FriendshipLib:CreateWindow(config)
         Parent = footerLeft,
         ZIndex = 6,
     })
-    _ = dividerDot
 
     local buildLabel = newLabel({
-        Text = "BUILD: V1.0.4A",
+        Text = "BUILD: V1.0.5A",
         TextColor3 = Theme.TextFaint,
         Font = Enum.Font.GothamBold,
         TextSize = 8,
@@ -880,9 +1023,7 @@ function FriendshipLib:CreateWindow(config)
         Parent = footerLeft,
         ZIndex = 6,
     })
-    _ = buildLabel
 
-    -- Footer right (branding) — anchored to bottom-right of footer
     local footerBrand = newLabel({
         Text = string.upper(title),
         TextColor3 = Theme.TextFaint,
@@ -955,19 +1096,44 @@ function FriendshipLib:CreateWindow(config)
         })
         makeCorner(indicator, 1)
 
-        -- Icon dot (default, always present for no-icon tabs)
+        -- Icon: Lucide support or fallback dot
         local iconDot = nil
+        local iconImgInstance = nil
 
         if icon and icon ~= "" then
-            -- Image icon provided
-            newImage({
-                Image = icon,
-                ImageColor3 = Theme.TextFaint,
-                Size = UDim2.new(0, 14, 0, 14),
-                Position = UDim2.new(0, 12, 0.5, -7),
-                Parent = navBtn,
-                ZIndex = 8,
-            })
+            -- Try Lucide icon
+            local lucideImg, isLucide = createLucideIcon(icon, 48, Theme.TextFaint)
+            if isLucide then
+                lucideImg.Size = UDim2.new(0, 14, 0, 14)
+                lucideImg.Position = UDim2.new(0, 12, 0.5, -7)
+                lucideImg.Parent = navBtn
+                lucideImg.ZIndex = 8
+                iconImgInstance = lucideImg
+            else
+                -- Not a lucide icon — try as rbxassetid URL
+                if string.find(icon, "rbxassetid://") then
+                    local img = newImage({
+                        Image = icon,
+                        ImageColor3 = Theme.TextFaint,
+                        Size = UDim2.new(0, 14, 0, 14),
+                        Position = UDim2.new(0, 12, 0.5, -7),
+                        Parent = navBtn,
+                        ZIndex = 8,
+                    })
+                    iconImgInstance = img
+                else
+                    -- Fallback dot
+                    iconDot = newFrame({
+                        Name = "IconDot",
+                        BackgroundColor3 = Theme.TextFaint,
+                        Size = UDim2.new(0, 5, 0, 5),
+                        Position = UDim2.new(0, 14, 0.5, -2.5),
+                        Parent = navBtn,
+                        ZIndex = 8,
+                    })
+                    makeCorner(iconDot, 99)
+                end
+            end
         else
             -- Default minimal dot icon
             iconDot = newFrame({
@@ -1009,7 +1175,7 @@ function FriendshipLib:CreateWindow(config)
         scrollFrame.Parent = self._pagesContainer
         makePadding(scrollFrame, 0, 0, 12, 0)
 
-        -- Two-column container using UIListLayout
+        -- Two-column container
         local columnsFrame = newFrame({
             Name = "Columns",
             BackgroundTransparency = 1,
@@ -1027,7 +1193,6 @@ function FriendshipLib:CreateWindow(config)
         columnsLayout.Padding = UDim.new(0, 12)
         columnsLayout.Parent = columnsFrame
 
-        -- Left column
         local leftCol = newFrame({
             Name = "LeftCol",
             BackgroundTransparency = 1,
@@ -1038,7 +1203,6 @@ function FriendshipLib:CreateWindow(config)
         leftCol.AutomaticSize = Enum.AutomaticSize.Y
         makeListLayout(leftCol, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 12)
 
-        -- Right column
         local rightCol = newFrame({
             Name = "RightCol",
             BackgroundTransparency = 1,
@@ -1058,8 +1222,10 @@ function FriendshipLib:CreateWindow(config)
         Tab._nameLabel    = nameLabel
         Tab._indicator    = indicator
         Tab._iconDot      = iconDot
+        Tab._iconImg      = iconImgInstance
         Tab._window       = self
         Tab._sectionOrder = 0
+        Tab._sections     = {}
 
         function Tab:_setActive(active)
             if active then
@@ -1072,6 +1238,9 @@ function FriendshipLib:CreateWindow(config)
                 if iconDot then
                     tween(iconDot, Theme.Fast, { BackgroundColor3 = Theme.Accent })
                 end
+                if iconImgInstance then
+                    tween(iconImgInstance, Theme.Fast, { ImageColor3 = Theme.Accent })
+                end
                 self._page.Visible = true
             else
                 tween(navBtn, Theme.Fast, {
@@ -1082,6 +1251,9 @@ function FriendshipLib:CreateWindow(config)
                 tween(indicator, Theme.Fast, { BackgroundTransparency = 1 })
                 if iconDot then
                     tween(iconDot, Theme.Fast, { BackgroundColor3 = Theme.TextFaint })
+                end
+                if iconImgInstance then
+                    tween(iconImgInstance, Theme.Fast, { ImageColor3 = Theme.TextFaint })
                 end
                 self._page.Visible = false
             end
@@ -1116,6 +1288,7 @@ function FriendshipLib:CreateWindow(config)
         end)
 
         table.insert(self._tabs, Tab)
+        table.insert(allTabs, Tab)
 
         -- Auto select first tab
         if #self._tabs == 1 then
@@ -1133,7 +1306,6 @@ function FriendshipLib:CreateWindow(config)
         function Tab:CreateSection(title)
             Tab._sectionOrder = Tab._sectionOrder + 1
 
-            -- Alternate between left and right column
             local targetCol = (Tab._sectionOrder % 2 == 1) and self._leftCol or self._rightCol
 
             local sectionWrap = newFrame({
@@ -1157,7 +1329,6 @@ function FriendshipLib:CreateWindow(config)
             makeCorner(sectionInner, 8)
             makeStroke(sectionInner, Color3.fromRGB(255,255,255), 1, 0.93)
             makeListLayout(sectionInner, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 4)
-
             makePadding(sectionInner, 10, 10, 10, 10)
 
             -- Section header
@@ -1194,13 +1365,19 @@ function FriendshipLib:CreateWindow(config)
             local Section = {}
             Section._container = elemContainer
             Section._elemOrder = 0
+            Section._wrapper   = sectionWrap
+            Section._title     = title
+            Section._elements  = {}
+
+            -- Register section in Tab for search
+            table.insert(Tab._sections, Section)
 
             local function nextOrder()
                 Section._elemOrder = Section._elemOrder + 1
                 return Section._elemOrder
             end
 
-            -- ── HELPER: Element with hover effect (matches web: hover:bg-white/[0.02]) ──
+            -- ── HELPER: Element with hover effect ──
             local function makeElement(height)
                 local el = newFrame({
                     BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -1219,6 +1396,7 @@ function FriendshipLib:CreateWindow(config)
                     tween(el, Theme.Fast, { BackgroundTransparency = 1 })
                 end)
 
+                table.insert(Section._elements, el)
                 return el
             end
 
@@ -1239,7 +1417,6 @@ function FriendshipLib:CreateWindow(config)
             end
 
             -- ── TOGGLE ────────────────────────────────────
-            -- Matches web: pill switch with sliding indicator
             function Section:CreateToggle(config)
                 config = config or {}
                 local label       = config.Label       or "Toggle"
@@ -1254,7 +1431,6 @@ function FriendshipLib:CreateWindow(config)
 
                 local el = makeElement(elH)
 
-                -- Label
                 local lbl = newLabel({
                     Text = label,
                     TextColor3 = Color3.fromRGB(200, 200, 210),
@@ -1282,7 +1458,6 @@ function FriendshipLib:CreateWindow(config)
 
                 animateEntry(el, lbl, descLbl)
 
-                -- Switch pill: 40x20px (web: w-10 h-5 rounded-full p-[3px])
                 local switchFrame = newFrame({
                     Size = UDim2.new(0, 40, 0, 20),
                     Position = UDim2.new(1, -52, 0.5, -10),
@@ -1292,7 +1467,6 @@ function FriendshipLib:CreateWindow(config)
                 makeCorner(switchFrame, 10)
                 local switchStroke = makeStroke(switchFrame, Color3.fromRGB(255,255,255), 1, 0.9)
 
-                -- Indicator: 14x14 circle (web: w-3.5 h-3.5 rounded-full)
                 local indicator = newFrame({
                     Size = UDim2.new(0, 14, 0, 14),
                     BackgroundColor3 = Color3.fromRGB(60, 60, 70),
@@ -1302,17 +1476,14 @@ function FriendshipLib:CreateWindow(config)
                 makeCorner(indicator, 7)
                 indicator.AnchorPoint = Vector2.new(0, 0.5)
 
-                -- Web: indicator slides x from 3 (OFF) to 23 (ON)
                 local function setToggleVisual(enabled, animated)
                     local info = animated and TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out) or TweenInfo.new(0)
                     if enabled then
-                        -- ON: bg=cyan/10, border=cyan/50, indicator=cyan-400 at right
                         tween(switchFrame, info, { BackgroundColor3 = Theme.AccentBG })
                         tween(switchStroke, info, { Color = Theme.AccentDim, Transparency = 0.5 })
                         tween(indicator, info, { Position = UDim2.new(0, 23, 0.5, 0) })
                         tween(indicator, TweenInfo.new(0.4, Enum.EasingStyle.Exponential), { BackgroundColor3 = Theme.Accent })
                     else
-                        -- OFF: bg=white/5, border=white/10, indicator=white/20 at left
                         tween(switchFrame, info, { BackgroundColor3 = Color3.fromRGB(13, 13, 15) })
                         tween(switchStroke, info, { Color = Color3.fromRGB(255, 255, 255), Transparency = 0.9 })
                         tween(indicator, info, { Position = UDim2.new(0, 3, 0.5, 0) })
@@ -1320,7 +1491,6 @@ function FriendshipLib:CreateWindow(config)
                     end
                 end
 
-                -- Set initial state
                 if currentValue then
                     switchFrame.BackgroundColor3 = Theme.AccentBG
                     switchStroke.Color = Theme.AccentDim
@@ -1333,7 +1503,6 @@ function FriendshipLib:CreateWindow(config)
                     indicator.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
                 end
 
-                -- Click handler
                 local interact = newButton({
                     Size = UDim2.new(1, 0, 1, 0),
                     BackgroundTransparency = 1,
@@ -1360,7 +1529,6 @@ function FriendshipLib:CreateWindow(config)
             end
 
             -- ── SLIDER ────────────────────────────────────
-            -- Matches web: value badge + thin track with fill
             function Section:CreateSlider(config)
                 config = config or {}
                 local label       = config.Label       or "Slider"
@@ -1377,7 +1545,6 @@ function FriendshipLib:CreateWindow(config)
 
                 local el = makeElement(55)
 
-                -- Label
                 local lbl = newLabel({
                     Text = label,
                     TextColor3 = Color3.fromRGB(200, 200, 210),
@@ -1390,7 +1557,6 @@ function FriendshipLib:CreateWindow(config)
                 })
                 lbl.AutomaticSize = Enum.AutomaticSize.X
 
-                -- Value badge (web: text-xs font-mono text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20)
                 local badgeFrame = newFrame({
                     BackgroundColor3 = Theme.AccentBG,
                     Size = UDim2.new(0, 50, 0, 18),
@@ -1414,7 +1580,6 @@ function FriendshipLib:CreateWindow(config)
 
                 animateEntry(el, lbl, valueLabel)
 
-                -- Track (web: h-1.5 bg-white/5 rounded-full border border-white/5)
                 local track = newFrame({
                     BackgroundColor3 = Color3.fromRGB(13, 13, 15),
                     Size = UDim2.new(1, -24, 0, 6),
@@ -1425,7 +1590,6 @@ function FriendshipLib:CreateWindow(config)
                 makeCorner(track, 3)
                 makeStroke(track, Color3.fromRGB(255,255,255), 1, 0.95)
 
-                -- Fill (web: bg-cyan-500, width = percentage)
                 local pct = (currentValue - min) / math.max(max - min, 0.001)
                 local fill = newFrame({
                     BackgroundColor3 = Theme.Accent,
@@ -1435,7 +1599,6 @@ function FriendshipLib:CreateWindow(config)
                 })
                 makeCorner(fill, 3)
 
-                -- Interact area for dragging
                 local sliderInteract = newButton({
                     Size = UDim2.new(1, -24, 0, 20),
                     Position = UDim2.new(0, 12, 1, -22),
@@ -1499,7 +1662,6 @@ function FriendshipLib:CreateWindow(config)
             end
 
             -- ── DROPDOWN ──────────────────────────────────
-            -- Matches web: column layout with select button, expand for options
             function Section:CreateDropdown(config)
                 config = config or {}
                 local label           = config.Name or config.Label or "Dropdown"
@@ -1520,7 +1682,6 @@ function FriendshipLib:CreateWindow(config)
                 local el = makeElement(closedH)
                 el.ClipsDescendants = true
 
-                -- Label (web: text-sm font-semibold text-white/80)
                 local lbl = newLabel({
                     Text = label,
                     TextColor3 = Color3.fromRGB(200, 200, 210),
@@ -1532,7 +1693,6 @@ function FriendshipLib:CreateWindow(config)
                     ZIndex = 9,
                 })
 
-                -- Select button (web: px-3 py-2 bg-white/5 border border-white/10 rounded-md text-xs text-white/70)
                 local selectBtn = newFrame({
                     BackgroundColor3 = Color3.fromRGB(13, 13, 15),
                     Size = UDim2.new(1, -24, 0, 28),
@@ -1555,8 +1715,7 @@ function FriendshipLib:CreateWindow(config)
                 })
                 selLabel.TextTruncate = Enum.TextTruncate.AtEnd
 
-                -- Chevron (web: ChevronDown icon, rotates on open)
-                local chevron = newLabel({
+                local chevronIcon = newLabel({
                     Text = "▾",
                     TextColor3 = Color3.fromRGB(100, 100, 110),
                     Font = Enum.Font.GothamBold,
@@ -1584,7 +1743,6 @@ function FriendshipLib:CreateWindow(config)
 
                 animateEntry(el, lbl, selLabel)
 
-                -- Options list
                 local listFrame = Instance.new("ScrollingFrame")
                 listFrame.Name = "List"
                 listFrame.BackgroundTransparency = 1
@@ -1647,7 +1805,6 @@ function FriendshipLib:CreateWindow(config)
                             updateSelectedText()
                             pcall(callback, currentOption)
 
-                            -- Update option colors
                             for _, droption in ipairs(listFrame:GetChildren()) do
                                 if droption:IsA("Frame") and droption.Name ~= "UIPadding" then
                                     local isSelected = table.find(currentOption, droption.Name)
@@ -1657,12 +1814,11 @@ function FriendshipLib:CreateWindow(config)
                                 end
                             end
 
-                            -- Auto-close for single select
                             if not multipleOptions then
                                 task.wait(0.1)
                                 opened = false
                                 tween(el, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 0, closedH) })
-                                tween(chevron, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { Rotation = 0 })
+                                tween(chevronIcon, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { Rotation = 0 })
                                 for _, DropdownOpt in ipairs(listFrame:GetChildren()) do
                                     if DropdownOpt:IsA("Frame") and DropdownOpt.Name ~= "UIPadding" then
                                         tween(DropdownOpt, TweenInfo.new(0.2), { BackgroundTransparency = 1 })
@@ -1679,7 +1835,6 @@ function FriendshipLib:CreateWindow(config)
                 end
                 SetDropdownOptions()
 
-                -- Click to toggle
                 local interact = newButton({
                     Size = UDim2.new(1, 0, 0, closedH),
                     BackgroundTransparency = 1,
@@ -1692,11 +1847,10 @@ function FriendshipLib:CreateWindow(config)
                     if Debounce then return end
 
                     if opened then
-                        -- Close
                         Debounce = true
                         opened = false
                         tween(el, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 0, closedH) })
-                        tween(chevron, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { Rotation = 0 })
+                        tween(chevronIcon, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { Rotation = 0 })
                         for _, DropdownOpt in ipairs(listFrame:GetChildren()) do
                             if DropdownOpt:IsA("Frame") and DropdownOpt.Name ~= "UIPadding" then
                                 tween(DropdownOpt, TweenInfo.new(0.2), { BackgroundTransparency = 1 })
@@ -1708,13 +1862,12 @@ function FriendshipLib:CreateWindow(config)
                         listFrame.Visible = false
                         Debounce = false
                     else
-                        -- Open
                         opened = true
                         local optCount = 0
                         for _ in ipairs(options) do optCount = optCount + 1 end
                         local openH = closedH + math.min(optCount * 28, 100) + 8
                         tween(el, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 0, openH) })
-                        tween(chevron, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { Rotation = 180 })
+                        tween(chevronIcon, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { Rotation = 180 })
                         listFrame.Visible = true
                         for _, DropdownOpt in ipairs(listFrame:GetChildren()) do
                             if DropdownOpt:IsA("Frame") and DropdownOpt.Name ~= "UIPadding" then
@@ -1755,7 +1908,6 @@ function FriendshipLib:CreateWindow(config)
             end
 
             -- ── KEYBIND ───────────────────────────────────
-            -- Matches web: simple pill button for key display
             function Section:CreateKeybind(config)
                 config = config or {}
                 local label           = config.Name or config.Label or "Keybind"
@@ -1786,7 +1938,6 @@ function FriendshipLib:CreateWindow(config)
                     ZIndex = 9,
                 })
 
-                -- Key button (web: px-3 py-1 rounded-sm text-[10px] font-mono border uppercase tracking-widest)
                 local keyBtn = newButton({
                     Name = "KeyBtn",
                     Text = string.upper(currentKeybind),
@@ -1805,23 +1956,19 @@ function FriendshipLib:CreateWindow(config)
 
                 animateEntry(el, lbl)
 
-                -- Click to start listening
                 keyBtn.MouseButton1Click:Connect(function()
                     CheckingForKey = not CheckingForKey
                     if CheckingForKey then
-                        -- Active: cyan style
                         tween(keyBtn, Theme.Fast, { BackgroundColor3 = Theme.AccentBG })
                         tween(keyBtn, Theme.Fast, { TextColor3 = Theme.Accent })
                         keyBtn.Text = "..."
                     else
-                        -- Default: white/5 style
                         tween(keyBtn, Theme.Fast, { BackgroundColor3 = Color3.fromRGB(13, 13, 15) })
                         tween(keyBtn, Theme.Fast, { TextColor3 = Color3.fromRGB(100, 100, 110) })
                         keyBtn.Text = string.upper(currentKeybind)
                     end
                 end)
 
-                -- Key input handling
                 UserInputService.InputBegan:Connect(function(input, processed)
                     if CheckingForKey then
                         if input.KeyCode ~= Enum.KeyCode.Unknown then
@@ -1830,7 +1977,6 @@ function FriendshipLib:CreateWindow(config)
                             keyBtn.Text = string.upper(tostring(NewKeyNoEnum))
                             currentKeybind = tostring(NewKeyNoEnum)
                             CheckingForKey = false
-                            -- Restore default style
                             tween(keyBtn, Theme.Fast, { BackgroundColor3 = Color3.fromRGB(13, 13, 15) })
                             tween(keyBtn, Theme.Fast, { TextColor3 = Color3.fromRGB(100, 100, 110) })
                             if callOnChange then
@@ -1866,7 +2012,6 @@ function FriendshipLib:CreateWindow(config)
                     end
                 end)
 
-                -- Auto-resize button based on text
                 keyBtn:GetPropertyChangedSignal("Text"):Connect(function()
                     local textW = TextService:GetTextSize(keyBtn.Text, 10, Enum.Font.GothamBold, Vector2.new(200, 24)).X
                     tween(keyBtn, TweenInfo.new(0.25, Enum.EasingStyle.Exponential), {
@@ -1888,18 +2033,15 @@ function FriendshipLib:CreateWindow(config)
             end
 
             -- ── BUTTON ────────────────────────────────────
-            -- Matches web: full-width styled button with variants (primary/secondary/danger)
             function Section:CreateButton(config)
                 config = config or {}
                 local label    = config.Name or config.Label or "Button"
-                local variant  = config.Variant or "primary" -- primary / secondary / danger
+                local variant  = config.Variant or "primary"
                 local callback = config.Callback or function() end
 
                 local el = makeElement(40)
-                -- Override hover for button - handled by the button itself
                 el.BackgroundTransparency = 1
 
-                -- Variant colors (web: primary=cyan, secondary=white, danger=red)
                 local bgColors = {
                     primary   = Theme.AccentBG,
                     secondary = Color3.fromRGB(13, 13, 15),
@@ -1926,7 +2068,6 @@ function FriendshipLib:CreateWindow(config)
                     danger    = Color3.fromRGB(80, 20, 20),
                 }
 
-                -- Full-width button
                 local btn = newButton({
                     Name = "Btn",
                     Text = string.upper(label),
@@ -1945,7 +2086,6 @@ function FriendshipLib:CreateWindow(config)
 
                 animateEntry(el)
 
-                -- Hover effects
                 btn.MouseEnter:Connect(function()
                     tween(btn, Theme.Fast, { BackgroundColor3 = hoverBgColors[variant] or hoverBgColors.primary })
                 end)
@@ -1953,7 +2093,6 @@ function FriendshipLib:CreateWindow(config)
                     tween(btn, Theme.Fast, { BackgroundColor3 = bgColors[variant] or bgColors.primary })
                 end)
 
-                -- Click with callback error handling
                 btn.MouseButton1Click:Connect(function()
                     local Success, Response = pcall(callback)
 
@@ -1964,7 +2103,6 @@ function FriendshipLib:CreateWindow(config)
                         btn.Text = string.upper(label)
                         tween(btn, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { BackgroundColor3 = bgColors[variant] or bgColors.primary })
                     else
-                        -- Flash effect
                         tween(btn, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { BackgroundColor3 = hoverBgColors[variant] or hoverBgColors.primary })
                         task.wait(0.15)
                         tween(btn, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), { BackgroundColor3 = bgColors[variant] or bgColors.primary })
@@ -1979,9 +2117,7 @@ function FriendshipLib:CreateWindow(config)
                 return BtnObj
             end
 
-            -- ── COLOR PICKER ──────────────────────────────
-            -- Matches web: label + hex text + swatch, click to expand HSV picker
-            -- FIXED: hue bar uses ImageLabel (TextButton has no Image property!)
+            -- ── COLOR PICKER (FIXED: proper HSV + doesn't overlap) ──
             function Section:CreateColorPicker(config)
                 config = config or {}
                 local label    = config.Name or config.Label or "Color"
@@ -1993,7 +2129,8 @@ function FriendshipLib:CreateWindow(config)
                 local opened = false
 
                 local el = makeElement(closedH)
-                el.ClipsDescendants = true
+                -- IMPORTANT: Do NOT use ClipsDescendants on el — it would clip the picker
+                -- Instead, we control visibility of picker elements directly
 
                 -- Label
                 local lbl = newLabel({
@@ -2007,7 +2144,7 @@ function FriendshipLib:CreateWindow(config)
                     ZIndex = 9,
                 })
 
-                -- Hex text (web: text-[10px] font-mono text-white/30 uppercase)
+                -- Hex text
                 local hexLabel = newLabel({
                     Text = colorToHex(default),
                     TextColor3 = Color3.fromRGB(80, 80, 90),
@@ -2020,7 +2157,7 @@ function FriendshipLib:CreateWindow(config)
                 })
                 hexLabel.TextXAlignment = Enum.TextXAlignment.Right
 
-                -- Color swatch (web: w-6 h-6 rounded border border-white/10)
+                -- Color swatch
                 local swatch = newFrame({
                     BackgroundColor3 = default,
                     Size = UDim2.new(0, 24, 0, 24),
@@ -2033,16 +2170,31 @@ function FriendshipLib:CreateWindow(config)
 
                 animateEntry(el, lbl, hexLabel)
 
-                -- ── Picker area (below closedH, absolute positioned) ──
-                local pickerArea = newFrame({
+                -- ── Picker area (absolute positioned OUTSIDE the element flow) ──
+                -- This goes in the Section's container, not inside el
+                -- This way it won't be clipped and won't affect element height
+                local pickerHolder = newFrame({
+                    Name = "ColorPicker_" .. label,
                     BackgroundTransparency = 1,
-                    Size = UDim2.new(1, -24, 0, 70),
-                    Position = UDim2.new(0, 12, 0, closedH),
-                    Parent = el,
-                    ZIndex = 9,
+                    Size = UDim2.new(1, 0, 0, 70),
+                    Visible = false,
+                    Parent = Section._container,
+                    ZIndex = 50,
                 })
+                pickerHolder.LayoutOrder = nextOrder()
 
-                -- Saturation-Value area (ImageLabel - correct type for Image property!)
+                -- Background for picker
+                local pickerBG = newFrame({
+                    BackgroundColor3 = Theme.BG_Element,
+                    Size = UDim2.new(1, 0, 0, 70),
+                    Parent = pickerHolder,
+                    ZIndex = 50,
+                })
+                makeCorner(pickerBG, 6)
+                makeStroke(pickerBG, Color3.fromRGB(255,255,255), 1, 0.9)
+                makePadding(pickerBG, 6, 6, 6, 6)
+
+                -- Saturation-Value area
                 local mainCP = Instance.new("ImageLabel")
                 mainCP.Name = "MainCP"
                 mainCP.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
@@ -2050,10 +2202,9 @@ function FriendshipLib:CreateWindow(config)
                 mainCP.Size = UDim2.new(1, 0, 0, 45)
                 mainCP.Position = UDim2.new(0, 0, 0, 0)
                 mainCP.Image = "rbxassetid://4155801252"
-                mainCP.ImageTransparency = 1
                 mainCP.ScaleType = Enum.ScaleType.Stretch
-                mainCP.Parent = pickerArea
-                mainCP.ZIndex = 10
+                mainCP.Parent = pickerBG
+                mainCP.ZIndex = 51
                 makeCorner(mainCP, 4)
 
                 -- Main point indicator
@@ -2062,12 +2213,11 @@ function FriendshipLib:CreateWindow(config)
                 mainPoint.Size = UDim2.new(0, 10, 0, 10)
                 mainPoint.Image = "rbxassetid://6279300645"
                 mainPoint.ImageColor3 = Color3.fromRGB(255, 255, 255)
-                mainPoint.ImageTransparency = 1
                 mainPoint.AnchorPoint = Vector2.new(0.5, 0.5)
                 mainPoint.Parent = mainCP
-                mainPoint.ZIndex = 11
+                mainPoint.ZIndex = 52
 
-                -- Hue bar (ImageLabel, NOT TextButton - that was the bug!)
+                -- Hue bar
                 local hueBar = Instance.new("ImageLabel")
                 hueBar.Name = "HueBar"
                 hueBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -2075,9 +2225,8 @@ function FriendshipLib:CreateWindow(config)
                 hueBar.Size = UDim2.new(1, 0, 0, 10)
                 hueBar.Position = UDim2.new(0, 0, 0, 51)
                 hueBar.Image = "rbxassetid://4155801252"
-                hueBar.ImageTransparency = 1
-                hueBar.Parent = pickerArea
-                hueBar.ZIndex = 10
+                hueBar.Parent = pickerBG
+                hueBar.ZIndex = 51
                 makeCorner(hueBar, 5)
 
                 -- Hue point indicator
@@ -2086,10 +2235,9 @@ function FriendshipLib:CreateWindow(config)
                 huePoint.Size = UDim2.new(0, 10, 0, 10)
                 huePoint.Image = "rbxassetid://6279300645"
                 huePoint.ImageColor3 = Color3.fromRGB(255, 255, 255)
-                huePoint.ImageTransparency = 1
                 huePoint.AnchorPoint = Vector2.new(0.5, 0.5)
                 huePoint.Parent = hueBar
-                huePoint.ZIndex = 11
+                huePoint.ZIndex = 52
 
                 -- HSV state
                 local h, s, v = default:ToHSV()
@@ -2098,29 +2246,25 @@ function FriendshipLib:CreateWindow(config)
                 local sliderDragging = false
 
                 local function updateDisplay()
-                    -- Main point position (scale-based for responsiveness)
                     mainPoint.Position = UDim2.new(s, 0, 1 - v, 0)
                     mainPoint.ImageColor3 = Color3.fromHSV(h, s, v)
-                    -- Hue point position
                     huePoint.Position = UDim2.new(h, 0, 0.5, 0)
                     huePoint.ImageColor3 = Color3.fromHSV(h, 1, 1)
-                    -- MainCP background = pure hue
                     mainCP.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
-                    -- Update swatch + hex
                     currentValue = Color3.fromHSV(h, s, v)
                     swatch.BackgroundColor3 = currentValue
                     hexLabel.Text = colorToHex(currentValue)
                 end
                 updateDisplay()
 
-                -- Interaction overlays (invisible TextButtons for click/drag)
+                -- Interaction overlays
                 local mainInteract = Instance.new("TextButton")
                 mainInteract.BackgroundTransparency = 1
                 mainInteract.Size = UDim2.new(1, 0, 1, 0)
                 mainInteract.Text = ""
                 mainInteract.AutoButtonColor = false
                 mainInteract.Parent = mainCP
-                mainInteract.ZIndex = 12
+                mainInteract.ZIndex = 53
 
                 local hueInteract = Instance.new("TextButton")
                 hueInteract.BackgroundTransparency = 1
@@ -2128,7 +2272,7 @@ function FriendshipLib:CreateWindow(config)
                 hueInteract.Text = ""
                 hueInteract.AutoButtonColor = false
                 hueInteract.Parent = hueBar
-                hueInteract.ZIndex = 12
+                hueInteract.ZIndex = 53
 
                 -- Mouse release
                 UserInputService.InputEnded:Connect(function(input)
@@ -2169,7 +2313,7 @@ function FriendshipLib:CreateWindow(config)
                     end
                 end)
 
-                -- Click to open/close
+                -- Click to toggle picker
                 local interact = newButton({
                     Size = UDim2.new(1, 0, 0, closedH),
                     BackgroundTransparency = 1,
@@ -2181,24 +2325,22 @@ function FriendshipLib:CreateWindow(config)
                 interact.MouseButton1Click:Connect(function()
                     if not opened then
                         opened = true
-                        tween(el, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 0, closedH + 70 + 8) })
-                        tween(mainCP, TweenInfo.new(0.25, Enum.EasingStyle.Exponential), { ImageTransparency = 0 })
-                        tween(mainPoint, TweenInfo.new(0.25, Enum.EasingStyle.Exponential), { ImageTransparency = 0 })
-                        tween(hueBar, TweenInfo.new(0.25, Enum.EasingStyle.Exponential), { ImageTransparency = 0 })
-                        tween(huePoint, TweenInfo.new(0.25, Enum.EasingStyle.Exponential), { ImageTransparency = 0 })
+                        pickerHolder.Visible = true
+                        pickerHolder.BackgroundTransparency = 1
+                        tween(pickerBG, TweenInfo.new(0.25, Enum.EasingStyle.Exponential), { BackgroundTransparency = 0 })
                     else
                         opened = false
-                        tween(el, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 0, closedH) })
-                        tween(mainCP, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), { ImageTransparency = 1 })
-                        tween(mainPoint, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), { ImageTransparency = 1 })
-                        tween(hueBar, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), { ImageTransparency = 1 })
-                        tween(huePoint, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), { ImageTransparency = 1 })
+                        tween(pickerBG, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), { BackgroundTransparency = 1 })
+                        task.delay(0.2, function()
+                            pickerHolder.Visible = false
+                        end)
                     end
                 end)
 
-                -- Cleanup on destroy
+                -- Cleanup
                 el.Destroying:Connect(function()
                     if renderConn then renderConn:Disconnect() end
+                    pickerHolder:Destroy()
                 end)
 
                 local ColorObj = {}
@@ -2213,7 +2355,6 @@ function FriendshipLib:CreateWindow(config)
             end
 
             -- ── INPUT / TEXT FIELD ────────────────────────
-            -- Matches web: column layout with label on top, input below
             function Section:CreateTextField(config)
                 config = config or {}
                 local label       = config.Name or config.Label or "Input"
@@ -2224,7 +2365,6 @@ function FriendshipLib:CreateWindow(config)
 
                 local el = makeElement(62)
 
-                -- Label on top
                 local lbl = newLabel({
                     Text = label,
                     TextColor3 = Color3.fromRGB(200, 200, 210),
@@ -2236,7 +2376,6 @@ function FriendshipLib:CreateWindow(config)
                     ZIndex = 9,
                 })
 
-                -- Input field below
                 local inputFrame = newFrame({
                     BackgroundColor3 = Color3.fromRGB(13, 13, 15),
                     Size = UDim2.new(1, -24, 0, 28),
@@ -2266,7 +2405,6 @@ function FriendshipLib:CreateWindow(config)
 
                 animateEntry(el, lbl)
 
-                -- Focus effect: accent border
                 inputBox.Focused:Connect(function()
                     tween(inputStroke, Theme.Fast, { Color = Theme.AccentDim, Transparency = 0.5 })
                 end)
@@ -2300,7 +2438,6 @@ function FriendshipLib:CreateWindow(config)
             end
 
             -- ── LABEL ─────────────────────────────────────
-            -- Matches web: simple text element
             function Section:CreateLabel(config)
                 config = config or {}
                 local text        = config.Text or ""
@@ -2341,7 +2478,6 @@ function FriendshipLib:CreateWindow(config)
             end
 
             -- ── PARAGRAPH ─────────────────────────────────
-            -- Matches web: Title + Content layout
             function Section:CreateParagraph(config)
                 config = config or {}
                 local title   = config.Title   or "Paragraph"
@@ -2434,19 +2570,6 @@ function FriendshipLib:DestroyAll()
 end
 
 -- ============================================================
---  RETURN LIBRARY
+--  RETURN LIBRARY (loadstring only)
 -- ============================================================
-
--- Support both require() and direct execution:
---   require()      -> returns FriendshipLib directly
---   Direct exec    -> sets _G.FriendshipLib for later use
---   loadstring()() -> returns FriendshipLib directly
-
-if rawget(_G, "FriendshipLib") then
-    -- Already loaded, update the global reference
-    _G.FriendshipLib = FriendshipLib
-else
-    _G.FriendshipLib = FriendshipLib
-end
-
 return FriendshipLib
