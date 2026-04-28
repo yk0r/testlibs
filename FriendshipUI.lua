@@ -655,7 +655,7 @@ function FriendshipLib:CreateWindow(config)
     makePadding(sidebarBottom, 0, 0, 0, 18)
 
     newLabel({
-        Text = "WELCOME BACK PREMIUM USER",
+        Text = "WELCOME",
         TextColor3 = Color3.fromRGB(180,180,180),
         Font = Enum.Font.GothamBold,
         TextSize = 10,
