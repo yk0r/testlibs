@@ -2574,6 +2574,7 @@ function FriendshipLib:CreateWindow(config)
                 config = config or {}
                 local title   = config.Title   or "Paragraph"
                 local content = config.Content or ""
+                local color   = config.Color   or nil
 
                 local el = makeElement(60)
                 el.AutomaticSize = Enum.AutomaticSize.Y
@@ -2581,6 +2582,7 @@ function FriendshipLib:CreateWindow(config)
                 local titleLbl = newLabel({
                     Text = title,
                     TextColor3 = Color3.fromRGB(200, 200, 210),
+                    RichText = true,
                     Font = Enum.Font.GothamBold,
                     TextSize = 13,
                     Size = UDim2.new(1, -24, 0, 20),
@@ -2591,7 +2593,8 @@ function FriendshipLib:CreateWindow(config)
 
                 local contentLbl = newLabel({
                     Text = content,
-                    TextColor3 = Color3.fromRGB(130, 130, 140),
+                    TextColor3 = color or Color3.fromRGB(130, 130, 140),
+                    RichText = true,
                     Font = Enum.Font.Gotham,
                     TextSize = 12,
                     Size = UDim2.new(1, -24, 0, 0),
@@ -2606,8 +2609,15 @@ function FriendshipLib:CreateWindow(config)
 
                 local ParagraphObj = {}
                 function ParagraphObj:Set(newConfig)
-                    titleLbl.Text = newConfig.Title or title
-                    contentLbl.Text = newConfig.Content or content
+                    if newConfig.Title ~= nil then
+                        titleLbl.Text = newConfig.Title
+                    end
+                    if newConfig.Content ~= nil then
+                        contentLbl.Text = newConfig.Content
+                    end
+                    if newConfig.Color then
+                        contentLbl.TextColor3 = newConfig.Color
+                    end
                 end
 
                 return ParagraphObj
