@@ -20,7 +20,7 @@
 --    the library is available as _G.FriendshipLib
 -- ====================================================
 
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/yk0r/testlibs/refs/heads/main/FriendshipLua.lua"))()
+local Library = _G.FriendshipLib
 if not Library then
     -- Fallback: try to load via require if it's a sibling module
     local ok, lib = pcall(function()
@@ -344,7 +344,10 @@ GameSection:CreateToggle({
     end
 })
 
-GameSection:CreateSeparator()
+GameSection:CreateParagraph({
+    Title = "Info",
+    Content = "These settings modify the game's rendering. Use with caution as some anti-cheat systems may detect these changes.",
+})
 
 GameSection:CreateButton({
     Label   = "Rejoin Server",
