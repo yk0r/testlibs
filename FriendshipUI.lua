@@ -543,29 +543,6 @@ local function makeDraggable(frame, handle)
     end)
 end
 
--- ============================================================
---  ROUNDED CORNERS FIX (Rayfield method: ImageLabel mask)
---  Uses a 9-slice rounded corner image to clip the window
--- ============================================================
-local CORNER_IMAGE = "rbxassetid://5344479619" -- Rayfield-style rounded corner mask
-
-local function applyWindowCorners(frame, radius)
-    -- Method: Use an ImageLabel as a clipping mask overlay
-    -- This image is a white rounded rectangle on transparent background
-    -- We set it as the last child with ZIndex higher than content
-    -- and use it as a BlendSource if supported, or use ClipsDescendants
-    -- with UICorner (the simpler Roblox-native approach)
-    --
-    -- Actually, the proper Rayfield method for corners is:
-    -- The window frame uses ClipsDescendants = true + UICorner
-    -- But sidebar/content area children can break corners if they
-    -- extend to edges. The fix: apply UICorner to BOTH the parent
-    -- AND any edge-touching children (sidebar, header, footer).
-    --
-    -- For the window itself:
-    makeCorner(frame, radius or 8)
-    frame.ClipsDescendants = true
-end
 
 -- ============================================================
 --  WINDOW
@@ -608,9 +585,7 @@ function FriendshipLib:CreateWindow(config)
         Position = position,
         Parent = screenGui,
         ZIndex = 3,
-        ClipsDescendants = true,
     })
-    -- Rayfield-style corners: use proper radius + ClipsDescendants
     makeCorner(mainWindow, 8)
     makeStroke(mainWindow, Color3.fromRGB(255,255,255), 1, 0.9)
 
@@ -623,7 +598,7 @@ function FriendshipLib:CreateWindow(config)
         Parent = mainWindow,
         ZIndex = 4,
     })
-    -- Sidebar corners are handled by mainWindow's ClipsDescendants — no UICorner here
+    makeCorner(sidebar, 8)
 
     -- Brand logo area - MOVED LEFT (padding from 18 -> 10)
     local brandArea = newFrame({
@@ -736,12 +711,12 @@ function FriendshipLib:CreateWindow(config)
         Parent = sidebar,
         ZIndex = 5,
     })
-    -- sidebarBottom corners handled by mainWindow's ClipsDescendants — no UICorner
+    makeCorner(sidebarBottom, 8)
     makeStroke(sidebarBottom, Color3.fromRGB(255,255,255), 1, 0.95)
     makePadding(sidebarBottom, 0, 0, 0, 10)
 
     newLabel({
-        Text = "WELCOME BACK PREMIUM USER",
+        Text = "Welcome back,",
         TextColor3 = Color3.fromRGB(180,180,180),
         Font = Enum.Font.GothamBold,
         TextSize = 10,
@@ -785,7 +760,7 @@ function FriendshipLib:CreateWindow(config)
         Parent = contentArea,
         ZIndex = 5,
     })
-    -- Header top-right corner handled by mainWindow's ClipsDescendants — no UICorner here
+    makeCorner(header, 8)
     makeStroke(header, Color3.fromRGB(255,255,255), 1, 0.95)
 
     -- Breadcrumb left
@@ -962,7 +937,7 @@ function FriendshipLib:CreateWindow(config)
         Parent = contentArea,
         ZIndex = 5,
     })
-    -- Footer bottom-right corner handled by mainWindow's ClipsDescendants — no UICorner here
+    makeCorner(footer, 8)
     makeStroke(footer, Color3.fromRGB(255,255,255), 1, 0.95)
 
     local footerLeft = newFrame({
@@ -1005,7 +980,7 @@ function FriendshipLib:CreateWindow(config)
     })
 
     local buildLabel = newLabel({
-        Text = "BUILD: V1.0.5A -Friendship.Lua BY DEVTEAM: 50MASTER YK0R MIKBRAY-",
+        Text = "BUILD: V1.0.5A",
         TextColor3 = Theme.TextFaint,
         Font = Enum.Font.GothamBold,
         TextSize = 8,
@@ -1026,6 +1001,166 @@ function FriendshipLib:CreateWindow(config)
         ZIndex = 6,
     })
     footerBrand.TextXAlignment = Enum.TextXAlignment.Right
+
+    -- ── RAYFIELD-STYLE CORNER REPAIR ──────────────────────────
+    -- When both mainWindow and its children have UICorner(8),
+    -- their curves overlap at the 4 outer corners, creating tiny
+    -- diamond-shaped gaps. CornerRepair fills these gaps.
+    -- Also, children's inner corners get rounded (unwanted), so
+    -- we fill those with small rectangular patches.
+
+    local CR = 8 -- corner radius, must match UICorner
+
+    -- Outer corner repairs (fill gap between mainWindow UICorner and child UICorner)
+    -- Top-left: sidebar area
+    local crTL = Instance.new("Frame")
+    crTL.Name = "CornerRepair_TL"
+    crTL.BackgroundColor3 = Theme.BG_Sidebar
+    crTL.BorderSizePixel = 0
+    crTL.Size = UDim2.new(0, CR, 0, CR)
+    crTL.Position = UDim2.new(0, 0, 0, 0)
+    crTL.ZIndex = 9
+    crTL.Parent = mainWindow
+
+    -- Top-right: header area — header is child of contentArea (transparent), mainWindow bg shows through
+    local crTR = Instance.new("Frame")
+    crTR.Name = "CornerRepair_TR"
+    crTR.BackgroundColor3 = Theme.BG_Window
+    crTR.BorderSizePixel = 0
+    crTR.Size = UDim2.new(0, CR, 0, CR)
+    crTR.Position = UDim2.new(1, -CR, 0, 0)
+    crTR.ZIndex = 9
+    crTR.Parent = mainWindow
+
+    -- Bottom-left: sidebarBottom area — sidebar covers this corner, use sidebar color
+    local crBL = Instance.new("Frame")
+    crBL.Name = "CornerRepair_BL"
+    crBL.BackgroundColor3 = Theme.BG_Sidebar
+    crBL.BorderSizePixel = 0
+    crBL.Size = UDim2.new(0, CR, 0, CR)
+    crBL.Position = UDim2.new(0, 0, 1, -CR)
+    crBL.ZIndex = 9
+    crBL.Parent = mainWindow
+
+    -- Bottom-right: footer area — contentArea is transparent, mainWindow bg shows
+    local crBR = Instance.new("Frame")
+    crBR.Name = "CornerRepair_BR"
+    crBR.BackgroundColor3 = Theme.BG_Window
+    crBR.BorderSizePixel = 0
+    crBR.Size = UDim2.new(0, CR, 0, CR)
+    crBR.Position = UDim2.new(1, -CR, 1, -CR)
+    crBR.ZIndex = 9
+    crBR.Parent = mainWindow
+
+    -- Inner corner fills (fix unwanted UICorner on children's inner edges)
+    -- Sidebar top-right inner corner (where sidebar meets header)
+    local fillSTR = Instance.new("Frame")
+    fillSTR.Name = "Fill_SidebarTR"
+    fillSTR.BackgroundColor3 = Theme.BG_Window
+    fillSTR.BorderSizePixel = 0
+    fillSTR.Size = UDim2.new(0, CR, 0, CR)
+    fillSTR.Position = UDim2.new(1, -CR - 0, 0, 0)
+    fillSTR.ZIndex = 9
+    fillSTR.Parent = sidebar
+
+    -- Sidebar bottom-right inner corner (where sidebar meets footer)
+    local fillSBR = Instance.new("Frame")
+    fillSBR.Name = "Fill_SidebarBR"
+    fillSBR.BackgroundColor3 = Theme.BG_Window
+    fillSBR.BorderSizePixel = 0
+    fillSBR.Size = UDim2.new(0, CR, 0, CR)
+    fillSBR.Position = UDim2.new(1, -CR - 0, 1, -CR)
+    fillSBR.ZIndex = 9
+    fillSBR.Parent = sidebar
+
+    -- Header bottom-left inner corner
+    local fillHBL = Instance.new("Frame")
+    fillHBL.Name = "Fill_HeaderBL"
+    fillHBL.BackgroundColor3 = Theme.BG_Window
+    fillHBL.BorderSizePixel = 0
+    fillHBL.Size = UDim2.new(0, CR, 0, CR)
+    fillHBL.Position = UDim2.new(0, 0, 1, -CR)
+    fillHBL.ZIndex = 9
+    fillHBL.Parent = header
+
+    -- Header bottom-right inner corner
+    local fillHBR = Instance.new("Frame")
+    fillHBR.Name = "Fill_HeaderBR"
+    fillHBR.BackgroundColor3 = Theme.BG_Window
+    fillHBR.BorderSizePixel = 0
+    fillHBR.Size = UDim2.new(0, CR, 0, CR)
+    fillHBR.Position = UDim2.new(1, -CR, 1, -CR)
+    fillHBL.ZIndex = 9
+    fillHBR.Parent = header
+
+    -- Footer top-left inner corner
+    local fillFTL = Instance.new("Frame")
+    fillFTL.Name = "Fill_FooterTL"
+    fillFTL.BackgroundColor3 = Theme.BG_Window
+    fillFTL.BorderSizePixel = 0
+    fillFTL.Size = UDim2.new(0, CR, 0, CR)
+    fillFTL.Position = UDim2.new(0, 0, 0, 0)
+    fillFTL.ZIndex = 9
+    fillFTL.Parent = footer
+
+    -- Footer top-right inner corner
+    local fillFTR = Instance.new("Frame")
+    fillFTR.Name = "Fill_FooterTR"
+    fillFTR.BackgroundColor3 = Theme.BG_Window
+    fillFTR.BorderSizePixel = 0
+    fillFTR.Size = UDim2.new(0, CR, 0, CR)
+    fillFTR.Position = UDim2.new(1, -CR, 0, 0)
+    fillFTR.ZIndex = 9
+    fillFTR.Parent = footer
+
+    -- SidebarBottom top-left & top-right inner corners
+    local fillSBTL = Instance.new("Frame")
+    fillSBTL.Name = "Fill_SBTopLeft"
+    fillSBTL.BackgroundColor3 = Theme.BG_Sidebar
+    fillSBTL.BorderSizePixel = 0
+    fillSBTL.Size = UDim2.new(0, CR, 0, CR)
+    fillSBTL.Position = UDim2.new(0, 0, 0, 0)
+    fillSBTL.ZIndex = 9
+    fillSBTL.Parent = sidebarBottom
+
+    local fillSBTR = Instance.new("Frame")
+    fillSBTR.Name = "Fill_SBTopRight"
+    fillSBTR.BackgroundColor3 = Theme.BG_Sidebar
+    fillSBTR.BorderSizePixel = 0
+    fillSBTR.Size = UDim2.new(0, CR, 0, CR)
+    fillSBTR.Position = UDim2.new(1, -CR, 0, 0)
+    fillSBTR.ZIndex = 9
+    fillSBTR.Parent = sidebarBottom
+
+    -- SidebarBottom bottom-right inner corner
+    local fillSBBR = Instance.new("Frame")
+    fillSBBR.Name = "Fill_SBBotRight"
+    fillSBBR.BackgroundColor3 = Theme.BG_Sidebar
+    fillSBBR.BorderSizePixel = 0
+    fillSBBR.Size = UDim2.new(0, CR, 0, CR)
+    fillSBBR.Position = UDim2.new(1, -CR, 1, -CR)
+    fillSBBR.ZIndex = 9
+    fillSBBR.Parent = sidebarBottom
+
+    -- Header top-left inner corner (header sits in contentArea, left edge meets sidebar)
+    local fillHTL = Instance.new("Frame")
+    fillHTL.Name = "Fill_HeaderTL"
+    fillHTL.BackgroundColor3 = Theme.BG_Window
+    fillHTL.BorderSizePixel = 0
+    fillHTL.Size = UDim2.new(0, CR, 0, CR)
+    fillHTL.Position = UDim2.new(0, 0, 0, 0)
+    fillHTL.ZIndex = 9
+    fillHTL.Parent = header
+
+    -- Footer bottom-left inner corner
+    local fillFBL = Instance.new("Frame")
+    fillFBL.Name = "Fill_FooterBL"
+    fillFBL.BackgroundColor3 = Theme.BG_Window
+    fillFBL.BorderSizePixel = 0
+    fillFBL.Size = UDim2.new(0, CR, 0, CR)
+    fillFBL.Position = UDim2.new(0, 0, 1, -CR)
+    fillFBL.ZIndex = 9
+    fillFBL.Parent = footer
 
     -- Make header draggable
     makeDraggable(mainWindow, header)
