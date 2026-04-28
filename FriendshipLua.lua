@@ -556,14 +556,14 @@ function FriendshipLib:CreateWindow(config)
         Parent = brandArea,
         ZIndex = 6,
     })
-    makeCorner(logoBox, 6)
+    makeCorner(logoBox, 5)
     makeStroke(logoBox, Theme.AccentDim, 1, 0.4)
 
     newLabel({
         Text = "F",
         TextColor3 = Theme.Accent,
         Font = Enum.Font.GothamBold,
-        TextSize = 20,
+        TextSize = 16,
         Size = UDim2.new(1, 0, 1, 0),
         Parent = logoBox,
         ZIndex = 7,
@@ -572,8 +572,8 @@ function FriendshipLib:CreateWindow(config)
     -- Dot indicator on logo
     local logoDot = newFrame({
         BackgroundColor3 = Theme.Accent,
-        Size = UDim2.new(0, 8, 0, 8),
-        Position = UDim2.new(1, -4, 0, -4),
+        Size = UDim2.new(0, 6, 0, 6),
+        Position = UDim2.new(1, -3, 0, -3),
         Parent = logoBox,
         ZIndex = 7,
     })
@@ -584,9 +584,9 @@ function FriendshipLib:CreateWindow(config)
         Text = title:match("^([^%.]+)") or title,
         TextColor3 = Color3.fromRGB(220,220,220),
         Font = Enum.Font.GothamBold,
-        TextSize = 15,
-        Size = UDim2.new(0, 130, 0, 18),
-        Position = UDim2.new(0, 72, 0.5, -18),
+        TextSize = 13,
+        Size = UDim2.new(0, 120, 0, 16),
+        Position = UDim2.new(0, 54, 0.5, -16),
         Parent = brandArea,
         ZIndex = 6,
     })
@@ -597,9 +597,9 @@ function FriendshipLib:CreateWindow(config)
             Text = "." .. titleExt,
             TextColor3 = Theme.Accent,
             Font = Enum.Font.GothamBold,
-            TextSize = 15,
-            Size = UDim2.new(0, 130, 0, 18),
-            Position = UDim2.new(0, 72 + TextService:GetTextSize(title:match("^([^%.]+)"), 15, Enum.Font.GothamBold, Vector2.new(200,20)).X, 0.5, -18),
+            TextSize = 13,
+            Size = UDim2.new(0, 120, 0, 16),
+            Position = UDim2.new(0, 54 + TextService:GetTextSize(title:match("^([^%.]+)"), 13, Enum.Font.GothamBold, Vector2.new(200,20)).X, 0.5, -16),
             Parent = brandArea,
             ZIndex = 6,
         })
@@ -610,9 +610,9 @@ function FriendshipLib:CreateWindow(config)
         Text = string.upper(subtitle),
         TextColor3 = Theme.TextFaint,
         Font = Enum.Font.GothamBold,
-        TextSize = 9,
-        Size = UDim2.new(0, 130, 0, 14),
-        Position = UDim2.new(0, 72, 0.5, 4),
+        TextSize = 8,
+        Size = UDim2.new(0, 120, 0, 12),
+        Position = UDim2.new(0, 54, 0.5, 3),
         Parent = brandArea,
         ZIndex = 6,
     })
@@ -652,15 +652,15 @@ function FriendshipLib:CreateWindow(config)
         ZIndex = 5,
     })
     makeStroke(sidebarBottom, Color3.fromRGB(255,255,255), 1, 0.95)
-    makePadding(sidebarBottom, 0, 0, 0, 24)
+    makePadding(sidebarBottom, 0, 0, 0, 18)
 
     newLabel({
         Text = "Welcome back,",
         TextColor3 = Color3.fromRGB(180,180,180),
         Font = Enum.Font.GothamBold,
-        TextSize = 12,
-        Size = UDim2.new(1, -24, 0, 16),
-        Position = UDim2.new(0, 0, 0, 13),
+        TextSize = 10,
+        Size = UDim2.new(1, -18, 0, 12),
+        Position = UDim2.new(0, 0, 0, 10),
         Parent = sidebarBottom,
         ZIndex = 6,
     })
@@ -672,9 +672,9 @@ function FriendshipLib:CreateWindow(config)
         Text = string.upper(playerName),
         TextColor3 = Theme.TextAccent,
         Font = Enum.Font.GothamBold,
-        TextSize = 10,
-        Size = UDim2.new(1, -24, 0, 14),
-        Position = UDim2.new(0, 0, 0, 31),
+        TextSize = 9,
+        Size = UDim2.new(1, -18, 0, 12),
+        Position = UDim2.new(0, 0, 0, 24),
         Parent = sidebarBottom,
         ZIndex = 6,
     })
@@ -704,19 +704,19 @@ function FriendshipLib:CreateWindow(config)
     -- Breadcrumb left
     local breadcrumbContainer = newFrame({
         BackgroundTransparency = 1,
-        Size = UDim2.new(0, 200, 1, 0),
-        Position = UDim2.new(0, 28, 0, 0),
+        Size = UDim2.new(0, 180, 1, 0),
+        Position = UDim2.new(0, 16, 0, 0),
         Parent = header,
         ZIndex = 6,
     })
-    makeListLayout(breadcrumbContainer, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Left, 8)
+    makeListLayout(breadcrumbContainer, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Left, 6)
     breadcrumbContainer.AutomaticSize = Enum.AutomaticSize.X
 
     local breadcrumbMeta = newLabel({
         Text = "CURRENT CATEGORY",
         TextColor3 = Theme.TextFaint,
         Font = Enum.Font.GothamBold,
-        TextSize = 9,
+        TextSize = 8,
         Size = UDim2.new(0, 0, 1, 0),
         Parent = breadcrumbContainer,
         ZIndex = 6,
@@ -727,7 +727,7 @@ function FriendshipLib:CreateWindow(config)
         Text = "›",
         TextColor3 = Theme.TextFaint,
         Font = Enum.Font.GothamBold,
-        TextSize = 14,
+        TextSize = 12,
         Size = UDim2.new(0, 10, 1, 0),
         Parent = breadcrumbContainer,
         ZIndex = 6,
@@ -739,7 +739,7 @@ function FriendshipLib:CreateWindow(config)
         Text = "Home",
         TextColor3 = Theme.Accent,
         Font = Enum.Font.GothamBold,
-        TextSize = 13,
+        TextSize = 12,
         Size = UDim2.new(0, 0, 1, 0),
         Parent = breadcrumbContainer,
         ZIndex = 6,
@@ -754,9 +754,9 @@ function FriendshipLib:CreateWindow(config)
         BackgroundTransparency = 1,
         TextColor3 = Theme.TextDim,
         Font = Enum.Font.GothamBold,
-        TextSize = 18,
-        Size = UDim2.new(0, 28, 0, 28),
-        Position = UDim2.new(1, -40, 0.5, -14),
+        TextSize = 16,
+        Size = UDim2.new(0, 24, 0, 24),
+        Position = UDim2.new(1, -34, 0.5, -12),
         Parent = header,
         ZIndex = 6,
     })
@@ -780,9 +780,9 @@ function FriendshipLib:CreateWindow(config)
         BackgroundTransparency = 1,
         TextColor3 = Theme.TextDim,
         Font = Enum.Font.GothamBold,
-        TextSize = 12,
-        Size = UDim2.new(0, 28, 0, 28),
-        Position = UDim2.new(1, -72, 0.5, -14),
+        TextSize = 11,
+        Size = UDim2.new(0, 24, 0, 24),
+        Position = UDim2.new(1, -62, 0.5, -12),
         Parent = header,
         ZIndex = 6,
     })
@@ -797,7 +797,7 @@ function FriendshipLib:CreateWindow(config)
     minBtn.MouseButton1Click:Connect(function()
         minimized = not minimized
         if minimized then
-            tween(mainWindow, Theme.Medium, { Size = UDim2.fromOffset(size.X.Offset, 60) })
+            tween(mainWindow, Theme.Medium, { Size = UDim2.fromOffset(size.X.Offset, 48) })
         else
             tween(mainWindow, Theme.Spring, { Size = size })
         end
@@ -811,7 +811,7 @@ function FriendshipLib:CreateWindow(config)
         Position = UDim2.new(0, 0, 0, 48),
         Parent = contentArea,
         ZIndex = 5,
-        ClipsDescendants = true,
+        ClipsDescendants = false,
     })
     makePadding(pagesContainer, 16, 16, 16, 16)
 
@@ -831,16 +831,16 @@ function FriendshipLib:CreateWindow(config)
     local footerLeft = newFrame({
         BackgroundTransparency = 1,
         Size = UDim2.new(0.5, 0, 1, 0),
-        Position = UDim2.new(0, 20, 0, 0),
+        Position = UDim2.new(0, 12, 0, 0),
         Parent = footer,
         ZIndex = 6,
     })
-    makeListLayout(footerLeft, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Left, 14)
+    makeListLayout(footerLeft, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Left, 10)
 
     -- Status indicator
     local statusDot = newFrame({
         BackgroundColor3 = Theme.Success,
-        Size = UDim2.new(0, 6, 0, 6),
+        Size = UDim2.new(0, 5, 0, 5),
         Parent = footerLeft,
         ZIndex = 7,
     })
@@ -850,8 +850,8 @@ function FriendshipLib:CreateWindow(config)
         Text = "STATUS: INJECTED",
         TextColor3 = Theme.TextFaint,
         Font = Enum.Font.GothamBold,
-        TextSize = 9,
-        Size = UDim2.new(0, 120, 1, 0),
+        TextSize = 8,
+        Size = UDim2.new(0, 100, 1, 0),
         Parent = footerLeft,
         ZIndex = 6,
     })
@@ -861,8 +861,8 @@ function FriendshipLib:CreateWindow(config)
         Text = "·",
         TextColor3 = Theme.TextFaint,
         Font = Enum.Font.GothamBold,
-        TextSize = 9,
-        Size = UDim2.new(0, 8, 1, 0),
+        TextSize = 8,
+        Size = UDim2.new(0, 6, 1, 0),
         Parent = footerLeft,
         ZIndex = 6,
     })
@@ -872,8 +872,8 @@ function FriendshipLib:CreateWindow(config)
         Text = "BUILD: V1.0.4A",
         TextColor3 = Theme.TextFaint,
         Font = Enum.Font.GothamBold,
-        TextSize = 9,
-        Size = UDim2.new(0, 120, 1, 0),
+        TextSize = 8,
+        Size = UDim2.new(0, 100, 1, 0),
         Parent = footerLeft,
         ZIndex = 6,
     })
@@ -884,7 +884,7 @@ function FriendshipLib:CreateWindow(config)
         Text = string.upper(title),
         TextColor3 = Theme.TextFaint,
         Font = Enum.Font.GothamBold,
-        TextSize = 9,
+        TextSize = 8,
         Size = UDim2.new(0.4, 0, 1, 0),
         Position = UDim2.new(0.6, 0, 0, 0),
         Parent = footer,
@@ -1612,7 +1612,7 @@ function FriendshipLib:CreateWindow(config)
                             end
                         end
                         isOpen = false
-                        tween(listFrame, Theme.Fast, { Size = UDim2.new(1, 0, 0, 0) })
+                        tween(listFrame, Theme.Fast, { Size = UDim2.new(0, btnRow.AbsoluteSize.X, 0, 0) })
                         task.delay(0.15, function() listFrame.Visible = false end)
                         tween(chevronLbl, Theme.Fast, { Rotation = 0 })
                         pcall(callback, opt)
@@ -1632,13 +1632,20 @@ function FriendshipLib:CreateWindow(config)
                 btnRow.MouseButton1Click:Connect(function()
                     isOpen = not isOpen
                     if isOpen then
+                        -- Position dropdown relative to mainWindow
+                        local btnPos = btnRow.AbsolutePosition
+                        local winPos = mainWindow.AbsolutePosition
+                        local relX = btnPos.X - winPos.X
+                        local relY = btnPos.Y - winPos.Y + btnRow.AbsoluteSize.Y + 2
+                        listFrame.Position = UDim2.new(0, relX, 0, relY)
+                        listFrame.Size = UDim2.new(0, btnRow.AbsoluteSize.X, 0, 0)
                         listFrame.Visible = true
                         tween(listFrame, Theme.Fast, {
-                            Size = UDim2.new(1, 0, 0, math.min(#options, 5) * 28 + 8)
+                            Size = UDim2.new(0, btnRow.AbsoluteSize.X, 0, dropdownListHeight)
                         })
                         tween(chevronLbl, Theme.Fast, { Rotation = 180 })
                     else
-                        tween(listFrame, Theme.Fast, { Size = UDim2.new(1, 0, 0, 0) })
+                        tween(listFrame, Theme.Fast, { Size = UDim2.new(0, btnRow.AbsoluteSize.X, 0, 0) })
                         task.delay(0.15, function() listFrame.Visible = false end)
                         tween(chevronLbl, Theme.Fast, { Rotation = 0 })
                     end
@@ -1674,13 +1681,14 @@ function FriendshipLib:CreateWindow(config)
                             Text = opt,
                             TextColor3 = opt == selected and Theme.Accent or Color3.fromRGB(140,140,150),
                             Font = Enum.Font.GothamSemibold,
-                            TextSize = 12,
-                            Size = UDim2.new(1, 0, 0, 28),
+                            TextSize = 11,
+                            Size = UDim2.new(1, 0, 0, 24),
                             Parent = listFrame,
                             ZIndex = 51,
                         })
                         optBtn.TextXAlignment = Enum.TextXAlignment.Left
-                        makePadding(optBtn, 0, 0, 0, 8)
+                        makePadding(optBtn, 0, 0, 0, 6)
+                        makeCorner(optBtn, 3)
                     end
                 end
 
@@ -1700,20 +1708,20 @@ function FriendshipLib:CreateWindow(config)
                 local row = newFrame({
                     BackgroundColor3 = Color3.fromRGB(0,0,0),
                     BackgroundTransparency = 1,
-                    Size = UDim2.new(1, 0, 0, 40),
+                    Size = UDim2.new(1, 0, 0, 32),
                     Parent = self._container,
                     ZIndex = 8,
                 })
                 row.LayoutOrder = nextOrder()
-                makeCorner(row, 6)
-                makePadding(row, 0, 8, 0, 10)
+                makeCorner(row, 4)
+                makePadding(row, 0, 8, 0, 8)
 
                 local lbl = newLabel({
                     Text = label,
                     TextColor3 = Color3.fromRGB(180,180,180),
                     Font = Enum.Font.GothamSemibold,
-                    TextSize = 13,
-                    Size = UDim2.new(1, -90, 1, 0),
+                    TextSize = 12,
+                    Size = UDim2.new(1, -80, 1, 0),
                     Parent = row,
                     ZIndex = 9,
                 })
@@ -1724,9 +1732,9 @@ function FriendshipLib:CreateWindow(config)
                     Text = currentKey.Name,
                     TextColor3 = Theme.TextFaint,
                     Font = Enum.Font.GothamBold,
-                    TextSize = 10,
-                    Size = UDim2.new(0, 78, 0, 24),
-                    Position = UDim2.new(1, -86, 0.5, -12),
+                    TextSize = 9,
+                    Size = UDim2.new(0, 68, 0, 22),
+                    Position = UDim2.new(1, -76, 0.5, -11),
                     Parent = row,
                     ZIndex = 9,
                 })
@@ -1817,12 +1825,12 @@ function FriendshipLib:CreateWindow(config)
 
                 local wrap = newFrame({
                     BackgroundTransparency = 1,
-                    Size = UDim2.new(1, 0, 0, 48),
+                    Size = UDim2.new(1, 0, 0, 38),
                     Parent = self._container,
                     ZIndex = 8,
                 })
                 wrap.LayoutOrder = nextOrder()
-                makePadding(wrap, 6, 8, 6, 8)
+                makePadding(wrap, 4, 6, 4, 6)
 
                 local btn = newButton({
                     BackgroundColor3 = style.bg,
@@ -1830,12 +1838,12 @@ function FriendshipLib:CreateWindow(config)
                     Text = string.upper(label),
                     TextColor3 = style.text,
                     Font = Enum.Font.GothamBold,
-                    TextSize = 11,
+                    TextSize = 10,
                     Size = UDim2.new(1, 0, 1, 0),
                     Parent = wrap,
                     ZIndex = 9,
                 })
-                makeCorner(btn, 6)
+                makeCorner(btn, 5)
                 makeStroke(btn, style.border, 1, 0.4)
 
                 btn.MouseEnter:Connect(function()
@@ -1875,20 +1883,20 @@ function FriendshipLib:CreateWindow(config)
                 local row = newFrame({
                     BackgroundColor3 = Color3.fromRGB(0,0,0),
                     BackgroundTransparency = 1,
-                    Size = UDim2.new(1, 0, 0, 40),
+                    Size = UDim2.new(1, 0, 0, 32),
                     Parent = self._container,
                     ZIndex = 8,
                 })
                 row.LayoutOrder = nextOrder()
-                makeCorner(row, 6)
-                makePadding(row, 0, 8, 0, 10)
+                makeCorner(row, 4)
+                makePadding(row, 0, 8, 0, 8)
 
                 local lbl = newLabel({
                     Text = label,
                     TextColor3 = Color3.fromRGB(180,180,180),
                     Font = Enum.Font.GothamSemibold,
-                    TextSize = 13,
-                    Size = UDim2.new(1, -100, 1, 0),
+                    TextSize = 12,
+                    Size = UDim2.new(1, -80, 1, 0),
                     Parent = row,
                     ZIndex = 9,
                 })
@@ -1897,9 +1905,9 @@ function FriendshipLib:CreateWindow(config)
                     Text = colorToHex(currentColor),
                     TextColor3 = Theme.TextFaint,
                     Font = Enum.Font.GothamBold,
-                    TextSize = 9,
-                    Size = UDim2.new(0, 58, 1, 0),
-                    Position = UDim2.new(1, -92, 0, 0),
+                    TextSize = 8,
+                    Size = UDim2.new(0, 46, 1, 0),
+                    Position = UDim2.new(1, -72, 0, 0),
                     Parent = row,
                     ZIndex = 9,
                 })
@@ -1907,26 +1915,26 @@ function FriendshipLib:CreateWindow(config)
 
                 local swatch = newButton({
                     BackgroundColor3 = currentColor,
-                    Size = UDim2.new(0, 24, 0, 24),
-                    Position = UDim2.new(1, -32, 0.5, -12),
+                    Size = UDim2.new(0, 20, 0, 20),
+                    Position = UDim2.new(1, -28, 0.5, -10),
                     Parent = row,
                     ZIndex = 9,
                 })
-                makeCorner(swatch, 4)
+                makeCorner(swatch, 3)
                 makeStroke(swatch, Color3.fromRGB(255,255,255), 1, 0.85)
 
-                -- Color picker panel (simplified: RGB sliders)
+                -- Color picker panel — also parented to mainWindow to avoid clipping
                 local pickerPanel = newFrame({
                     BackgroundColor3 = Theme.BG_Dropdown,
-                    Size = UDim2.new(1, 0, 0, 0),
-                    Position = UDim2.new(0, 0, 1, 4),
+                    Size = UDim2.new(0, 0, 0, 0),
+                    Position = UDim2.new(0, 0, 0, 0),
                     ZIndex = 40,
-                    Parent = row,
+                    Parent = mainWindow,
                     ClipsDescendants = true,
                 })
-                makeCorner(pickerPanel, 6)
+                makeCorner(pickerPanel, 5)
                 makeStroke(pickerPanel, Color3.fromRGB(255,255,255), 1, 0.9)
-                makePadding(pickerPanel, 8, 8, 8, 8)
+                makePadding(pickerPanel, 6, 6, 6, 6)
                 pickerPanel.Visible = false
 
                 local panelLayout = makeListLayout(pickerPanel, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 6)
@@ -1943,18 +1951,18 @@ function FriendshipLib:CreateWindow(config)
                 for _, ch in ipairs(channels) do
                     local chRow = newFrame({
                         BackgroundTransparency = 1,
-                        Size = UDim2.new(1, 0, 0, 20),
+                        Size = UDim2.new(1, 0, 0, 16),
                         Parent = pickerPanel,
                         ZIndex = 41,
                     })
-                    makeListLayout(chRow, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Left, 6)
+                    makeListLayout(chRow, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Left, 4)
 
                     newLabel({
                         Text = ch.name,
                         TextColor3 = ch.color,
                         Font = Enum.Font.GothamBold,
-                        TextSize = 10,
-                        Size = UDim2.new(0, 10, 1, 0),
+                        TextSize = 9,
+                        Size = UDim2.new(0, 8, 1, 0),
                         Parent = chRow,
                         ZIndex = 42,
                     })
@@ -1962,7 +1970,7 @@ function FriendshipLib:CreateWindow(config)
                     local trackBG2 = newFrame({
                         BackgroundColor3 = Color3.fromRGB(255,255,255),
                         BackgroundTransparency = 0.9,
-                        Size = UDim2.new(1, -50, 0, 6),
+                        Size = UDim2.new(1, -40, 0, 5),
                         Parent = chRow,
                         ZIndex = 42,
                     })
@@ -1981,8 +1989,8 @@ function FriendshipLib:CreateWindow(config)
                         Text = tostring(ch.getter(currentColor)),
                         TextColor3 = Theme.TextFaint,
                         Font = Enum.Font.GothamBold,
-                        TextSize = 9,
-                        Size = UDim2.new(0, 30, 1, 0),
+                        TextSize = 8,
+                        Size = UDim2.new(0, 24, 1, 0),
                         Parent = chRow,
                         ZIndex = 42,
                     })
@@ -2027,6 +2035,13 @@ function FriendshipLib:CreateWindow(config)
                 swatch.MouseButton1Click:Connect(function()
                     pickerOpen = not pickerOpen
                     if pickerOpen then
+                        -- Position picker relative to mainWindow
+                        local swPos = swatch.AbsolutePosition
+                        local winPos = mainWindow.AbsolutePosition
+                        local relX = swPos.X - winPos.X - 80
+                        local relY = swPos.Y - winPos.Y + swatch.AbsoluteSize.Y + 4
+                        pickerPanel.Position = UDim2.new(0, relX, 0, relY)
+                        pickerPanel.Size = UDim2.new(0, 160, 0, 0)
                         pickerPanel.Visible = true
                         -- Update sliders to current color
                         for _, cs in ipairs(channelSliders) do
@@ -2034,9 +2049,9 @@ function FriendshipLib:CreateWindow(config)
                             cs.valLbl.Text = tostring(v)
                             tween(cs.fill, Theme.Fast, { Size = UDim2.new(v/255, 0, 1, 0) })
                         end
-                        tween(pickerPanel, Theme.Fast, { Size = UDim2.new(1, 0, 0, 100) })
+                        tween(pickerPanel, Theme.Fast, { Size = UDim2.new(0, 160, 0, 90) })
                     else
-                        tween(pickerPanel, Theme.Fast, { Size = UDim2.new(1, 0, 0, 0) })
+                        tween(pickerPanel, Theme.Fast, { Size = UDim2.new(0, 160, 0, 0) })
                         task.delay(0.15, function() pickerPanel.Visible = false end)
                     end
                 end)
@@ -2073,20 +2088,20 @@ function FriendshipLib:CreateWindow(config)
 
                 local wrap = newFrame({
                     BackgroundTransparency = 1,
-                    Size = UDim2.new(1, 0, 0, 60),
+                    Size = UDim2.new(1, 0, 0, 48),
                     Parent = self._container,
                     ZIndex = 8,
                 })
                 wrap.LayoutOrder = nextOrder()
-                makePadding(wrap, 6, 10, 6, 10)
-                makeListLayout(wrap, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 4)
+                makePadding(wrap, 4, 8, 4, 8)
+                makeListLayout(wrap, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 3)
 
                 newLabel({
                     Text = label,
                     TextColor3 = Color3.fromRGB(180,180,180),
                     Font = Enum.Font.GothamSemibold,
-                    TextSize = 13,
-                    Size = UDim2.new(1, 0, 0, 18),
+                    TextSize = 12,
+                    Size = UDim2.new(1, 0, 0, 14),
                     Parent = wrap,
                     ZIndex = 9,
                 })
@@ -2095,20 +2110,20 @@ function FriendshipLib:CreateWindow(config)
                 inputBox.BackgroundColor3 = Color3.fromRGB(255,255,255)
                 inputBox.BackgroundTransparency = 0.93
                 inputBox.BorderSizePixel = 0
-                inputBox.Size = UDim2.new(1, 0, 0, 26)
+                inputBox.Size = UDim2.new(1, 0, 0, 22)
                 inputBox.Text = default
                 inputBox.PlaceholderText = placeholder
                 inputBox.TextColor3 = Color3.fromRGB(170,170,180)
                 inputBox.PlaceholderColor3 = Theme.TextFaint
                 inputBox.Font = Enum.Font.GothamSemibold
-                inputBox.TextSize = 12
+                inputBox.TextSize = 11
                 inputBox.TextXAlignment = Enum.TextXAlignment.Left
                 inputBox.ClearTextOnFocus = false
                 inputBox.Parent = wrap
                 inputBox.ZIndex = 9
-                makeCorner(inputBox, 4)
+                makeCorner(inputBox, 3)
                 makeStroke(inputBox, Color3.fromRGB(255,255,255), 1, 0.9)
-                makePadding(inputBox, 0, 6, 0, 8)
+                makePadding(inputBox, 0, 5, 0, 6)
 
                 inputBox.Focused:Connect(function()
                     tween(inputBox, Theme.Fast, {
@@ -2158,18 +2173,18 @@ function FriendshipLib:CreateWindow(config)
 
                 local wrap = newFrame({
                     BackgroundTransparency = 1,
-                    Size = UDim2.new(1, 0, 0, 30),
+                    Size = UDim2.new(1, 0, 0, 24),
                     Parent = self._container,
                     ZIndex = 8,
                 })
                 wrap.LayoutOrder = nextOrder()
-                makePadding(wrap, 4, 10, 4, 10)
+                makePadding(wrap, 2, 8, 2, 8)
 
                 local lbl = newLabel({
                     Text = text,
                     TextColor3 = color,
                     Font = Enum.Font.Gotham,
-                    TextSize = 12,
+                    TextSize = 11,
                     Size = UDim2.new(1, 0, 1, 0),
                     Parent = wrap,
                     ZIndex = 9,
