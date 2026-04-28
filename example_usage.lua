@@ -1,21 +1,12 @@
 --[[
     Friendship.Lua — Example Usage
-
-    Load the library first, then use as shown below.
-    See FriendshipUI.lua header for all available options.
+    Load the library first via loadstring, then use as shown.
+    Tab icons use Lucide names (e.g. "swords", "eye", "zap", "settings")
+    Full list: https://lucide.dev/icons
 ]]
 
 -- ── Load Library ──────────────────────────────────────
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/yk0r/testlibs/refs/heads/main/FriendshipUI.lua"))()
-if not Library then
-    local ok, lib = pcall(function()
-        return require(script.Parent:FindFirstChild("FriendshipLua"))
-    end)
-    if ok and lib then Library = lib else
-        warn("[Friendship.Lua] Library not found. Run FriendshipUI.lua first.")
-        return
-    end
-end
 
 -- ── Window ────────────────────────────────────────────
 local Window = Library:CreateWindow({
@@ -26,7 +17,7 @@ local Window = Library:CreateWindow({
 })
 
 -- ── Combat Tab ────────────────────────────────────────
-local CombatTab = Window:CreateTab("Combat", "")
+local CombatTab = Window:CreateTab("Combat", "swords")
 
 local Aimbot = CombatTab:CreateSection("Aimbot")
 
@@ -59,7 +50,7 @@ Aimbot:CreateDropdown({
 })
 
 -- ── Visuals Tab ───────────────────────────────────────
-local VisualsTab = Window:CreateTab("Visuals", "")
+local VisualsTab = Window:CreateTab("Visuals", "eye")
 
 local ESP = VisualsTab:CreateSection("ESP")
 
@@ -86,7 +77,7 @@ ESP:CreateSlider({
 })
 
 -- ── Movement Tab ──────────────────────────────────────
-local MoveTab = Window:CreateTab("Movement", "")
+local MoveTab = Window:CreateTab("Movement", "zap")
 
 local Move = MoveTab:CreateSection("Movement")
 
@@ -133,11 +124,11 @@ Teleport:CreateButton({
 })
 
 -- ── Misc Tab ──────────────────────────────────────────
-local MiscTab = Window:CreateTab("Misc", "")
+local MiscTab = Window:CreateTab("Misc", "settings")
 
-local Game = MiscTab:CreateSection("Game")
+local GameSection = MiscTab:CreateSection("Game")
 
-Game:CreateToggle({
+GameSection:CreateToggle({
     Label    = "Full Bright",
     Default  = false,
     Callback = function(v)
@@ -149,7 +140,7 @@ Game:CreateToggle({
     end,
 })
 
-Game:CreateToggle({
+GameSection:CreateToggle({
     Label    = "Remove Fog",
     Default  = false,
     Callback = function(v)
@@ -159,12 +150,12 @@ Game:CreateToggle({
     end,
 })
 
-Game:CreateParagraph({
+GameSection:CreateParagraph({
     Title   = "Note",
     Content = "Rendering changes may be detected by anti-cheat.",
 })
 
-Game:CreateButton({
+GameSection:CreateButton({
     Label    = "Rejoin",
     Variant  = "secondary",
     Callback = function()
@@ -172,14 +163,14 @@ Game:CreateButton({
     end,
 })
 
-Game:CreateButton({
+GameSection:CreateButton({
     Label    = "Server Hop",
     Variant  = "primary",
     Callback = function() end,
 })
 
 -- ── Settings Tab ──────────────────────────────────────
-local SettingsTab = Window:CreateTab("Settings", "")
+local SettingsTab = Window:CreateTab("Settings", "sliders-horizontal")
 
 local UI = SettingsTab:CreateSection("Interface")
 
