@@ -20,7 +20,7 @@
 --    the library is available as _G.FriendshipLib
 -- ====================================================
 
-local Library = _G.FriendshipLib
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/yk0r/testlibs/refs/heads/main/FriendshipLua.lua"))()
 if not Library then
     -- Fallback: try to load via require if it's a sibling module
     local ok, lib = pcall(function()
