@@ -20,7 +20,7 @@
 --    the library is available as _G.FriendshipLib
 -- ====================================================
 
-local Library = _G.FriendshipLib
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/yk0r/testlibs/refs/heads/main/FriendshipLua.lua"))()
 if not Library then
     -- Fallback: try to load via require if it's a sibling module
     local ok, lib = pcall(function()
@@ -42,8 +42,8 @@ end
 local Window = Library:CreateWindow({
     Title      = "Friendship.Lua",    -- displayed as "Friendship" + ".Lua" in accent
     SubTitle   = "Premium Scripts",
-    Size       = UDim2.fromOffset(850, 580),
-    Position   = UDim2.new(0.5, -425, 0.5, -290),
+    Size       = UDim2.fromOffset(700, 450),
+    Position   = UDim2.new(0.5, -350, 0.5, -225),
     ToggleKey  = Enum.KeyCode.RightShift,  -- key to show/hide UI
 })
 
