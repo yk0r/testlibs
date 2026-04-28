@@ -2253,4 +2253,18 @@ end
 -- ============================================================
 --  RETURN LIBRARY
 -- ============================================================
+
+-- Support both require() and direct execution:
+--   require()      -> returns FriendshipLib directly
+--   Direct exec    -> sets _G.FriendshipLib for later use
+--   loadstring()() -> returns FriendshipLib directly
+
+if rawget(_G, "FriendshipLib") then
+    -- Already loaded, update the global reference
+    _G.FriendshipLib = FriendshipLib
+else
+    _G.FriendshipLib = FriendshipLib
+end
+
 return FriendshipLib
+
