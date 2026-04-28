@@ -953,16 +953,6 @@ function FriendshipLib:CreateWindow(config)
         })
         makeCorner(navBtn, 8)
 
-        -- Layout inside button
-        local btnInner = newFrame({
-            BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 1, 0),
-            Parent = navBtn,
-            ZIndex = 7,
-        })
-        makeListLayout(btnInner, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Left, 10)
-        makePadding(btnInner, 0, 0, 0, 14)
-
         -- Active indicator line
         local indicator = newFrame({
             BackgroundColor3 = Theme.Accent,
@@ -974,34 +964,30 @@ function FriendshipLib:CreateWindow(config)
         })
         makeCorner(indicator, 2)
 
-        -- Icon (if provided, otherwise use a default shape)
-        local iconFrame = newFrame({
-            BackgroundTransparency = 1,
-            Size = UDim2.new(0, 18, 1, 0),
-            Parent = btnInner,
-            ZIndex = 7,
-        })
+        -- Icon dot (default, always present for no-icon tabs)
+        local iconDot = nil
 
         if icon and icon ~= "" then
+            -- Image icon provided
             newImage({
                 Image = icon,
                 ImageColor3 = Theme.TextFaint,
                 Size = UDim2.new(0, 16, 0, 16),
-                Position = UDim2.new(0, 0, 0.5, -8),
-                Parent = iconFrame,
+                Position = UDim2.new(0, 14, 0.5, -8),
+                Parent = navBtn,
                 ZIndex = 8,
             })
         else
             -- Default minimal dot icon
-            local iconDot = newFrame({
+            iconDot = newFrame({
+                Name = "IconDot",
                 BackgroundColor3 = Theme.TextFaint,
                 Size = UDim2.new(0, 6, 0, 6),
-                Position = UDim2.new(0, 5, 0.5, -3),
-                Parent = iconFrame,
+                Position = UDim2.new(0, 18, 0.5, -3),
+                Parent = navBtn,
                 ZIndex = 8,
             })
             makeCorner(iconDot, 99)
-            iconFrame._dot = iconDot
         end
 
         local nameLabel = newLabel({
@@ -1009,35 +995,15 @@ function FriendshipLib:CreateWindow(config)
             TextColor3 = Theme.TextDim,
             Font = Enum.Font.GothamSemibold,
             TextSize = 13,
-            Size = UDim2.new(1, -28, 1, 0),
-            Parent = btnInner,
+            Size = UDim2.new(1, -40, 1, 0),
+            Position = UDim2.new(0, 36, 0, 0),
+            Parent = navBtn,
             ZIndex = 7,
         })
 
-        -- Page frame for this tab
-        local page = newFrame({
-            Name = "Page_" .. name,
-            BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 1, 0),
-            Visible = false,
-            Parent = self._pagesContainer,
-            ZIndex = 5,
-        })
-        page.AutomaticSize = Enum.AutomaticSize.None
-
-        -- Two-column grid layout
-        local grid = Instance.new("UIGridLayout")
-        grid.CellSize = UDim2.new(0.5, -10, 0, 0)
-        grid.CellPadding = UDim2.fromOffset(16, 20)
-        grid.FillDirection = Enum.FillDirection.Horizontal
-        grid.HorizontalAlignment = Enum.HorizontalAlignment.Left
-        grid.VerticalAlignment = Enum.VerticalAlignment.Top
-        grid.SortOrder = Enum.SortOrder.LayoutOrder
-        grid.Parent = page
-
-        -- Wrap in a scrolling frame
+        -- Page content wrapped in a scrolling frame
         local scrollFrame = Instance.new("ScrollingFrame")
-        scrollFrame.Name = "ScrollFrame"
+        scrollFrame.Name = "Page_" .. name
         scrollFrame.BackgroundTransparency = 1
         scrollFrame.BorderSizePixel = 0
         scrollFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -1047,27 +1013,60 @@ function FriendshipLib:CreateWindow(config)
         scrollFrame.ScrollBarImageColor3 = Color3.fromRGB(255,255,255)
         scrollFrame.ScrollBarImageTransparency = 0.85
         scrollFrame.ScrollingDirection = Enum.ScrollingDirection.Y
-        scrollFrame.Parent = self._pagesContainer
-
-        local scrollGrid = Instance.new("UIGridLayout")
-        scrollGrid.CellSize = UDim2.new(0.5, -10, 0, 0)
-        scrollGrid.CellPadding = UDim2.fromOffset(16, 20)
-        scrollGrid.FillDirection = Enum.FillDirection.Horizontal
-        scrollGrid.HorizontalAlignment = Enum.HorizontalAlignment.Left
-        scrollGrid.VerticalAlignment = Enum.VerticalAlignment.Top
-        scrollGrid.SortOrder = Enum.SortOrder.LayoutOrder
-        scrollGrid.Parent = scrollFrame
-
         scrollFrame.Visible = false
+        scrollFrame.ZIndex = 5
+        scrollFrame.Parent = self._pagesContainer
+        makePadding(scrollFrame, 0, 0, 12, 0)
+
+        -- Two-column container using UIListLayout
+        local columnsFrame = newFrame({
+            Name = "Columns",
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 0, 0),
+            Parent = scrollFrame,
+            ZIndex = 5,
+        })
+        columnsFrame.AutomaticSize = Enum.AutomaticSize.Y
+
+        local columnsLayout = Instance.new("UIListLayout")
+        columnsLayout.FillDirection = Enum.FillDirection.Horizontal
+        columnsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+        columnsLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+        columnsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        columnsLayout.Padding = UDim.new(0, 16)
+        columnsLayout.Parent = columnsFrame
+
+        -- Left column
+        local leftCol = newFrame({
+            Name = "LeftCol",
+            BackgroundTransparency = 1,
+            Size = UDim2.new(0.5, -8, 0, 0),
+            Parent = columnsFrame,
+            ZIndex = 5,
+        })
+        leftCol.AutomaticSize = Enum.AutomaticSize.Y
+        makeListLayout(leftCol, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 20)
+
+        -- Right column
+        local rightCol = newFrame({
+            Name = "RightCol",
+            BackgroundTransparency = 1,
+            Size = UDim2.new(0.5, -8, 0, 0),
+            Parent = columnsFrame,
+            ZIndex = 5,
+        })
+        rightCol.AutomaticSize = Enum.AutomaticSize.Y
+        makeListLayout(rightCol, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 20)
 
         -- Tab object
         local Tab = {}
         Tab._page         = scrollFrame
-        Tab._grid         = scrollGrid
+        Tab._leftCol      = leftCol
+        Tab._rightCol     = rightCol
         Tab._navBtn       = navBtn
         Tab._nameLabel    = nameLabel
         Tab._indicator    = indicator
-        Tab._iconFrame    = iconFrame
+        Tab._iconDot      = iconDot
         Tab._window       = self
         Tab._sectionOrder = 0
 
@@ -1079,8 +1078,8 @@ function FriendshipLib:CreateWindow(config)
                 })
                 tween(nameLabel, Theme.Fast, { TextColor3 = Theme.Accent })
                 tween(indicator, Theme.Fast, { BackgroundTransparency = 0 })
-                if iconFrame._dot then
-                    tween(iconFrame._dot, Theme.Fast, { BackgroundColor3 = Theme.Accent })
+                if iconDot then
+                    tween(iconDot, Theme.Fast, { BackgroundColor3 = Theme.Accent })
                 end
                 self._page.Visible = true
             else
@@ -1090,8 +1089,8 @@ function FriendshipLib:CreateWindow(config)
                 })
                 tween(nameLabel, Theme.Fast, { TextColor3 = Theme.TextDim })
                 tween(indicator, Theme.Fast, { BackgroundTransparency = 1 })
-                if iconFrame._dot then
-                    tween(iconFrame._dot, Theme.Fast, { BackgroundColor3 = Theme.TextFaint })
+                if iconDot then
+                    tween(iconDot, Theme.Fast, { BackgroundColor3 = Theme.TextFaint })
                 end
                 self._page.Visible = false
             end
@@ -1129,18 +1128,28 @@ function FriendshipLib:CreateWindow(config)
 
         -- Auto select first tab
         if #self._tabs == 1 then
-            navBtn.MouseButton1Click:Fire()
+            task.defer(function()
+                if self._activeTab then
+                    self._activeTab:_setActive(false)
+                end
+                self._activeTab = Tab
+                Tab:_setActive(true)
+                self._breadcrumb.Text = name
+            end)
         end
 
         -- ── CREATE SECTION ────────────────────────────────
         function Tab:CreateSection(title)
             Tab._sectionOrder = Tab._sectionOrder + 1
 
+            -- Alternate between left and right column
+            local targetCol = (Tab._sectionOrder % 2 == 1) and self._leftCol or self._rightCol
+
             local sectionWrap = newFrame({
                 Name = "Section_" .. title,
                 BackgroundTransparency = 1,
                 Size = UDim2.new(1, 0, 0, 0),
-                Parent = self._page,
+                Parent = targetCol,
                 ZIndex = 5,
             })
             sectionWrap.LayoutOrder = Tab._sectionOrder
@@ -1748,7 +1757,7 @@ function FriendshipLib:CreateWindow(config)
                     ZIndex = 9,
                 })
                 makeCorner(keyBtn, 4)
-                makeStroke(keyBtn, Color3.fromRGB(255,255,255), 1, 0.9)
+                local keyStroke = makeStroke(keyBtn, Color3.fromRGB(255,255,255), 1, 0.9)
 
                 keyBtn.MouseButton1Click:Connect(function()
                     isBinding = not isBinding
@@ -1759,13 +1768,20 @@ function FriendshipLib:CreateWindow(config)
                             BackgroundTransparency = 0,
                             TextColor3 = Theme.Accent,
                         })
-                        makeStroke(keyBtn, Theme.AccentDim, 1, 0.3)
+                        tween(keyStroke, Theme.Fast, {
+                            Color = Theme.AccentDim,
+                            Transparency = 0.3,
+                        })
                     else
                         keyBtn.Text = currentKey.Name
                         tween(keyBtn, Theme.Fast, {
                             BackgroundColor3 = Color3.fromRGB(255,255,255),
                             BackgroundTransparency = 0.95,
                             TextColor3 = Theme.TextFaint,
+                        })
+                        tween(keyStroke, Theme.Fast, {
+                            Color = Color3.fromRGB(255,255,255),
+                            Transparency = 0.9,
                         })
                     end
                 end)
@@ -1780,6 +1796,10 @@ function FriendshipLib:CreateWindow(config)
                                 BackgroundColor3 = Color3.fromRGB(255,255,255),
                                 BackgroundTransparency = 0.95,
                                 TextColor3 = Theme.TextFaint,
+                            })
+                            tween(keyStroke, Theme.Fast, {
+                                Color = Color3.fromRGB(255,255,255),
+                                Transparency = 0.9,
                             })
                             pcall(callback, currentKey)
                         end
@@ -2267,4 +2287,3 @@ else
 end
 
 return FriendshipLib
-
