@@ -1002,57 +1002,12 @@ function FriendshipLib:CreateWindow(config)
     })
     footerBrand.TextXAlignment = Enum.TextXAlignment.Right
 
-    -- ── RAYFIELD-STYLE CORNER REPAIR ──────────────────────────
-    -- When both mainWindow and its children have UICorner(8),
-    -- their curves overlap at the 4 outer corners, creating tiny
-    -- diamond-shaped gaps. CornerRepair fills these gaps.
-    -- Also, children's inner corners get rounded (unwanted), so
-    -- we fill those with small rectangular patches.
+    -- ── INNER CORNER FILLS ──────────────────────────────────────
+    -- Children (sidebar, header, footer, sidebarBottom) all have UICorner(8),
+    -- which rounds ALL four corners including inner ones we want to keep sharp.
+    -- These small patches fill in the unwanted inner rounded corners.
 
     local CR = 8 -- corner radius, must match UICorner
-
-    -- Outer corner repairs (fill gap between mainWindow UICorner and child UICorner)
-    -- Top-left: sidebar area
-    local crTL = Instance.new("Frame")
-    crTL.Name = "CornerRepair_TL"
-    crTL.BackgroundColor3 = Theme.BG_Sidebar
-    crTL.BorderSizePixel = 0
-    crTL.Size = UDim2.new(0, CR, 0, CR)
-    crTL.Position = UDim2.new(0, 0, 0, 0)
-    crTL.ZIndex = 9
-    crTL.Parent = mainWindow
-
-    -- Top-right: header area — header is child of contentArea (transparent), mainWindow bg shows through
-    local crTR = Instance.new("Frame")
-    crTR.Name = "CornerRepair_TR"
-    crTR.BackgroundColor3 = Theme.BG_Window
-    crTR.BorderSizePixel = 0
-    crTR.Size = UDim2.new(0, CR, 0, CR)
-    crTR.Position = UDim2.new(1, -CR, 0, 0)
-    crTR.ZIndex = 9
-    crTR.Parent = mainWindow
-
-    -- Bottom-left: sidebarBottom area — sidebar covers this corner, use sidebar color
-    local crBL = Instance.new("Frame")
-    crBL.Name = "CornerRepair_BL"
-    crBL.BackgroundColor3 = Theme.BG_Sidebar
-    crBL.BorderSizePixel = 0
-    crBL.Size = UDim2.new(0, CR, 0, CR)
-    crBL.Position = UDim2.new(0, 0, 1, -CR)
-    crBL.ZIndex = 9
-    crBL.Parent = mainWindow
-
-    -- Bottom-right: footer area — contentArea is transparent, mainWindow bg shows
-    local crBR = Instance.new("Frame")
-    crBR.Name = "CornerRepair_BR"
-    crBR.BackgroundColor3 = Theme.BG_Window
-    crBR.BorderSizePixel = 0
-    crBR.Size = UDim2.new(0, CR, 0, CR)
-    crBR.Position = UDim2.new(1, -CR, 1, -CR)
-    crBR.ZIndex = 9
-    crBR.Parent = mainWindow
-
-    -- Inner corner fills (fix unwanted UICorner on children's inner edges)
     -- Sidebar top-right inner corner (where sidebar meets header)
     local fillSTR = Instance.new("Frame")
     fillSTR.Name = "Fill_SidebarTR"
@@ -1090,7 +1045,7 @@ function FriendshipLib:CreateWindow(config)
     fillHBR.BorderSizePixel = 0
     fillHBR.Size = UDim2.new(0, CR, 0, CR)
     fillHBR.Position = UDim2.new(1, -CR, 1, -CR)
-    fillHBL.ZIndex = 9
+    fillHBR.ZIndex = 9
     fillHBR.Parent = header
 
     -- Footer top-left inner corner
