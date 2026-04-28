@@ -6,7 +6,7 @@
 ]]
 
 -- ── Load Library ──────────────────────────────────────
-local Library = _G.FriendshipLib
+local Library = loadstring(game:HttpGet("YOUR_RAWGIT_URL"))()
 if not Library then
     local ok, lib = pcall(function()
         return require(script.Parent:FindFirstChild("FriendshipLua"))
