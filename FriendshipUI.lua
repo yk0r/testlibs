@@ -655,8 +655,7 @@ function FriendshipLib:CreateWindow(config)
     makeStroke(logoBox, Theme.AccentDim, 1, 0.4)
 
     newLabel({
-        Text = "WELCOME BACK
-                PREMIUM USER",
+        Text = "WELCOME BACK",
         TextColor3 = Theme.Accent,
         Font = Enum.Font.GothamBold,
         TextSize = 16,
