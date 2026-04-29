@@ -958,7 +958,7 @@ function FriendshipLib:CreateWindow(config)
     makeCorner(statusDot, 99)
 
     local statusLabel = newLabel({
-        Text = "STATUS: FREE USER",
+        Text = "STATUS:FREE USER",
         TextColor3 = Theme.TextFaint,
         Font = Enum.Font.GothamBold,
         TextSize = 8,
@@ -980,7 +980,7 @@ function FriendshipLib:CreateWindow(config)
     })
 
     local buildLabel = newLabel({
-        Text = "BUILD: V1.0.5A               --BY DEVTEAM: 50MASTER YK0R MIKBRAY--",
+        Text = "BUILD: V1.0.5A                   --DEVTEAM: 50MASTER YK0R MIKBRAY--",
         TextColor3 = Theme.TextFaint,
         Font = Enum.Font.GothamBold,
         TextSize = 8,
