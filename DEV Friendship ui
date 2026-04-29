@@ -959,7 +959,7 @@ function FriendshipLib:CreateWindow(config)
     makeCorner(statusDot, 99)
 
     local statusLabel = newLabel({
-        Text = "YOU ARE A DEVELOPER[]",
+        Text = "YOU ARE A DEVELOPER",
         TextColor3 = Theme.Accent,
         Font = Enum.Font.GothamBold,
         TextSize = 8,
