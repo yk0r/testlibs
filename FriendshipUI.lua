@@ -1194,9 +1194,29 @@ function FriendshipLib:CreateWindow(config)
     })
     footerBrand.TextXAlignment = Enum.TextXAlignment.Right
 
-    -- ── WINDOW CORNERS ──────────────────────────────────────
-    -- mainWindow uses ClipsDescendants + UICorner to clip child
-    -- overflow at the 4 rounded corners. No cap frames needed.
+    -- ── WINDOW CORNER CAPS ──────────────────────────────────────
+    -- sidebar/header/footer have NO UICorner (keeps inner edges sharp).
+    -- At the 4 window corners, these sharp corners extend past mainWindow's
+    -- UICorner curve. Small caps cover the overshoot.
+    local CR = 8 -- must match mainWindow UICorner
+
+    local function makeCap(name, pos)
+        local cap = Instance.new("Frame")
+        cap.Name = name
+        cap.BackgroundColor3 = Theme.BG_Window
+        cap.BorderSizePixel = 0
+        cap.Size = UDim2.new(0, CR, 0, CR)
+        cap.Position = pos
+        cap.ZIndex = 10
+        cap.Parent = mainWindow
+        makeCorner(cap, CR)
+        return cap
+    end
+
+    makeCap("Cap_TL", UDim2.new(0, 0, 0, 0))
+    makeCap("Cap_TR", UDim2.new(1, -CR, 0, 0))
+    makeCap("Cap_BL", UDim2.new(0, 0, 1, -CR))
+    makeCap("Cap_BR", UDim2.new(1, -CR, 1, -CR))
 
     -- Make header and brand area draggable
     makeDraggable(mainWindow, header)
