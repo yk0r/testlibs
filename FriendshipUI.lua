@@ -880,9 +880,19 @@ function FriendshipLib:CreateWindow(config)
     local searchPrevTab = nil
     local searchOriginalParents = {} -- tracks where sections were moved from
 
-    -- Create a search results page (shared across all tabs)
+    -- Create a search results overlay (sibling to pagesContainer, not child)
+    local searchOverlay = newFrame({
+        Name = "SearchOverlay",
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 1, -80),
+        Position = UDim2.new(0, 0, 0, 48),
+        Visible = false,
+        ZIndex = 15,
+        Parent = contentArea,
+    })
+
     local searchScroll = Instance.new("ScrollingFrame")
-    searchScroll.Name = "SearchResults"
+    searchScroll.Name = "SearchScroll"
     searchScroll.BackgroundTransparency = 1
     searchScroll.BorderSizePixel = 0
     searchScroll.Size = UDim2.new(1, 0, 1, 0)
@@ -892,10 +902,8 @@ function FriendshipLib:CreateWindow(config)
     searchScroll.ScrollBarImageColor3 = Color3.fromRGB(255,255,255)
     searchScroll.ScrollBarImageTransparency = 0.85
     searchScroll.ScrollingDirection = Enum.ScrollingDirection.Y
-    searchScroll.Visible = false
-    searchScroll.ZIndex = 15
-    -- Parent will be set after pagesContainer is created
-    makePadding(searchScroll, 0, 0, 12, 0)
+    searchScroll.Parent = searchOverlay
+    makePadding(searchScroll, 16, 16, 16, 16)
 
     local searchColsFrame = newFrame({
         Name = "SearchCols",
@@ -934,11 +942,10 @@ function FriendshipLib:CreateWindow(config)
     searchRightCol.AutomaticSize = Enum.AutomaticSize.Y
     makeListLayout(searchRightCol, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 12)
 
-    -- Tab badge pool (reused across search sessions)
-    local searchBadges = {} -- section -> badge frame
+    -- Badge tracking
+    local searchBadges = {}
 
     local function collectSearchableText(section)
-        -- Gather all searchable text: section title + element names/labels
         local texts = { section._title or "" }
         for _, el in ipairs(section._elements) do
             table.insert(texts, el.Name or "")
@@ -960,14 +967,10 @@ function FriendshipLib:CreateWindow(config)
     end
 
     local function clearSearchResults()
-        -- Move sections back to their original parents and restore layout order
         for section, info in pairs(searchOriginalParents) do
             if type(section) == "table" and section._wrapper then
-                if section._wrapper.Parent then
-                    section._wrapper.Parent = info.parent
-                    section._wrapper.LayoutOrder = info.layoutOrder
-                end
-                -- Remove badge if it exists
+                section._wrapper.Parent = info.parent
+                section._wrapper.LayoutOrder = info.layoutOrder
                 if searchBadges[section] then
                     pcall(function() searchBadges[section]:Destroy() end)
                     searchBadges[section] = nil
@@ -980,7 +983,6 @@ function FriendshipLib:CreateWindow(config)
     end
 
     local function showSearchResults(query)
-        -- First, return everything to original positions
         clearSearchResults()
 
         -- Hide all sections first
@@ -1013,22 +1015,22 @@ function FriendshipLib:CreateWindow(config)
                         el.Visible = true
                     end
 
-                    -- Add tab name badge inside the section wrapper (before sectionInner)
+                    -- Add tab name badge
                     local badge = newFrame({
                         Name = "TabBadge",
                         BackgroundColor3 = Theme.AccentBG,
-                        Size = UDim2.new(0, 0, 0, 16),
+                        Size = UDim2.new(0, 0, 0, 18),
                         Parent = section._wrapper,
                         ZIndex = 20,
                     })
                     badge.AutomaticSize = Enum.AutomaticSize.X
                     makeCorner(badge, 3)
                     makeStroke(badge, Theme.AccentDim, 1, 0.7)
-                    makePadding(badge, 3, 6, 3, 6)
+                    makePadding(badge, 2, 6, 2, 6)
                     badge.LayoutOrder = -1
 
                     local badgeLabel = newLabel({
-                        Text = string.upper(tabData._name or "Tab"),
+                        Text = string.upper(tabData._name or "TAB"),
                         TextColor3 = Theme.Accent,
                         Font = Enum.Font.GothamBold,
                         TextSize = 8,
@@ -1065,7 +1067,6 @@ function FriendshipLib:CreateWindow(config)
                 ZIndex = 15,
             })
             noLabel.TextXAlignment = Enum.TextXAlignment.Center
-            -- Track this as a special entry so we can clean it up
             searchOriginalParents["_noResults"] = { frame = noResult }
         end
     end
@@ -1073,7 +1074,7 @@ function FriendshipLib:CreateWindow(config)
     local function exitSearchMode()
         if not searchActive then return end
         searchActive = false
-        searchScroll.Visible = false
+        searchOverlay.Visible = false
 
         -- Return all sections to their original parents
         clearSearchResults()
@@ -1117,8 +1118,8 @@ function FriendshipLib:CreateWindow(config)
                     Window._activeTab._page.Visible = false
                 end
 
-                -- Show search results page
-                searchScroll.Visible = true
+                -- Show search overlay
+                searchOverlay.Visible = true
                 breadcrumbActive.Text = "Search"
             end
 
@@ -1127,7 +1128,7 @@ function FriendshipLib:CreateWindow(config)
         end
     end)
 
-    -- Also clear search when search box loses focus with empty text
+    -- Clear search when search box loses focus with empty text
     searchBox.FocusLost:Connect(function()
         if searchBox.Text == "" then
             exitSearchMode()
@@ -1145,9 +1146,6 @@ function FriendshipLib:CreateWindow(config)
         ClipsDescendants = false,
     })
     makePadding(pagesContainer, 16, 16, 16, 16)
-
-    -- Now that pagesContainer exists, set search results page parent
-    searchScroll.Parent = pagesContainer
 
     -- Footer / Status bar
     local footer = newFrame({
