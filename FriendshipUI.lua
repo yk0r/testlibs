@@ -588,9 +588,7 @@ function FriendshipLib:CreateWindow(config)
         Position = position,
         Parent = screenGui,
         ZIndex = 3,
-        ClipsDescendants = true,
     })
-    makeCorner(mainWindow, 8)
     makeStroke(mainWindow, Color3.fromRGB(255,255,255), 1, 0.9)
 
     -- ── SIDEBAR ──────────────────────────────────────────────
@@ -1194,29 +1192,8 @@ function FriendshipLib:CreateWindow(config)
     })
     footerBrand.TextXAlignment = Enum.TextXAlignment.Right
 
-    -- ── WINDOW CORNER CAPS ──────────────────────────────────────
-    -- sidebar/header/footer have NO UICorner (keeps inner edges sharp).
-    -- At the 4 window corners, these sharp corners extend past mainWindow's
-    -- UICorner curve. Small caps cover the overshoot.
-    local CR = 8 -- must match mainWindow UICorner
-
-    local function makeCap(name, pos)
-        local cap = Instance.new("Frame")
-        cap.Name = name
-        cap.BackgroundColor3 = Theme.BG_Window
-        cap.BorderSizePixel = 0
-        cap.Size = UDim2.new(0, CR, 0, CR)
-        cap.Position = pos
-        cap.ZIndex = 10
-        cap.Parent = mainWindow
-        makeCorner(cap, CR)
-        return cap
-    end
-
-    makeCap("Cap_TL", UDim2.new(0, 0, 0, 0))
-    makeCap("Cap_TR", UDim2.new(1, -CR, 0, 0))
-    makeCap("Cap_BL", UDim2.new(0, 0, 1, -CR))
-    makeCap("Cap_BR", UDim2.new(1, -CR, 1, -CR))
+    -- ── WINDOW CORNERS ──────────────────────────────────────
+    -- mainWindow uses sharp corners (no UICorner)
 
     -- Make header and brand area draggable
     makeDraggable(mainWindow, header)
