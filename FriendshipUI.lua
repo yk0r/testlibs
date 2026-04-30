@@ -718,7 +718,7 @@ function FriendshipLib:CreateWindow(config)
     makePadding(sidebarBottom, 0, 0, 0, 10)
 
     newLabel({
-        Text = "Welcome back,",
+        Text = "WELCOME BACK",
         TextColor3 = Color3.fromRGB(180,180,180),
         Font = Enum.Font.GothamBold,
         TextSize = 10,
@@ -729,7 +729,7 @@ function FriendshipLib:CreateWindow(config)
     })
 
     local playerName = "User"
-    pcall(function() playerName = LocalPlayer.Name end)
+    pcall(function() playerName = "Mikbray" end)
 
     newLabel({
         Text = string.upper(playerName),
@@ -1170,7 +1170,7 @@ function FriendshipLib:CreateWindow(config)
     })
 
     local buildLabel = newLabel({
-        Text = "BUILD: V1.0.5A",
+        Text = "BUILD: V1.0.5A              --[[ DEVTEAM : 50MASTER | YK0R | MIKBRAY ]]--",
         TextColor3 = Theme.TextFaint,
         Font = Enum.Font.GothamBold,
         TextSize = 8,
