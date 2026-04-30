@@ -602,7 +602,7 @@ function FriendshipLib:CreateWindow(config)
         Parent = mainWindow,
         ZIndex = 4,
     })
-    -- NO UICorner on sidebar — only mainWindow gets rounded corners
+    -- NO UICorner on sidebar — ClipsDescendants on mainWindow clips the corners
 
     -- Brand logo area - MOVED LEFT (padding from 18 -> 10)
     local brandArea = newFrame({
@@ -764,7 +764,7 @@ function FriendshipLib:CreateWindow(config)
         Parent = contentArea,
         ZIndex = 5,
     })
-    -- NO UICorner on header — inner containers stay rectangular
+    -- NO UICorner on header — ClipsDescendants on mainWindow clips the corners
     makeStroke(header, Color3.fromRGB(255,255,255), 1, 0.95)
 
     -- Breadcrumb left
@@ -1129,7 +1129,7 @@ function FriendshipLib:CreateWindow(config)
         Parent = contentArea,
         ZIndex = 5,
     })
-    -- NO UICorner on footer — inner containers stay rectangular
+    -- NO UICorner on footer — ClipsDescendants on mainWindow clips the corners
     makeStroke(footer, Color3.fromRGB(255,255,255), 1, 0.95)
 
     local footerLeft = newFrame({
