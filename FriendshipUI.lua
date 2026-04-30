@@ -598,7 +598,7 @@ function FriendshipLib:CreateWindow(config)
         Parent = mainWindow,
         ZIndex = 4,
     })
-    makeCorner(sidebar, 8)
+    -- NO UICorner on sidebar — only mainWindow gets rounded corners
 
     -- Brand logo area - MOVED LEFT (padding from 18 -> 10)
     local brandArea = newFrame({
@@ -711,7 +711,7 @@ function FriendshipLib:CreateWindow(config)
         Parent = sidebar,
         ZIndex = 5,
     })
-    makeCorner(sidebarBottom, 8)
+    -- NO UICorner on sidebarBottom — inner containers stay rectangular
     makeStroke(sidebarBottom, Color3.fromRGB(255,255,255), 1, 0.95)
     makePadding(sidebarBottom, 0, 0, 0, 10)
 
@@ -760,7 +760,7 @@ function FriendshipLib:CreateWindow(config)
         Parent = contentArea,
         ZIndex = 5,
     })
-    makeCorner(header, 8)
+    -- NO UICorner on header — inner containers stay rectangular
     makeStroke(header, Color3.fromRGB(255,255,255), 1, 0.95)
 
     -- Breadcrumb left
@@ -937,7 +937,7 @@ function FriendshipLib:CreateWindow(config)
         Parent = contentArea,
         ZIndex = 5,
     })
-    makeCorner(footer, 8)
+    -- NO UICorner on footer — inner containers stay rectangular
     makeStroke(footer, Color3.fromRGB(255,255,255), 1, 0.95)
 
     local footerLeft = newFrame({
@@ -1002,120 +1002,53 @@ function FriendshipLib:CreateWindow(config)
     })
     footerBrand.TextXAlignment = Enum.TextXAlignment.Right
 
-    -- ── INNER CORNER FILLS ──────────────────────────────────────
-    -- Children (sidebar, header, footer, sidebarBottom) all have UICorner(8),
-    -- which rounds ALL four corners including inner ones we want to keep sharp.
-    -- These small patches fill in the unwanted inner rounded corners.
+    -- ── WINDOW CORNER CAPS ──────────────────────────────────────
+    -- Children (sidebar, header, footer, sidebarBottom) have NO UICorner,
+    -- keeping inner edges sharp. At the 4 window corners, these sharp
+    -- corners extend slightly past mainWindow's UICorner curve.
+    -- Small caps cover the overshoot, maintaining the window's rounded look.
 
-    local CR = 8 -- corner radius, must match UICorner
-    -- Sidebar top-right inner corner (where sidebar meets header)
-    local fillSTR = Instance.new("Frame")
-    fillSTR.Name = "Fill_SidebarTR"
-    fillSTR.BackgroundColor3 = Theme.BG_Window
-    fillSTR.BorderSizePixel = 0
-    fillSTR.Size = UDim2.new(0, CR, 0, CR)
-    fillSTR.Position = UDim2.new(1, -CR - 0, 0, 0)
-    fillSTR.ZIndex = 9
-    fillSTR.Parent = sidebar
+    local CR = 8 -- corner radius, must match mainWindow UICorner
 
-    -- Sidebar bottom-right inner corner (where sidebar meets footer)
-    local fillSBR = Instance.new("Frame")
-    fillSBR.Name = "Fill_SidebarBR"
-    fillSBR.BackgroundColor3 = Theme.BG_Window
-    fillSBR.BorderSizePixel = 0
-    fillSBR.Size = UDim2.new(0, CR, 0, CR)
-    fillSBR.Position = UDim2.new(1, -CR - 0, 1, -CR)
-    fillSBR.ZIndex = 9
-    fillSBR.Parent = sidebar
+    local capTL = Instance.new("Frame")
+    capTL.Name = "Cap_TL"
+    capTL.BackgroundColor3 = Theme.BG_Window
+    capTL.BorderSizePixel = 0
+    capTL.Size = UDim2.new(0, CR, 0, CR)
+    capTL.Position = UDim2.new(0, 0, 0, 0)
+    capTL.ZIndex = 10
+    capTL.Parent = mainWindow
+    makeCorner(capTL, CR)
 
-    -- Header bottom-left inner corner
-    local fillHBL = Instance.new("Frame")
-    fillHBL.Name = "Fill_HeaderBL"
-    fillHBL.BackgroundColor3 = Theme.BG_Window
-    fillHBL.BorderSizePixel = 0
-    fillHBL.Size = UDim2.new(0, CR, 0, CR)
-    fillHBL.Position = UDim2.new(0, 0, 1, -CR)
-    fillHBL.ZIndex = 9
-    fillHBL.Parent = header
+    local capTR = Instance.new("Frame")
+    capTR.Name = "Cap_TR"
+    capTR.BackgroundColor3 = Theme.BG_Window
+    capTR.BorderSizePixel = 0
+    capTR.Size = UDim2.new(0, CR, 0, CR)
+    capTR.Position = UDim2.new(1, -CR, 0, 0)
+    capTR.ZIndex = 10
+    capTR.Parent = mainWindow
+    makeCorner(capTR, CR)
 
-    -- Header bottom-right inner corner
-    local fillHBR = Instance.new("Frame")
-    fillHBR.Name = "Fill_HeaderBR"
-    fillHBR.BackgroundColor3 = Theme.BG_Window
-    fillHBR.BorderSizePixel = 0
-    fillHBR.Size = UDim2.new(0, CR, 0, CR)
-    fillHBR.Position = UDim2.new(1, -CR, 1, -CR)
-    fillHBR.ZIndex = 9
-    fillHBR.Parent = header
+    local capBL = Instance.new("Frame")
+    capBL.Name = "Cap_BL"
+    capBL.BackgroundColor3 = Theme.BG_Window
+    capBL.BorderSizePixel = 0
+    capBL.Size = UDim2.new(0, CR, 0, CR)
+    capBL.Position = UDim2.new(0, 0, 1, -CR)
+    capBL.ZIndex = 10
+    capBL.Parent = mainWindow
+    makeCorner(capBL, CR)
 
-    -- Footer top-left inner corner
-    local fillFTL = Instance.new("Frame")
-    fillFTL.Name = "Fill_FooterTL"
-    fillFTL.BackgroundColor3 = Theme.BG_Window
-    fillFTL.BorderSizePixel = 0
-    fillFTL.Size = UDim2.new(0, CR, 0, CR)
-    fillFTL.Position = UDim2.new(0, 0, 0, 0)
-    fillFTL.ZIndex = 9
-    fillFTL.Parent = footer
-
-    -- Footer top-right inner corner
-    local fillFTR = Instance.new("Frame")
-    fillFTR.Name = "Fill_FooterTR"
-    fillFTR.BackgroundColor3 = Theme.BG_Window
-    fillFTR.BorderSizePixel = 0
-    fillFTR.Size = UDim2.new(0, CR, 0, CR)
-    fillFTR.Position = UDim2.new(1, -CR, 0, 0)
-    fillFTR.ZIndex = 9
-    fillFTR.Parent = footer
-
-    -- SidebarBottom top-left & top-right inner corners
-    local fillSBTL = Instance.new("Frame")
-    fillSBTL.Name = "Fill_SBTopLeft"
-    fillSBTL.BackgroundColor3 = Theme.BG_Sidebar
-    fillSBTL.BorderSizePixel = 0
-    fillSBTL.Size = UDim2.new(0, CR, 0, CR)
-    fillSBTL.Position = UDim2.new(0, 0, 0, 0)
-    fillSBTL.ZIndex = 9
-    fillSBTL.Parent = sidebarBottom
-
-    local fillSBTR = Instance.new("Frame")
-    fillSBTR.Name = "Fill_SBTopRight"
-    fillSBTR.BackgroundColor3 = Theme.BG_Sidebar
-    fillSBTR.BorderSizePixel = 0
-    fillSBTR.Size = UDim2.new(0, CR, 0, CR)
-    fillSBTR.Position = UDim2.new(1, -CR, 0, 0)
-    fillSBTR.ZIndex = 9
-    fillSBTR.Parent = sidebarBottom
-
-    -- SidebarBottom bottom-right inner corner
-    local fillSBBR = Instance.new("Frame")
-    fillSBBR.Name = "Fill_SBBotRight"
-    fillSBBR.BackgroundColor3 = Theme.BG_Sidebar
-    fillSBBR.BorderSizePixel = 0
-    fillSBBR.Size = UDim2.new(0, CR, 0, CR)
-    fillSBBR.Position = UDim2.new(1, -CR, 1, -CR)
-    fillSBBR.ZIndex = 9
-    fillSBBR.Parent = sidebarBottom
-
-    -- Header top-left inner corner (header sits in contentArea, left edge meets sidebar)
-    local fillHTL = Instance.new("Frame")
-    fillHTL.Name = "Fill_HeaderTL"
-    fillHTL.BackgroundColor3 = Theme.BG_Window
-    fillHTL.BorderSizePixel = 0
-    fillHTL.Size = UDim2.new(0, CR, 0, CR)
-    fillHTL.Position = UDim2.new(0, 0, 0, 0)
-    fillHTL.ZIndex = 9
-    fillHTL.Parent = header
-
-    -- Footer bottom-left inner corner
-    local fillFBL = Instance.new("Frame")
-    fillFBL.Name = "Fill_FooterBL"
-    fillFBL.BackgroundColor3 = Theme.BG_Window
-    fillFBL.BorderSizePixel = 0
-    fillFBL.Size = UDim2.new(0, CR, 0, CR)
-    fillFBL.Position = UDim2.new(0, 0, 1, -CR)
-    fillFBL.ZIndex = 9
-    fillFBL.Parent = footer
+    local capBR = Instance.new("Frame")
+    capBR.Name = "Cap_BR"
+    capBR.BackgroundColor3 = Theme.BG_Window
+    capBR.BorderSizePixel = 0
+    capBR.Size = UDim2.new(0, CR, 0, CR)
+    capBR.Position = UDim2.new(1, -CR, 1, -CR)
+    capBR.ZIndex = 10
+    capBR.Parent = mainWindow
+    makeCorner(capBR, CR)
 
     -- Make header draggable
     makeDraggable(mainWindow, header)
