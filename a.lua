@@ -1214,8 +1214,8 @@ function FriendshipLib:CreateWindow(config)
 
     -- ── CINEMATIC INTRO ──────────────────────────────────────
     -- Phase 1: Two glowing vertical lines expand from center
-    -- Phase 2: Lines split apart — left goes left, right goes right
-    -- Phase 3: Lines contract in place, revealing "Friendship.Lua"
+    -- Phase 2: Lines split apart, text revealed progressively (curtain effect)
+    -- Phase 3: Lines contract in place, text stays
     -- Phase 4: Text fades out
     -- Phase 5: Window fades in
 
@@ -1259,7 +1259,19 @@ function FriendshipLib:CreateWindow(config)
     rightGlow.ZIndex = 99
     rightGlow.Parent = screenGui
 
-    -- Title text (centered, ".Lua" in accent color)
+    -- Text reveal container: ClipsDescendants masks the text
+    -- Starts at width 0 (nothing visible), grows as lines split apart
+    local textReveal = Instance.new("Frame")
+    textReveal.Name = "TextReveal"
+    textReveal.BackgroundTransparency = 1
+    textReveal.AnchorPoint = Vector2.new(0.5, 0)
+    textReveal.Size = UDim2.new(0, 0, 0, 30)
+    textReveal.Position = UDim2.new(0.5, 0, 0.5, -15)
+    textReveal.ClipsDescendants = true
+    textReveal.ZIndex = 101
+    textReveal.Parent = screenGui
+
+    -- Title text (centered inside reveal container, ".Lua" in accent color)
     local introText = Instance.new("TextLabel")
     introText.Name = "IntroText"
     local titlePrefix = title:match("^([^%.]+)") or title
@@ -1270,18 +1282,17 @@ function FriendshipLib:CreateWindow(config)
     introText.Font = Enum.Font.GothamBold
     introText.TextSize = 22
     introText.BackgroundTransparency = 1
-    introText.TextTransparency = 1
+    introText.AnchorPoint = Vector2.new(0.5, 0)
     introText.Size = UDim2.new(0, 300, 0, 30)
-    introText.Position = UDim2.new(0.5, -150, 0.5, -15)
+    introText.Position = UDim2.new(0.5, 0, 0, 0)
     introText.ZIndex = 102
-    introText.Parent = screenGui
+    introText.Parent = textReveal
 
-    local IntroExpand  = TweenInfo.new(0.5,  Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-    local IntroSplit   = TweenInfo.new(0.4,  Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-    local IntroContract= TweenInfo.new(0.5,  Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-    local IntroTextIn  = TweenInfo.new(0.6,  Enum.EasingStyle.Exponential, Enum.EasingDirection.Out)
-    local IntroTextOut = TweenInfo.new(0.5,  Enum.EasingStyle.Exponential, Enum.EasingDirection.In)
-    local IntroFadeIn  = TweenInfo.new(0.5,  Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+    local IntroExpand   = TweenInfo.new(0.5,  Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+    local IntroSplit    = TweenInfo.new(0.6,  Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+    local IntroContract = TweenInfo.new(0.5,  Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+    local IntroTextOut  = TweenInfo.new(0.5,  Enum.EasingStyle.Exponential, Enum.EasingDirection.In)
+    local IntroFadeIn   = TweenInfo.new(0.5,  Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
     task.spawn(function()
         -- Phase 1: Both lines expand vertically from center
@@ -1291,19 +1302,19 @@ function FriendshipLib:CreateWindow(config)
         tween(rightGlow, IntroExpand, { Size = UDim2.new(0, 12, 0, 200), Position = UDim2.new(0.5, -6, 0.5, -100) })
         task.wait(0.55)
 
-        -- Phase 2: Lines split apart — left moves left, right moves right
-        tween(leftLine,  IntroSplit, { Position = UDim2.new(0.5, -82, 0.5, -100) })
-        tween(leftGlow,  IntroSplit, { Position = UDim2.new(0.5, -88, 0.5, -100) })
-        tween(rightLine, IntroSplit, { Position = UDim2.new(0.5, 80, 0.5, -100) })
-        tween(rightGlow, IntroSplit, { Position = UDim2.new(0.5, 76, 0.5, -100) })
-        task.wait(0.45)
+        -- Phase 2: Lines split apart, text reveal grows with them (curtain effect)
+        tween(leftLine,   IntroSplit, { Position = UDim2.new(0.5, -100, 0.5, -100) })
+        tween(leftGlow,   IntroSplit, { Position = UDim2.new(0.5, -106, 0.5, -100) })
+        tween(rightLine,  IntroSplit, { Position = UDim2.new(0.5, 98, 0.5, -100) })
+        tween(rightGlow,  IntroSplit, { Position = UDim2.new(0.5, 94, 0.5, -100) })
+        tween(textReveal, IntroSplit, { Size = UDim2.new(0, 196, 0, 30) })
+        task.wait(0.65)
 
-        -- Phase 3: Lines contract in place (height → 0), text fades in between them
-        tween(leftLine,   IntroContract, { Position = UDim2.new(0.5, -82, 0.5, 0), Size = UDim2.new(0, 2, 0, 0) })
-        tween(leftGlow,   IntroContract, { Position = UDim2.new(0.5, -88, 0.5, 0), Size = UDim2.new(0, 12, 0, 0) })
-        tween(rightLine,  IntroContract, { Position = UDim2.new(0.5, 80, 0.5, 0), Size = UDim2.new(0, 2, 0, 0) })
-        tween(rightGlow,  IntroContract, { Position = UDim2.new(0.5, 76, 0.5, 0), Size = UDim2.new(0, 12, 0, 0) })
-        tween(introText,  IntroTextIn, { TextTransparency = 0 })
+        -- Phase 3: Lines contract in place (height → 0), text stays visible
+        tween(leftLine,   IntroContract, { Position = UDim2.new(0.5, -100, 0.5, 0), Size = UDim2.new(0, 2, 0, 0) })
+        tween(leftGlow,   IntroContract, { Position = UDim2.new(0.5, -106, 0.5, 0), Size = UDim2.new(0, 12, 0, 0) })
+        tween(rightLine,  IntroContract, { Position = UDim2.new(0.5, 98, 0.5, 0), Size = UDim2.new(0, 2, 0, 0) })
+        tween(rightGlow,  IntroContract, { Position = UDim2.new(0.5, 94, 0.5, 0), Size = UDim2.new(0, 12, 0, 0) })
         task.wait(1.0)
 
         -- Phase 4: Text fades out
@@ -1315,7 +1326,7 @@ function FriendshipLib:CreateWindow(config)
         leftGlow:Destroy()
         rightLine:Destroy()
         rightGlow:Destroy()
-        introText:Destroy()
+        textReveal:Destroy()
 
         -- Phase 5: Window fades in after intro is completely gone
         mainWindow.Visible = true
