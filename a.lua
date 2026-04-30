@@ -1287,11 +1287,11 @@ function FriendshipLib:CreateWindow(config)
         tween(introText, IntroTextIn, { TextTransparency = 0, Position = UDim2.new(0.5, -150, 0.5, -15) })
         task.wait(1.0)
 
-        -- Phase 4: Text fades out, line shrinks back to center and disappears
+        -- Phase 4: Text fades out, line contracts in place
         tween(introText, IntroTextOut, { TextTransparency = 1 })
-        tween(introLine, IntroSplit, { Position = UDim2.new(0.5, -1, 0.5, 0), Size = UDim2.new(0, 2, 0, 0) })
-        tween(introGlow,  IntroSplit, { Position = UDim2.new(0.5, -6, 0.5, 0), Size = UDim2.new(0, 12, 0, 0) })
-        tween(introDot,   IntroSplit, { Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, 0, 0.5, 0) })
+        tween(introLine, IntroSplit, { Position = UDim2.new(0.5, -82, 0.5, 0), Size = UDim2.new(0, 2, 0, 0) })
+        tween(introGlow,  IntroSplit, { Position = UDim2.new(0.5, -88, 0.5, 0), Size = UDim2.new(0, 14, 0, 0) })
+        tween(introDot,   IntroSplit, { Size = UDim2.new(0, 0, 0, 0) })
         task.wait(0.45)
 
         -- Cleanup intro elements
