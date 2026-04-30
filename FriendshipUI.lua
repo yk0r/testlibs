@@ -729,7 +729,7 @@ function FriendshipLib:CreateWindow(config)
     })
 
     local playerName = "User"
-    pcall(function() playerName = "Mikbray" end)
+    pcall(function() playerName = LocalPlayer.Name end)
 
     newLabel({
         Text = string.upper(playerName),
