@@ -1213,47 +1213,60 @@ function FriendshipLib:CreateWindow(config)
     mainWindow.Position = position
 
     -- ── CINEMATIC INTRO ──────────────────────────────────────
-    -- Phase 1: Glowing vertical line appears at screen center
-    -- Phase 2: Line splits left, opening a slit
-    -- Phase 3: "Friendship.Lua" emerges from the slit
-    -- Phase 4: Text fades out, window fades in
+    -- Phase 1: Two glowing vertical lines expand from center
+    -- Phase 2: Lines split apart — left goes left, right goes right
+    -- Phase 3: Lines contract in place, revealing "Friendship.Lua"
+    -- Phase 4: Text fades out
+    -- Phase 5: Window fades in
 
-    local introLine = Instance.new("Frame")
-    introLine.Name = "IntroLine"
-    introLine.BackgroundColor3 = Theme.Accent
-    introLine.BorderSizePixel = 0
-    introLine.Size = UDim2.new(0, 2, 0, 0)
-    introLine.Position = UDim2.new(0.5, -1, 0.5, 0)
-    introLine.ZIndex = 100
-    introLine.Parent = screenGui
+    -- Left line (starts at center, will move left)
+    local leftLine = Instance.new("Frame")
+    leftLine.Name = "IntroLineLeft"
+    leftLine.BackgroundColor3 = Theme.Accent
+    leftLine.BorderSizePixel = 0
+    leftLine.Size = UDim2.new(0, 2, 0, 0)
+    leftLine.Position = UDim2.new(0.5, -1, 0.5, 0)
+    leftLine.ZIndex = 100
+    leftLine.Parent = screenGui
 
-    -- Glow behind the line (wider, semi-transparent)
-    local introGlow = Instance.new("Frame")
-    introGlow.Name = "IntroGlow"
-    introGlow.BackgroundColor3 = Theme.Accent
-    introGlow.BackgroundTransparency = 0.6
-    introGlow.BorderSizePixel = 0
-    introGlow.Size = UDim2.new(0, 12, 0, 0)
-    introGlow.Position = UDim2.new(0.5, -6, 0.5, 0)
-    introGlow.ZIndex = 99
-    introGlow.Parent = screenGui
+    local leftGlow = Instance.new("Frame")
+    leftGlow.Name = "IntroGlowLeft"
+    leftGlow.BackgroundColor3 = Theme.Accent
+    leftGlow.BackgroundTransparency = 0.6
+    leftGlow.BorderSizePixel = 0
+    leftGlow.Size = UDim2.new(0, 12, 0, 0)
+    leftGlow.Position = UDim2.new(0.5, -6, 0.5, 0)
+    leftGlow.ZIndex = 99
+    leftGlow.Parent = screenGui
 
-    -- Accent dot at line center
-    local introDot = Instance.new("Frame")
-    introDot.Name = "IntroDot"
-    introDot.BackgroundColor3 = Theme.Accent
-    introDot.BorderSizePixel = 0
-    introDot.Size = UDim2.new(0, 0, 0, 0)
-    introDot.Position = UDim2.new(0.5, 0, 0.5, 0)
-    introDot.ZIndex = 101
-    introDot.Parent = screenGui
-    makeCorner(introDot, 99)
+    -- Right line (starts at center, will move right)
+    local rightLine = Instance.new("Frame")
+    rightLine.Name = "IntroLineRight"
+    rightLine.BackgroundColor3 = Theme.Accent
+    rightLine.BorderSizePixel = 0
+    rightLine.Size = UDim2.new(0, 2, 0, 0)
+    rightLine.Position = UDim2.new(0.5, -1, 0.5, 0)
+    rightLine.ZIndex = 100
+    rightLine.Parent = screenGui
 
-    -- Title text (emerges from slit)
+    local rightGlow = Instance.new("Frame")
+    rightGlow.Name = "IntroGlowRight"
+    rightGlow.BackgroundColor3 = Theme.Accent
+    rightGlow.BackgroundTransparency = 0.6
+    rightGlow.BorderSizePixel = 0
+    rightGlow.Size = UDim2.new(0, 12, 0, 0)
+    rightGlow.Position = UDim2.new(0.5, -6, 0.5, 0)
+    rightGlow.ZIndex = 99
+    rightGlow.Parent = screenGui
+
+    -- Title text (centered, ".Lua" in accent color)
     local introText = Instance.new("TextLabel")
     introText.Name = "IntroText"
-    introText.Text = title:match("^([^%.]+)") or title
+    local titlePrefix = title:match("^([^%.]+)") or title
+    local titleSuffix = title:match("(%..+)$") or ""
+    introText.Text = titlePrefix .. '<font color="#4CC9F0">' .. titleSuffix .. '</font>'
     introText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    introText.RichText = true
     introText.Font = Enum.Font.GothamBold
     introText.TextSize = 22
     introText.BackgroundTransparency = 1
@@ -1265,39 +1278,43 @@ function FriendshipLib:CreateWindow(config)
 
     local IntroExpand  = TweenInfo.new(0.5,  Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
     local IntroSplit   = TweenInfo.new(0.4,  Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+    local IntroContract= TweenInfo.new(0.5,  Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
     local IntroTextIn  = TweenInfo.new(0.6,  Enum.EasingStyle.Exponential, Enum.EasingDirection.Out)
     local IntroTextOut = TweenInfo.new(0.5,  Enum.EasingStyle.Exponential, Enum.EasingDirection.In)
     local IntroFadeIn  = TweenInfo.new(0.5,  Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
     task.spawn(function()
-        -- Phase 1: Line expands vertically from center
-        tween(introLine, IntroExpand, { Size = UDim2.new(0, 2, 0, 200), Position = UDim2.new(0.5, -1, 0.5, -100) })
-        tween(introGlow, IntroExpand, { Size = UDim2.new(0, 12, 0, 200), Position = UDim2.new(0.5, -6, 0.5, -100) })
-        tween(introDot, IntroExpand, { Size = UDim2.new(0, 6, 0, 6), Position = UDim2.new(0.5, -3, 0.5, -3) })
+        -- Phase 1: Both lines expand vertically from center
+        tween(leftLine,  IntroExpand, { Size = UDim2.new(0, 2, 0, 200), Position = UDim2.new(0.5, -1, 0.5, -100) })
+        tween(leftGlow,  IntroExpand, { Size = UDim2.new(0, 12, 0, 200), Position = UDim2.new(0.5, -6, 0.5, -100) })
+        tween(rightLine, IntroExpand, { Size = UDim2.new(0, 2, 0, 200), Position = UDim2.new(0.5, -1, 0.5, -100) })
+        tween(rightGlow, IntroExpand, { Size = UDim2.new(0, 12, 0, 200), Position = UDim2.new(0.5, -6, 0.5, -100) })
         task.wait(0.55)
 
-        -- Phase 2: Line splits to the left, opening a slit
-        tween(introLine, IntroSplit, { Position = UDim2.new(0.5, -82, 0.5, -100), Size = UDim2.new(0, 2, 0, 200) })
-        tween(introGlow, IntroSplit, { Position = UDim2.new(0.5, -88, 0.5, -100), Size = UDim2.new(0, 14, 0, 200) })
-        tween(introDot, IntroSplit, { Position = UDim2.new(0.5, -85, 0.5, -3) })
-        task.wait(0.3)
+        -- Phase 2: Lines split apart — left moves left, right moves right
+        tween(leftLine,  IntroSplit, { Position = UDim2.new(0.5, -82, 0.5, -100) })
+        tween(leftGlow,  IntroSplit, { Position = UDim2.new(0.5, -88, 0.5, -100) })
+        tween(rightLine, IntroSplit, { Position = UDim2.new(0.5, 80, 0.5, -100) })
+        tween(rightGlow, IntroSplit, { Position = UDim2.new(0.5, 76, 0.5, -100) })
+        task.wait(0.45)
 
-        -- Phase 3: Title text slides in from the slit and fades in
-        introText.Position = UDim2.new(0.5, -80, 0.5, -15)
-        tween(introText, IntroTextIn, { TextTransparency = 0, Position = UDim2.new(0.5, -150, 0.5, -15) })
+        -- Phase 3: Lines contract in place (height → 0), text fades in between them
+        tween(leftLine,   IntroContract, { Position = UDim2.new(0.5, -82, 0.5, 0), Size = UDim2.new(0, 2, 0, 0) })
+        tween(leftGlow,   IntroContract, { Position = UDim2.new(0.5, -88, 0.5, 0), Size = UDim2.new(0, 12, 0, 0) })
+        tween(rightLine,  IntroContract, { Position = UDim2.new(0.5, 80, 0.5, 0), Size = UDim2.new(0, 2, 0, 0) })
+        tween(rightGlow,  IntroContract, { Position = UDim2.new(0.5, 76, 0.5, 0), Size = UDim2.new(0, 12, 0, 0) })
+        tween(introText,  IntroTextIn, { TextTransparency = 0 })
         task.wait(1.0)
 
-        -- Phase 4: Text fades out, line contracts in place
+        -- Phase 4: Text fades out
         tween(introText, IntroTextOut, { TextTransparency = 1 })
-        tween(introLine, IntroSplit, { Position = UDim2.new(0.5, -82, 0.5, 0), Size = UDim2.new(0, 2, 0, 0) })
-        tween(introGlow,  IntroSplit, { Position = UDim2.new(0.5, -88, 0.5, 0), Size = UDim2.new(0, 14, 0, 0) })
-        tween(introDot,   IntroSplit, { Size = UDim2.new(0, 0, 0, 0) })
         task.wait(0.45)
 
         -- Cleanup intro elements
-        introLine:Destroy()
-        introGlow:Destroy()
-        introDot:Destroy()
+        leftLine:Destroy()
+        leftGlow:Destroy()
+        rightLine:Destroy()
+        rightGlow:Destroy()
         introText:Destroy()
 
         -- Phase 5: Window fades in after intro is completely gone
