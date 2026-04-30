@@ -1,6 +1,6 @@
 --[[
     Friendship.Lua UI Library
-    Roblox Executor Script UI Library
+    Roblox Exploit Script UI Library
 
     Design System:
     - Theme: Dark cyberpunk / hacker aesthetic
@@ -361,7 +361,7 @@ function FriendshipLib:_initNotifContainer()
         ZIndex = 100,
     })
 
-    local layout = makeListLayout(container, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Right, 8)
+    local layout = makeListLayout(container, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Right, 6)
     layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
     layout.SortOrder = Enum.SortOrder.LayoutOrder
 
@@ -381,119 +381,122 @@ function FriendshipLib:Notify(config)
     self._notifCount = (self._notifCount or 0) + 1
     local order = self._notifCount
 
-    local card = newFrame({
-        Name = "Notif_" .. order,
-        BackgroundColor3 = Color3.fromRGB(15, 16, 19),
-        Size = UDim2.new(1, 0, 0, 0),
-        BackgroundTransparency = 0,
-        Parent = self._notifContainer,
-        ZIndex = 101,
-    })
-    card.LayoutOrder = order
+    local card = Instance.new("Frame")
+    card.Name = "Notif_" .. order
+    card.BackgroundColor3 = Color3.fromRGB(15, 16, 19)
+    card.BorderSizePixel = 0
+    card.Size = UDim2.new(1, 0, 0, 0)
     card.AutomaticSize = Enum.AutomaticSize.Y
-    card.ClipsDescendants = false
-
+    card.ClipsDescendants = true
+    card.LayoutOrder = order
+    card.ZIndex = 101
+    card.Parent = self._notifContainer
     makeCorner(card, 6)
-    makeStroke(card, Theme.AccentDim, 1, 0.5)
+    local cardStroke = makeStroke(card, Theme.AccentDim, 1, 0.6)
 
-    local bar = newFrame({
-        Name = "AccentBar",
-        BackgroundColor3 = Theme.Accent,
-        Size = UDim2.new(0, 2, 1, 0),
-        Position = UDim2.new(0, 0, 0, 0),
-        Parent = card,
-        ZIndex = 102,
-    })
-    makeCorner(bar, 2)
+    -- Left accent bar
+    local bar = Instance.new("Frame")
+    bar.Name = "AccentBar"
+    bar.BackgroundColor3 = Theme.Accent
+    bar.BorderSizePixel = 0
+    bar.Size = UDim2.new(0, 2, 1, 0)
+    bar.ZIndex = 102
+    bar.Parent = card
+    makeCorner(bar, 1)
 
-    local inner = newFrame({
-        BackgroundTransparency = 1,
-        Size = UDim2.new(1, -16, 0, 0),
-        Position = UDim2.new(0, 10, 0, 0),
-        Parent = card,
-        ZIndex = 102,
-    })
+    -- Content area
+    local inner = Instance.new("Frame")
+    inner.BackgroundTransparency = 1
+    inner.Size = UDim2.new(1, -16, 0, 0)
+    inner.Position = UDim2.new(0, 10, 0, 0)
     inner.AutomaticSize = Enum.AutomaticSize.Y
-    makePadding(inner, 10, 6, 10, 4)
-    makeListLayout(inner, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 3)
+    inner.ZIndex = 102
+    inner.Parent = card
+    makePadding(inner, 10, 6, 14, 4)
+    makeListLayout(inner, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 2)
 
-    local titleRow = newFrame({
-        BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 0, 14),
-        Parent = inner,
-        ZIndex = 102,
-    })
-    makeListLayout(titleRow, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Left, 6)
-    titleRow.AutomaticSize = Enum.AutomaticSize.XY
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Size = UDim2.new(1, 0, 0, 14)
+    titleLabel.Text = string.upper(title)
+    titleLabel.TextColor3 = Theme.TextFaint
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextSize = 9
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.ZIndex = 103
+    titleLabel.Parent = inner
 
-    local dotWrap = newFrame({
-        BackgroundTransparency = 1,
-        Size = UDim2.new(0, 6, 0, 14),
-        Parent = titleRow,
-        ZIndex = 103,
-    })
-    local dot = newFrame({
-        Name = "Dot",
-        BackgroundColor3 = Theme.Accent,
-        Size = UDim2.new(0, 6, 0, 6),
-        Parent = dotWrap,
-        ZIndex = 103,
-    })
-    dot.AnchorPoint = Vector2.new(0, 0.5)
-    makeCorner(dot, 99)
-
-    local titleLabel = newLabel({
-        Text = string.upper(title),
-        TextColor3 = Theme.TextFaint,
-        Font = Enum.Font.GothamBold,
-        TextSize = 9,
-        Size = UDim2.new(0, 0, 0, 14),
-        Parent = titleRow,
-        ZIndex = 103,
-    })
-    titleLabel.AutomaticSize = Enum.AutomaticSize.X
-
-    local contentLabel = newLabel({
-        Text = content,
-        TextColor3 = Theme.Text,
-        Font = Enum.Font.GothamSemibold,
-        TextSize = 12,
-        Size = UDim2.new(1, 0, 0, 0),
-        Parent = inner,
-        ZIndex = 102,
-    })
+    local contentLabel = Instance.new("TextLabel")
+    contentLabel.BackgroundTransparency = 1
+    contentLabel.Size = UDim2.new(1, 0, 0, 0)
     contentLabel.AutomaticSize = Enum.AutomaticSize.Y
+    contentLabel.Text = content
+    contentLabel.TextColor3 = Theme.Text
+    contentLabel.Font = Enum.Font.GothamSemibold
+    contentLabel.TextSize = 12
+    contentLabel.TextXAlignment = Enum.TextXAlignment.Left
     contentLabel.TextWrapped = true
+    contentLabel.ZIndex = 103
+    contentLabel.Parent = inner
 
-    local progressBG = newFrame({
-        BackgroundColor3 = Color3.fromRGB(255,255,255),
-        BackgroundTransparency = 0.95,
-        Size = UDim2.new(1, 0, 0, 2),
-        Position = UDim2.new(0, 0, 1, -2),
-        Parent = card,
-        ZIndex = 103,
-    })
-    local progressBar = newFrame({
-        BackgroundColor3 = Theme.Accent,
-        Size = UDim2.new(1, 0, 1, 0),
-        Parent = progressBG,
-        ZIndex = 104,
-    })
+    -- Progress bar
+    local progressBG = Instance.new("Frame")
+    progressBG.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    progressBG.BackgroundTransparency = 0.93
+    progressBG.BorderSizePixel = 0
+    progressBG.Size = UDim2.new(1, 0, 0, 1)
+    progressBG.Position = UDim2.new(0, 0, 1, -1)
+    progressBG.ZIndex = 104
+    progressBG.Parent = card
 
-    card.Position = UDim2.new(1, 20, 0, 0)
+    local progressBar = Instance.new("Frame")
+    progressBar.BackgroundColor3 = Theme.Accent
+    progressBar.BorderSizePixel = 0
+    progressBar.Size = UDim2.new(1, 0, 1, 0)
+    progressBar.ZIndex = 105
+    progressBar.Parent = progressBG
+
+    -- Collect all fade-able objects
+    local fadeTargets = {card, bar, titleLabel, contentLabel, progressBar, progressBG}
+
+    -- Appear: everything starts invisible, tween in together
+    card.Position = UDim2.new(0.2, 0, 0, 0)
     card.BackgroundTransparency = 1
-    tween(card, Theme.Medium, { BackgroundTransparency = 0 })
-    tween(card, Theme.Medium, { Position = UDim2.new(0, 0, 0, 0) })
+    cardStroke.Transparency = 1
+    bar.BackgroundTransparency = 1
+    titleLabel.TextTransparency = 1
+    contentLabel.TextTransparency = 1
+    progressBar.BackgroundTransparency = 1
+    progressBG.BackgroundTransparency = 1
 
+    task.defer(function()
+        tween(card, Theme.Medium, { BackgroundTransparency = 0, Position = UDim2.new(0, 0, 0, 0) })
+        tween(cardStroke, Theme.Medium, { Transparency = 0.6 })
+        tween(bar, Theme.Medium, { BackgroundTransparency = 0 })
+        tween(titleLabel, Theme.Medium, { TextTransparency = 0 })
+        tween(contentLabel, Theme.Medium, { TextTransparency = 0 })
+        tween(progressBar, Theme.Medium, { BackgroundTransparency = 0 })
+        tween(progressBG, Theme.Medium, { BackgroundTransparency = 0.93 })
+    end)
+
+    -- Progress bar countdown
     task.delay(0.3, function()
         tween(progressBar, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
             Size = UDim2.new(0, 0, 1, 0)
         })
     end)
 
+    -- Disappear: ALL elements fade simultaneously
+    local fadeOut = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+
     task.delay(duration + 0.3, function()
-        tween(card, Theme.Medium, { BackgroundTransparency = 1 })
-        tween(card, Theme.Medium, { Position = UDim2.new(1, 20, 0, 0) })
+        tween(card, fadeOut, { BackgroundTransparency = 1 })
+        tween(cardStroke, fadeOut, { Transparency = 1 })
+        tween(bar, fadeOut, { BackgroundTransparency = 1 })
+        tween(titleLabel, fadeOut, { TextTransparency = 1 })
+        tween(contentLabel, fadeOut, { TextTransparency = 1 })
+        tween(progressBar, fadeOut, { BackgroundTransparency = 1 })
+        tween(progressBG, fadeOut, { BackgroundTransparency = 1 })
         task.delay(0.35, function()
             card:Destroy()
         end)
@@ -586,7 +589,6 @@ function FriendshipLib:CreateWindow(config)
         Parent = screenGui,
         ZIndex = 3,
     })
-    makeCorner(mainWindow, 8)
     makeStroke(mainWindow, Color3.fromRGB(255,255,255), 1, 0.9)
 
     -- ── SIDEBAR ──────────────────────────────────────────────
@@ -598,7 +600,7 @@ function FriendshipLib:CreateWindow(config)
         Parent = mainWindow,
         ZIndex = 4,
     })
-    makeCorner(sidebar, 8)
+    -- NO UICorner on sidebar — ClipsDescendants on mainWindow clips the corners
 
     -- Brand logo area - MOVED LEFT (padding from 18 -> 10)
     local brandArea = newFrame({
@@ -711,12 +713,12 @@ function FriendshipLib:CreateWindow(config)
         Parent = sidebar,
         ZIndex = 5,
     })
-    makeCorner(sidebarBottom, 8)
+    -- NO UICorner on sidebarBottom — inner containers stay rectangular
     makeStroke(sidebarBottom, Color3.fromRGB(255,255,255), 1, 0.95)
     makePadding(sidebarBottom, 0, 0, 0, 10)
 
     newLabel({
-        Text = "WELCOME BACK PREMIUM USER",
+        Text = "Welcome back,",
         TextColor3 = Color3.fromRGB(180,180,180),
         Font = Enum.Font.GothamBold,
         TextSize = 10,
@@ -760,7 +762,7 @@ function FriendshipLib:CreateWindow(config)
         Parent = contentArea,
         ZIndex = 5,
     })
-    makeCorner(header, 8)
+    -- NO UICorner on header — ClipsDescendants on mainWindow clips the corners
     makeStroke(header, Color3.fromRGB(255,255,255), 1, 0.95)
 
     -- Breadcrumb left
@@ -870,53 +872,241 @@ function FriendshipLib:CreateWindow(config)
         tween(searchStroke, Theme.Fast, { Color = Color3.fromRGB(255,255,255), Transparency = 0.9 })
     end)
 
-    -- ── SEARCH FUNCTIONALITY (Rayfield style) ──
-    -- Searches through all tabs and their sections/elements
-    local allTabs = {} -- will be populated as tabs are created
+    -- ── FORWARD DECLARATIONS (defined later, but search functions need them) ──
+    local pagesContainer
+    local Window
 
-    searchBox:GetPropertyChangedSignal("Text"):Connect(function()
-        local query = string.lower(searchBox.Text)
-        for _, tabData in ipairs(allTabs) do
-            if query == "" then
-                -- Show all sections and elements
-                for _, section in ipairs(tabData._sections) do
-                    section._wrapper.Visible = true
-                    for _, el in ipairs(section._elements) do
-                        el.Visible = true
-                    end
-                end
-            else
-                for _, section in ipairs(tabData._sections) do
-                    local sectionMatch = false
-                    local sectionTitle = string.lower(section._title)
-                    if string.find(sectionTitle, query, 1, true) then
-                        sectionMatch = true
-                    end
+    -- ── SEARCH FUNCTIONALITY (Rayfield-style global search) ──
+    -- Iterates ALL tabs, toggles section._wrapper.Visible based on query match.
+    -- Matching sections from all tabs are moved into a search results page.
+    -- On clear: sections are moved back to their original tab columns.
+    local allTabs = {}
+    local searchActive = false
+    local searchPrevTab = nil
 
-                    local anyElementMatch = false
-                    for _, el in ipairs(section._elements) do
-                        local elText = string.lower(el.Name)
-                        if string.find(elText, query, 1, true) then
-                            el.Visible = true
-                            anyElementMatch = true
-                        else
-                            el.Visible = false
-                        end
-                    end
+    -- Cache: remember where each section was originally parented
+    -- Format: section -> {parent = Frame, layoutOrder = number}
+    local sectionOriginalHome = {}
 
-                    section._wrapper.Visible = sectionMatch or anyElementMatch
-                    if sectionMatch then
-                        for _, el in ipairs(section._elements) do
-                            el.Visible = true
-                        end
+    local function collectSearchableText(section)
+        local parts = {}
+        -- Section title
+        if section._title and section._title ~= "" then
+            table.insert(parts, section._title)
+        end
+        -- Element names and labels
+        for _, el in ipairs(section._elements) do
+            if el.Name and el.Name ~= "Frame" and el.Name ~= "" then
+                table.insert(parts, el.Name)
+            end
+            for _, child in ipairs(el:GetChildren()) do
+                if child:IsA("TextLabel") or child:IsA("TextButton") then
+                    local t = child.Text
+                    if t and t ~= "" and t ~= "..." and #t < 200 then
+                        table.insert(parts, t)
                     end
                 end
             end
         end
+        return table.concat(parts, " ")
+    end
+
+    local function sectionMatchesQuery(section, query)
+        local allText = string.lower(collectSearchableText(section))
+        return string.find(allText, query, 1, true) ~= nil
+    end
+
+    local function exitSearchMode()
+        if not searchActive then return end
+        searchActive = false
+
+        -- Move every section back to its original home
+        for section, home in pairs(sectionOriginalHome) do
+            if section._wrapper then
+                section._wrapper.Parent = home.parent
+                section._wrapper.LayoutOrder = home.layoutOrder
+                section._wrapper.Visible = true
+            end
+        end
+
+        -- Remove any tab-name labels we inserted during search
+        for _, tabData in ipairs(allTabs) do
+            for _, section in ipairs(tabData._sections) do
+                local existingLabel = section._wrapper:FindFirstChild("SearchTabLabel")
+                if existingLabel then
+                    existingLabel:Destroy()
+                end
+            end
+        end
+
+        -- Hide search page, show previous tab page
+        local searchPage = pagesContainer:FindFirstChild("SearchResultsPage")
+        if searchPage then
+            searchPage.Visible = false
+        end
+
+        -- Restore the tab page that was active before search
+        if searchPrevTab and searchPrevTab._page then
+            searchPrevTab._page.Visible = true
+        elseif Window._activeTab and Window._activeTab._page then
+            Window._activeTab._page.Visible = true
+        end
+
+        -- Restore breadcrumb
+        if Window._activeTab then
+            breadcrumbActive.Text = Window._activeTab._name or "Home"
+        end
+    end
+
+    local function performSearch(query)
+        -- 1. First, move everything back to original homes (in case of re-search)
+        for section, home in pairs(sectionOriginalHome) do
+            if section._wrapper then
+                section._wrapper.Parent = home.parent
+                section._wrapper.LayoutOrder = home.layoutOrder
+                section._wrapper.Visible = true
+            end
+            -- Remove any search tab labels
+            local existingLabel = section._wrapper:FindFirstChild("SearchTabLabel")
+            if existingLabel then existingLabel:Destroy() end
+        end
+
+        -- 2. Cache original homes for all sections (do this once, refresh each search)
+        sectionOriginalHome = {}
+        for _, tabData in ipairs(allTabs) do
+            for _, section in ipairs(tabData._sections) do
+                sectionOriginalHome[section] = {
+                    parent = section._wrapper.Parent,
+                    layoutOrder = section._wrapper.LayoutOrder,
+                }
+            end
+        end
+
+        -- 3. Get or create search results page
+        local searchPage = pagesContainer:FindFirstChild("SearchResultsPage")
+        if not searchPage then
+            searchPage = Instance.new("ScrollingFrame")
+            searchPage.Name = "SearchResultsPage"
+            searchPage.BackgroundTransparency = 1
+            searchPage.BorderSizePixel = 0
+            searchPage.Size = UDim2.new(1, 0, 1, 0)
+            searchPage.CanvasSize = UDim2.new(0, 0, 0, 0)
+            searchPage.AutomaticCanvasSize = Enum.AutomaticSize.Y
+            searchPage.ScrollBarThickness = 3
+            searchPage.ScrollBarImageColor3 = Color3.fromRGB(255,255,255)
+            searchPage.ScrollBarImageTransparency = 0.85
+            searchPage.ScrollingDirection = Enum.ScrollingDirection.Y
+            searchPage.Visible = false
+            searchPage.ZIndex = 6
+            searchPage.Parent = pagesContainer
+            makePadding(searchPage, 0, 0, 12, 0)
+
+            local searchCol = newFrame({
+                Name = "SearchCol",
+                BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 0, 0),
+                Parent = searchPage,
+                ZIndex = 6,
+            })
+            searchCol.AutomaticSize = Enum.AutomaticSize.Y
+            makeListLayout(searchCol, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 12)
+        end
+
+        local searchCol = searchPage:FindFirstChild("SearchCol")
+
+        -- 4. Clear previous search results from searchCol
+        for _, child in ipairs(searchCol:GetChildren()) do
+            if child.Name == "NoResultsLabel" then
+                child:Destroy()
+            end
+        end
+
+        -- 5. Hide all tab pages
+        for _, tabData in ipairs(allTabs) do
+            if tabData._page then
+                tabData._page.Visible = false
+            end
+        end
+
+        -- 6. Find matching sections and move them into searchCol
+        local matchCount = 0
+        local resultIndex = 0
+
+        for _, tabData in ipairs(allTabs) do
+            for _, section in ipairs(tabData._sections) do
+                if sectionMatchesQuery(section, query) then
+                    -- Add a tab-name label before the section
+                    local tabLabel = newLabel({
+                        Text = string.upper(tabData._name or "TAB"),
+                        TextColor3 = Theme.Accent,
+                        Font = Enum.Font.GothamBold,
+                        TextSize = 9,
+                        Size = UDim2.new(1, 0, 0, 14),
+                        Parent = section._wrapper,
+                        ZIndex = 20,
+                    })
+                    tabLabel.Name = "SearchTabLabel"
+                    tabLabel.LayoutOrder = -1
+                    tabLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+                    -- Move section wrapper to search column
+                    resultIndex = resultIndex + 1
+                    section._wrapper.Parent = searchCol
+                    section._wrapper.LayoutOrder = resultIndex
+                    section._wrapper.Visible = true
+
+                    matchCount = matchCount + 1
+                else
+                    section._wrapper.Visible = false
+                end
+            end
+        end
+
+        -- 7. Show search page
+        searchPage.Visible = true
+
+        -- 8. No results message
+        if matchCount == 0 then
+            local noLabel = newLabel({
+                Text = "No results found for '" .. query .. "'",
+                TextColor3 = Theme.TextFaint,
+                Font = Enum.Font.GothamSemibold,
+                TextSize = 12,
+                Size = UDim2.new(1, 0, 0, 60),
+                Parent = searchCol,
+                ZIndex = 6,
+            })
+            noLabel.Name = "NoResultsLabel"
+            noLabel.TextXAlignment = Enum.TextXAlignment.Center
+        end
+    end
+
+    searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+        local query = string.lower(searchBox.Text)
+
+        if query == "" then
+            exitSearchMode()
+        else
+            -- Enter search mode
+            if not searchActive then
+                searchActive = true
+                searchPrevTab = Window._activeTab
+                breadcrumbActive.Text = "Search"
+            end
+
+            -- Perform search
+            performSearch(query)
+        end
     end)
 
-    -- Tab content pages container
-    local pagesContainer = newFrame({
+    searchBox.FocusLost:Connect(function()
+        if searchBox.Text == "" then
+            exitSearchMode()
+        end
+    end)
+
+    -- Tab content pages container (forward-declared above for search functions)
+    pagesContainer = newFrame({
         Name = "PagesContainer",
         BackgroundTransparency = 1,
         Size = UDim2.new(1, 0, 1, -80),
@@ -937,7 +1127,7 @@ function FriendshipLib:CreateWindow(config)
         Parent = contentArea,
         ZIndex = 5,
     })
-    makeCorner(footer, 8)
+    -- NO UICorner on footer — ClipsDescendants on mainWindow clips the corners
     makeStroke(footer, Color3.fromRGB(255,255,255), 1, 0.95)
 
     local footerLeft = newFrame({
@@ -980,7 +1170,7 @@ function FriendshipLib:CreateWindow(config)
     })
 
     local buildLabel = newLabel({
-        Text = "BUILD: V1.0.5A           --BY DEVTEAM: 50MASTER YK0R MIKBRAY--",
+        Text = "BUILD: V1.0.5A",
         TextColor3 = Theme.TextFaint,
         Font = Enum.Font.GothamBold,
         TextSize = 8,
@@ -1002,123 +1192,12 @@ function FriendshipLib:CreateWindow(config)
     })
     footerBrand.TextXAlignment = Enum.TextXAlignment.Right
 
-    -- ── INNER CORNER FILLS ──────────────────────────────────────
-    -- Children (sidebar, header, footer, sidebarBottom) all have UICorner(8),
-    -- which rounds ALL four corners including inner ones we want to keep sharp.
-    -- These small patches fill in the unwanted inner rounded corners.
+    -- ── WINDOW CORNERS ──────────────────────────────────────
+    -- mainWindow uses sharp corners (no UICorner)
 
-    local CR = 8 -- corner radius, must match UICorner
-    -- Sidebar top-right inner corner (where sidebar meets header)
-    local fillSTR = Instance.new("Frame")
-    fillSTR.Name = "Fill_SidebarTR"
-    fillSTR.BackgroundColor3 = Theme.BG_Window
-    fillSTR.BorderSizePixel = 0
-    fillSTR.Size = UDim2.new(0, CR, 0, CR)
-    fillSTR.Position = UDim2.new(1, -CR - 0, 0, 0)
-    fillSTR.ZIndex = 9
-    fillSTR.Parent = sidebar
-
-    -- Sidebar bottom-right inner corner (where sidebar meets footer)
-    local fillSBR = Instance.new("Frame")
-    fillSBR.Name = "Fill_SidebarBR"
-    fillSBR.BackgroundColor3 = Theme.BG_Window
-    fillSBR.BorderSizePixel = 0
-    fillSBR.Size = UDim2.new(0, CR, 0, CR)
-    fillSBR.Position = UDim2.new(1, -CR - 0, 1, -CR)
-    fillSBR.ZIndex = 9
-    fillSBR.Parent = sidebar
-
-    -- Header bottom-left inner corner
-    local fillHBL = Instance.new("Frame")
-    fillHBL.Name = "Fill_HeaderBL"
-    fillHBL.BackgroundColor3 = Theme.BG_Window
-    fillHBL.BorderSizePixel = 0
-    fillHBL.Size = UDim2.new(0, CR, 0, CR)
-    fillHBL.Position = UDim2.new(0, 0, 1, -CR)
-    fillHBL.ZIndex = 9
-    fillHBL.Parent = header
-
-    -- Header bottom-right inner corner
-    local fillHBR = Instance.new("Frame")
-    fillHBR.Name = "Fill_HeaderBR"
-    fillHBR.BackgroundColor3 = Theme.BG_Window
-    fillHBR.BorderSizePixel = 0
-    fillHBR.Size = UDim2.new(0, CR, 0, CR)
-    fillHBR.Position = UDim2.new(1, -CR, 1, -CR)
-    fillHBR.ZIndex = 9
-    fillHBR.Parent = header
-
-    -- Footer top-left inner corner
-    local fillFTL = Instance.new("Frame")
-    fillFTL.Name = "Fill_FooterTL"
-    fillFTL.BackgroundColor3 = Theme.BG_Window
-    fillFTL.BorderSizePixel = 0
-    fillFTL.Size = UDim2.new(0, CR, 0, CR)
-    fillFTL.Position = UDim2.new(0, 0, 0, 0)
-    fillFTL.ZIndex = 9
-    fillFTL.Parent = footer
-
-    -- Footer top-right inner corner
-    local fillFTR = Instance.new("Frame")
-    fillFTR.Name = "Fill_FooterTR"
-    fillFTR.BackgroundColor3 = Theme.BG_Window
-    fillFTR.BorderSizePixel = 0
-    fillFTR.Size = UDim2.new(0, CR, 0, CR)
-    fillFTR.Position = UDim2.new(1, -CR, 0, 0)
-    fillFTR.ZIndex = 9
-    fillFTR.Parent = footer
-
-    -- SidebarBottom top-left & top-right inner corners
-    local fillSBTL = Instance.new("Frame")
-    fillSBTL.Name = "Fill_SBTopLeft"
-    fillSBTL.BackgroundColor3 = Theme.BG_Sidebar
-    fillSBTL.BorderSizePixel = 0
-    fillSBTL.Size = UDim2.new(0, CR, 0, CR)
-    fillSBTL.Position = UDim2.new(0, 0, 0, 0)
-    fillSBTL.ZIndex = 9
-    fillSBTL.Parent = sidebarBottom
-
-    local fillSBTR = Instance.new("Frame")
-    fillSBTR.Name = "Fill_SBTopRight"
-    fillSBTR.BackgroundColor3 = Theme.BG_Sidebar
-    fillSBTR.BorderSizePixel = 0
-    fillSBTR.Size = UDim2.new(0, CR, 0, CR)
-    fillSBTR.Position = UDim2.new(1, -CR, 0, 0)
-    fillSBTR.ZIndex = 9
-    fillSBTR.Parent = sidebarBottom
-
-    -- SidebarBottom bottom-right inner corner
-    local fillSBBR = Instance.new("Frame")
-    fillSBBR.Name = "Fill_SBBotRight"
-    fillSBBR.BackgroundColor3 = Theme.BG_Sidebar
-    fillSBBR.BorderSizePixel = 0
-    fillSBBR.Size = UDim2.new(0, CR, 0, CR)
-    fillSBBR.Position = UDim2.new(1, -CR, 1, -CR)
-    fillSBBR.ZIndex = 9
-    fillSBBR.Parent = sidebarBottom
-
-    -- Header top-left inner corner (header sits in contentArea, left edge meets sidebar)
-    local fillHTL = Instance.new("Frame")
-    fillHTL.Name = "Fill_HeaderTL"
-    fillHTL.BackgroundColor3 = Theme.BG_Window
-    fillHTL.BorderSizePixel = 0
-    fillHTL.Size = UDim2.new(0, CR, 0, CR)
-    fillHTL.Position = UDim2.new(0, 0, 0, 0)
-    fillHTL.ZIndex = 9
-    fillHTL.Parent = header
-
-    -- Footer bottom-left inner corner
-    local fillFBL = Instance.new("Frame")
-    fillFBL.Name = "Fill_FooterBL"
-    fillFBL.BackgroundColor3 = Theme.BG_Window
-    fillFBL.BorderSizePixel = 0
-    fillFBL.Size = UDim2.new(0, CR, 0, CR)
-    fillFBL.Position = UDim2.new(0, 0, 1, -CR)
-    fillFBL.ZIndex = 9
-    fillFBL.Parent = footer
-
-    -- Make header draggable
+    -- Make header and brand area draggable
     makeDraggable(mainWindow, header)
+    makeDraggable(mainWindow, brandArea)
 
     -- Toggle visibility keybind
     UserInputService.InputBegan:Connect(function(input, gameProcessed)
@@ -1129,19 +1208,101 @@ function FriendshipLib:CreateWindow(config)
 
     -- Entry animation
     mainWindow.BackgroundTransparency = 1
-    mainWindow.Size = UDim2.fromOffset(size.X.Offset * 0.95, size.Y.Offset * 0.95)
-    mainWindow.Position = UDim2.new(0.5, -size.X.Offset * 0.475, 0.5, -size.Y.Offset * 0.475)
+    mainWindow.Size = size
+    mainWindow.Position = position
 
-    task.defer(function()
-        tween(mainWindow, Theme.Spring, {
-            BackgroundTransparency = 0,
-            Size = size,
-            Position = position,
-        })
+    -- ── CINEMATIC INTRO ──────────────────────────────────────
+    -- Phase 1: Glowing vertical line appears at screen center
+    -- Phase 2: Line splits left, opening a slit
+    -- Phase 3: "Friendship.Lua" emerges from the slit
+    -- Phase 4: Text fades out, window fades in
+
+    local introLine = Instance.new("Frame")
+    introLine.Name = "IntroLine"
+    introLine.BackgroundColor3 = Theme.Accent
+    introLine.BorderSizePixel = 0
+    introLine.Size = UDim2.new(0, 2, 0, 0)
+    introLine.Position = UDim2.new(0.5, -1, 0.5, 0)
+    introLine.ZIndex = 100
+    introLine.Parent = screenGui
+
+    -- Glow behind the line (wider, semi-transparent)
+    local introGlow = Instance.new("Frame")
+    introGlow.Name = "IntroGlow"
+    introGlow.BackgroundColor3 = Theme.Accent
+    introGlow.BackgroundTransparency = 0.6
+    introGlow.BorderSizePixel = 0
+    introGlow.Size = UDim2.new(0, 12, 0, 0)
+    introGlow.Position = UDim2.new(0.5, -6, 0.5, 0)
+    introGlow.ZIndex = 99
+    introGlow.Parent = screenGui
+
+    -- Accent dot at line center
+    local introDot = Instance.new("Frame")
+    introDot.Name = "IntroDot"
+    introDot.BackgroundColor3 = Theme.Accent
+    introDot.BorderSizePixel = 0
+    introDot.Size = UDim2.new(0, 0, 0, 0)
+    introDot.Position = UDim2.new(0.5, 0, 0.5, 0)
+    introDot.ZIndex = 101
+    introDot.Parent = screenGui
+    makeCorner(introDot, 99)
+
+    -- Title text (emerges from slit)
+    local introText = Instance.new("TextLabel")
+    introText.Name = "IntroText"
+    introText.Text = title:match("^([^%.]+)") or title
+    introText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    introText.Font = Enum.Font.GothamBold
+    introText.TextSize = 22
+    introText.BackgroundTransparency = 1
+    introText.TextTransparency = 1
+    introText.Size = UDim2.new(0, 300, 0, 30)
+    introText.Position = UDim2.new(0.5, -150, 0.5, -15)
+    introText.ZIndex = 102
+    introText.Parent = screenGui
+
+    local IntroExpand  = TweenInfo.new(0.5,  Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+    local IntroSplit   = TweenInfo.new(0.4,  Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+    local IntroTextIn  = TweenInfo.new(0.6,  Enum.EasingStyle.Exponential, Enum.EasingDirection.Out)
+    local IntroTextOut = TweenInfo.new(0.5,  Enum.EasingStyle.Exponential, Enum.EasingDirection.In)
+    local IntroFadeIn  = TweenInfo.new(0.5,  Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+
+    task.spawn(function()
+        -- Phase 1: Line expands vertically from center
+        tween(introLine, IntroExpand, { Size = UDim2.new(0, 2, 0, 200), Position = UDim2.new(0.5, -1, 0.5, -100) })
+        tween(introGlow, IntroExpand, { Size = UDim2.new(0, 12, 0, 200), Position = UDim2.new(0.5, -6, 0.5, -100) })
+        tween(introDot, IntroExpand, { Size = UDim2.new(0, 6, 0, 6), Position = UDim2.new(0.5, -3, 0.5, -3) })
+        task.wait(0.55)
+
+        -- Phase 2: Line splits to the left, opening a slit
+        tween(introLine, IntroSplit, { Position = UDim2.new(0.5, -82, 0.5, -100), Size = UDim2.new(0, 2, 0, 200) })
+        tween(introGlow, IntroSplit, { Position = UDim2.new(0.5, -88, 0.5, -100), Size = UDim2.new(0, 14, 0, 200) })
+        tween(introDot, IntroSplit, { Position = UDim2.new(0.5, -85, 0.5, -3) })
+        task.wait(0.3)
+
+        -- Phase 3: Title text slides in from the slit and fades in
+        introText.Position = UDim2.new(0.5, -80, 0.5, -15)
+        tween(introText, IntroTextIn, { TextTransparency = 0, Position = UDim2.new(0.5, -150, 0.5, -15) })
+        task.wait(1.0)
+
+        -- Phase 4: Text + line fade out, window fades in
+        tween(introText, IntroTextOut, { TextTransparency = 1 })
+        tween(introLine, IntroTextOut, { BackgroundTransparency = 1 })
+        tween(introGlow,  IntroTextOut, { BackgroundTransparency = 1 })
+        tween(introDot,   IntroTextOut, { BackgroundTransparency = 1 })
+        tween(mainWindow, IntroFadeIn, { BackgroundTransparency = 0 })
+        task.wait(0.5)
+
+        -- Cleanup intro elements
+        introLine:Destroy()
+        introGlow:Destroy()
+        introDot:Destroy()
+        introText:Destroy()
     end)
 
-    -- ── WINDOW OBJECT ──────────────────────────────────────
-    local Window = {}
+    -- ── WINDOW OBJECT (forward-declared above for search functions) ──
+    Window = {}
     Window._tabs           = {}
     Window._activeTab      = nil
     Window._navContainer   = navContainer
@@ -1307,6 +1468,7 @@ function FriendshipLib:CreateWindow(config)
         Tab._window       = self
         Tab._sectionOrder = 0
         Tab._sections     = {}
+        Tab._name         = name
 
         function Tab:_setActive(active)
             if active then
@@ -1341,6 +1503,11 @@ function FriendshipLib:CreateWindow(config)
         end
 
         navBtn.MouseButton1Click:Connect(function()
+            -- Exit search mode if active
+            if searchActive then
+                searchBox.Text = ""
+                -- exitSearchMode will be called by the Text changed signal
+            end
             if self._activeTab then
                 self._activeTab:_setActive(false)
             end
@@ -1458,7 +1625,7 @@ function FriendshipLib:CreateWindow(config)
                 return Section._elemOrder
             end
 
-            -- ── HELPER: Element with hover effect ──
+            -- ── HELPER: Element container ──
             local function makeElement(height)
                 local el = newFrame({
                     BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -1468,15 +1635,6 @@ function FriendshipLib:CreateWindow(config)
                     ZIndex = 8,
                 })
                 el.LayoutOrder = nextOrder()
-                makeCorner(el, 6)
-
-                el.MouseEnter:Connect(function()
-                    tween(el, Theme.Fast, { BackgroundTransparency = 0.98 })
-                end)
-                el.MouseLeave:Connect(function()
-                    tween(el, Theme.Fast, { BackgroundTransparency = 1 })
-                end)
-
                 table.insert(Section._elements, el)
                 return el
             end
@@ -2574,6 +2732,7 @@ function FriendshipLib:CreateWindow(config)
                 config = config or {}
                 local title   = config.Title   or "Paragraph"
                 local content = config.Content or ""
+                local color   = config.Color   or nil
 
                 local el = makeElement(60)
                 el.AutomaticSize = Enum.AutomaticSize.Y
@@ -2581,6 +2740,7 @@ function FriendshipLib:CreateWindow(config)
                 local titleLbl = newLabel({
                     Text = title,
                     TextColor3 = Color3.fromRGB(200, 200, 210),
+                    RichText = true,
                     Font = Enum.Font.GothamBold,
                     TextSize = 13,
                     Size = UDim2.new(1, -24, 0, 20),
@@ -2591,7 +2751,8 @@ function FriendshipLib:CreateWindow(config)
 
                 local contentLbl = newLabel({
                     Text = content,
-                    TextColor3 = Color3.fromRGB(130, 130, 140),
+                    TextColor3 = color or Color3.fromRGB(130, 130, 140),
+                    RichText = true,
                     Font = Enum.Font.Gotham,
                     TextSize = 12,
                     Size = UDim2.new(1, -24, 0, 0),
@@ -2606,8 +2767,15 @@ function FriendshipLib:CreateWindow(config)
 
                 local ParagraphObj = {}
                 function ParagraphObj:Set(newConfig)
-                    titleLbl.Text = newConfig.Title or title
-                    contentLbl.Text = newConfig.Content or content
+                    if newConfig.Title ~= nil then
+                        titleLbl.Text = newConfig.Title
+                    end
+                    if newConfig.Content ~= nil then
+                        contentLbl.Text = newConfig.Content
+                    end
+                    if newConfig.Color then
+                        contentLbl.TextColor3 = newConfig.Color
+                    end
                 end
 
                 return ParagraphObj
