@@ -873,34 +873,43 @@ function FriendshipLib:CreateWindow(config)
         tween(searchStroke, Theme.Fast, { Color = Color3.fromRGB(255,255,255), Transparency = 0.9 })
     end)
 
-    -- ── SEARCH FUNCTIONALITY (Global search — Rayfield inspired) ──
-    -- Searches through ALL tabs: section titles + element labels/names/text
-    -- On search: hides current tab page, shows search overlay with matching sections
-    -- Sections are MOVED (not cloned) into search results for full interactivity
-    -- On clear: sections are moved back to original tab columns
+    -- ── FORWARD DECLARATIONS (defined later, but search functions need them) ──
+    local pagesContainer
+    local Window
+
+    -- ── SEARCH FUNCTIONALITY (Rayfield-style global search) ──
+    -- Iterates ALL tabs, toggles section._wrapper.Visible based on query match.
+    -- Matching sections from all tabs are moved into a search results page.
+    -- On clear: sections are moved back to their original tab columns.
     local allTabs = {}
     local searchActive = false
     local searchPrevTab = nil
 
-    -- Track where each section was originally parented
-    local searchMovedSections = {} -- section -> {parent, layoutOrder}
-    local searchBadges = {}        -- section -> badge frame
-    local searchNoResult = nil     -- "no results" frame
+    -- Cache: remember where each section was originally parented
+    -- Format: section -> {parent = Frame, layoutOrder = number}
+    local sectionOriginalHome = {}
 
     local function collectSearchableText(section)
-        local texts = { section._title or "" }
+        local parts = {}
+        -- Section title
+        if section._title and section._title ~= "" then
+            table.insert(parts, section._title)
+        end
+        -- Element names and labels
         for _, el in ipairs(section._elements) do
-            table.insert(texts, el.Name or "")
+            if el.Name and el.Name ~= "Frame" and el.Name ~= "" then
+                table.insert(parts, el.Name)
+            end
             for _, child in ipairs(el:GetChildren()) do
                 if child:IsA("TextLabel") or child:IsA("TextButton") then
                     local t = child.Text
-                    if t and t ~= "" and t ~= "..." and #t < 100 then
-                        table.insert(texts, t)
+                    if t and t ~= "" and t ~= "..." and #t < 200 then
+                        table.insert(parts, t)
                     end
                 end
             end
         end
-        return table.concat(texts, " ")
+        return table.concat(parts, " ")
     end
 
     local function sectionMatchesQuery(section, query)
@@ -908,50 +917,36 @@ function FriendshipLib:CreateWindow(config)
         return string.find(allText, query, 1, true) ~= nil
     end
 
-    -- Move all sections back to their original tab columns, remove badges
-    local function restoreAllSections()
-        for section, info in pairs(searchMovedSections) do
-            if section._wrapper and section._wrapper.Parent then
-                section._wrapper.Parent = info.parent
-                section._wrapper.LayoutOrder = info.layoutOrder
-            end
-            if searchBadges[section] then
-                pcall(function() searchBadges[section]:Destroy() end)
-                searchBadges[section] = nil
-            end
-        end
-        searchMovedSections = {}
-        searchBadges = {}
-
-        if searchNoResult then
-            pcall(function() searchNoResult:Destroy() end)
-            searchNoResult = nil
-        end
-    end
-
     local function exitSearchMode()
         if not searchActive then return end
         searchActive = false
 
-        -- Hide search overlay
-        if searchOverlay then
-            searchOverlay.Visible = false
+        -- Move every section back to its original home
+        for section, home in pairs(sectionOriginalHome) do
+            if section._wrapper then
+                section._wrapper.Parent = home.parent
+                section._wrapper.LayoutOrder = home.layoutOrder
+                section._wrapper.Visible = true
+            end
         end
 
-        -- Restore sections to original positions
-        restoreAllSections()
-
-        -- Restore all sections visibility
+        -- Remove any tab-name labels we inserted during search
         for _, tabData in ipairs(allTabs) do
             for _, section in ipairs(tabData._sections) do
-                section._wrapper.Visible = true
-                for _, el in ipairs(section._elements) do
-                    el.Visible = true
+                local existingLabel = section._wrapper:FindFirstChild("SearchTabLabel")
+                if existingLabel then
+                    existingLabel:Destroy()
                 end
             end
         end
 
-        -- Restore previous tab
+        -- Hide search page, show previous tab page
+        local searchPage = pagesContainer:FindFirstChild("SearchResultsPage")
+        if searchPage then
+            searchPage.Visible = false
+        end
+
+        -- Restore the tab page that was active before search
         if searchPrevTab and searchPrevTab._page then
             searchPrevTab._page.Visible = true
         elseif Window._activeTab and Window._activeTab._page then
@@ -964,161 +959,125 @@ function FriendshipLib:CreateWindow(config)
         end
     end
 
-    -- Search overlay (created lazily on first search to avoid ordering issues)
-    local searchOverlay = nil
-    local searchLeftCol = nil
-    local searchRightCol = nil
-
-    local function ensureSearchOverlay()
-        if searchOverlay then return end
-
-        searchOverlay = newFrame({
-            Name = "SearchOverlay",
-            BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 1, -80),
-            Position = UDim2.new(0, 0, 0, 48),
-            Visible = false,
-            ZIndex = 15,
-            Parent = contentArea,
-        })
-
-        local scroll = Instance.new("ScrollingFrame")
-        scroll.Name = "SearchScroll"
-        scroll.BackgroundTransparency = 1
-        scroll.BorderSizePixel = 0
-        scroll.Size = UDim2.new(1, 0, 1, 0)
-        scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-        scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-        scroll.ScrollBarThickness = 3
-        scroll.ScrollBarImageColor3 = Color3.fromRGB(255,255,255)
-        scroll.ScrollBarImageTransparency = 0.85
-        scroll.ScrollingDirection = Enum.ScrollingDirection.Y
-        scroll.Parent = searchOverlay
-        makePadding(scroll, 0, 0, 12, 0)
-
-        local colsFrame = newFrame({
-            Name = "SearchCols",
-            BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 0),
-            Parent = scroll,
-            ZIndex = 15,
-        })
-        colsFrame.AutomaticSize = Enum.AutomaticSize.Y
-
-        local colsLayout = Instance.new("UIListLayout")
-        colsLayout.FillDirection = Enum.FillDirection.Horizontal
-        colsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-        colsLayout.VerticalAlignment = Enum.VerticalAlignment.Top
-        colsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        colsLayout.Padding = UDim.new(0, 12)
-        colsLayout.Parent = colsFrame
-
-        searchLeftCol = newFrame({
-            Name = "SearchLeftCol",
-            BackgroundTransparency = 1,
-            Size = UDim2.new(0.5, -6, 0, 0),
-            Parent = colsFrame,
-            ZIndex = 15,
-        })
-        searchLeftCol.AutomaticSize = Enum.AutomaticSize.Y
-        makeListLayout(searchLeftCol, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 12)
-
-        searchRightCol = newFrame({
-            Name = "SearchRightCol",
-            BackgroundTransparency = 1,
-            Size = UDim2.new(0.5, -6, 0, 0),
-            Parent = colsFrame,
-            ZIndex = 15,
-        })
-        searchRightCol.AutomaticSize = Enum.AutomaticSize.Y
-        makeListLayout(searchRightCol, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 12)
-    end
-
     local function performSearch(query)
-        -- Restore any previously moved sections first
-        restoreAllSections()
+        -- 1. First, move everything back to original homes (in case of re-search)
+        for section, home in pairs(sectionOriginalHome) do
+            if section._wrapper then
+                section._wrapper.Parent = home.parent
+                section._wrapper.LayoutOrder = home.layoutOrder
+                section._wrapper.Visible = true
+            end
+            -- Remove any search tab labels
+            local existingLabel = section._wrapper:FindFirstChild("SearchTabLabel")
+            if existingLabel then existingLabel:Destroy() end
+        end
 
-        -- Hide all sections
+        -- 2. Cache original homes for all sections (do this once, refresh each search)
+        sectionOriginalHome = {}
         for _, tabData in ipairs(allTabs) do
             for _, section in ipairs(tabData._sections) do
-                section._wrapper.Visible = false
+                sectionOriginalHome[section] = {
+                    parent = section._wrapper.Parent,
+                    layoutOrder = section._wrapper.LayoutOrder,
+                }
             end
         end
 
-        local colIndex = 0
+        -- 3. Get or create search results page
+        local searchPage = pagesContainer:FindFirstChild("SearchResultsPage")
+        if not searchPage then
+            searchPage = Instance.new("ScrollingFrame")
+            searchPage.Name = "SearchResultsPage"
+            searchPage.BackgroundTransparency = 1
+            searchPage.BorderSizePixel = 0
+            searchPage.Size = UDim2.new(1, 0, 1, 0)
+            searchPage.CanvasSize = UDim2.new(0, 0, 0, 0)
+            searchPage.AutomaticCanvasSize = Enum.AutomaticSize.Y
+            searchPage.ScrollBarThickness = 3
+            searchPage.ScrollBarImageColor3 = Color3.fromRGB(255,255,255)
+            searchPage.ScrollBarImageTransparency = 0.85
+            searchPage.ScrollingDirection = Enum.ScrollingDirection.Y
+            searchPage.Visible = false
+            searchPage.ZIndex = 6
+            searchPage.Parent = pagesContainer
+            makePadding(searchPage, 0, 0, 12, 0)
+
+            local searchCol = newFrame({
+                Name = "SearchCol",
+                BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 0, 0),
+                Parent = searchPage,
+                ZIndex = 6,
+            })
+            searchCol.AutomaticSize = Enum.AutomaticSize.Y
+            makeListLayout(searchCol, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 12)
+        end
+
+        local searchCol = searchPage:FindFirstChild("SearchCol")
+
+        -- 4. Clear previous search results from searchCol
+        for _, child in ipairs(searchCol:GetChildren()) do
+            if child.Name == "NoResultsLabel" then
+                child:Destroy()
+            end
+        end
+
+        -- 5. Hide all tab pages
+        for _, tabData in ipairs(allTabs) do
+            if tabData._page then
+                tabData._page.Visible = false
+            end
+        end
+
+        -- 6. Find matching sections and move them into searchCol
         local matchCount = 0
+        local resultIndex = 0
 
         for _, tabData in ipairs(allTabs) do
             for _, section in ipairs(tabData._sections) do
                 if sectionMatchesQuery(section, query) then
-                    -- Remember original parent
-                    searchMovedSections[section] = {
-                        parent = section._wrapper.Parent,
-                        layoutOrder = section._wrapper.LayoutOrder,
-                    }
-
-                    -- Move section to search results
-                    local targetCol = (colIndex % 2 == 0) and searchLeftCol or searchRightCol
-                    section._wrapper.Parent = targetCol
-                    section._wrapper.LayoutOrder = colIndex + 1
-                    section._wrapper.Visible = true
-
-                    -- Ensure all elements visible
-                    for _, el in ipairs(section._elements) do
-                        el.Visible = true
-                    end
-
-                    -- Add tab name badge
-                    local badge = newFrame({
-                        Name = "TabBadge",
-                        BackgroundColor3 = Theme.AccentBG,
-                        Size = UDim2.new(0, 0, 0, 18),
-                        Parent = section._wrapper,
-                        ZIndex = 20,
-                    })
-                    badge.AutomaticSize = Enum.AutomaticSize.X
-                    makeCorner(badge, 3)
-                    makeStroke(badge, Theme.AccentDim, 1, 0.7)
-                    makePadding(badge, 2, 6, 2, 6)
-                    badge.LayoutOrder = -1
-
-                    local badgeLabel = newLabel({
+                    -- Add a tab-name label before the section
+                    local tabLabel = newLabel({
                         Text = string.upper(tabData._name or "TAB"),
                         TextColor3 = Theme.Accent,
                         Font = Enum.Font.GothamBold,
-                        TextSize = 8,
-                        Size = UDim2.new(0, 0, 1, 0),
-                        Parent = badge,
-                        ZIndex = 21,
+                        TextSize = 9,
+                        Size = UDim2.new(1, 0, 0, 14),
+                        Parent = section._wrapper,
+                        ZIndex = 20,
                     })
-                    badgeLabel.AutomaticSize = Enum.AutomaticSize.X
-                    badgeLabel.TextXAlignment = Enum.TextXAlignment.Left
+                    tabLabel.Name = "SearchTabLabel"
+                    tabLabel.LayoutOrder = -1
+                    tabLabel.TextXAlignment = Enum.TextXAlignment.Left
 
-                    searchBadges[section] = badge
-                    colIndex = colIndex + 1
+                    -- Move section wrapper to search column
+                    resultIndex = resultIndex + 1
+                    section._wrapper.Parent = searchCol
+                    section._wrapper.LayoutOrder = resultIndex
+                    section._wrapper.Visible = true
+
                     matchCount = matchCount + 1
+                else
+                    section._wrapper.Visible = false
                 end
             end
         end
 
-        -- No results message
+        -- 7. Show search page
+        searchPage.Visible = true
+
+        -- 8. No results message
         if matchCount == 0 then
-            searchNoResult = newFrame({
-                Name = "NoResults",
-                BackgroundTransparency = 1,
-                Size = UDim2.new(1, 0, 0, 60),
-                Parent = searchLeftCol,
-                ZIndex = 15,
-            })
             local noLabel = newLabel({
                 Text = "No results found for '" .. query .. "'",
                 TextColor3 = Theme.TextFaint,
                 Font = Enum.Font.GothamSemibold,
                 TextSize = 12,
-                Size = UDim2.new(1, 0, 1, 0),
-                Parent = searchNoResult,
-                ZIndex = 15,
+                Size = UDim2.new(1, 0, 0, 60),
+                Parent = searchCol,
+                ZIndex = 6,
             })
+            noLabel.Name = "NoResultsLabel"
             noLabel.TextXAlignment = Enum.TextXAlignment.Center
         end
     end
@@ -1129,21 +1088,10 @@ function FriendshipLib:CreateWindow(config)
         if query == "" then
             exitSearchMode()
         else
-            -- Ensure search overlay exists
-            ensureSearchOverlay()
-
             -- Enter search mode
             if not searchActive then
                 searchActive = true
                 searchPrevTab = Window._activeTab
-
-                -- Hide current tab page
-                if Window._activeTab and Window._activeTab._page then
-                    Window._activeTab._page.Visible = false
-                end
-
-                -- Show search overlay
-                searchOverlay.Visible = true
                 breadcrumbActive.Text = "Search"
             end
 
@@ -1158,8 +1106,8 @@ function FriendshipLib:CreateWindow(config)
         end
     end)
 
-    -- Tab content pages container
-    local pagesContainer = newFrame({
+    -- Tab content pages container (forward-declared above for search functions)
+    pagesContainer = newFrame({
         Name = "PagesContainer",
         BackgroundTransparency = 1,
         Size = UDim2.new(1, 0, 1, -80),
@@ -1296,8 +1244,8 @@ function FriendshipLib:CreateWindow(config)
         })
     end)
 
-    -- ── WINDOW OBJECT ──────────────────────────────────────
-    local Window = {}
+    -- ── WINDOW OBJECT (forward-declared above for search functions) ──
+    Window = {}
     Window._tabs           = {}
     Window._activeTab      = nil
     Window._navContainer   = navContainer
