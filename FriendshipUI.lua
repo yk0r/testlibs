@@ -873,48 +873,264 @@ function FriendshipLib:CreateWindow(config)
         tween(searchStroke, Theme.Fast, { Color = Color3.fromRGB(255,255,255), Transparency = 0.9 })
     end)
 
-    -- ── SEARCH FUNCTIONALITY (Rayfield style) ──
-    -- Searches through all tabs and their sections/elements
+    -- ── SEARCH FUNCTIONALITY (Global — Rayfield style) ──
+    -- Searches through ALL tabs and their sections/elements
     local allTabs = {} -- will be populated as tabs are created
+    local searchActive = false
+    local searchPrevTab = nil
+    local searchOriginalParents = {} -- tracks where sections were moved from
 
-    searchBox:GetPropertyChangedSignal("Text"):Connect(function()
-        local query = string.lower(searchBox.Text)
-        for _, tabData in ipairs(allTabs) do
-            if query == "" then
-                -- Show all sections and elements
-                for _, section in ipairs(tabData._sections) do
-                    section._wrapper.Visible = true
-                    for _, el in ipairs(section._elements) do
-                        el.Visible = true
-                    end
-                end
-            else
-                for _, section in ipairs(tabData._sections) do
-                    local sectionMatch = false
-                    local sectionTitle = string.lower(section._title)
-                    if string.find(sectionTitle, query, 1, true) then
-                        sectionMatch = true
-                    end
+    -- Create a search results page (shared across all tabs)
+    local searchScroll = Instance.new("ScrollingFrame")
+    searchScroll.Name = "SearchResults"
+    searchScroll.BackgroundTransparency = 1
+    searchScroll.BorderSizePixel = 0
+    searchScroll.Size = UDim2.new(1, 0, 1, 0)
+    searchScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    searchScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    searchScroll.ScrollBarThickness = 3
+    searchScroll.ScrollBarImageColor3 = Color3.fromRGB(255,255,255)
+    searchScroll.ScrollBarImageTransparency = 0.85
+    searchScroll.ScrollingDirection = Enum.ScrollingDirection.Y
+    searchScroll.Visible = false
+    searchScroll.ZIndex = 15
+    -- Parent will be set after pagesContainer is created
+    makePadding(searchScroll, 0, 0, 12, 0)
 
-                    local anyElementMatch = false
-                    for _, el in ipairs(section._elements) do
-                        local elText = string.lower(el.Name)
-                        if string.find(elText, query, 1, true) then
-                            el.Visible = true
-                            anyElementMatch = true
-                        else
-                            el.Visible = false
-                        end
-                    end
+    local searchColsFrame = newFrame({
+        Name = "SearchCols",
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 0, 0),
+        Parent = searchScroll,
+        ZIndex = 15,
+    })
+    searchColsFrame.AutomaticSize = Enum.AutomaticSize.Y
 
-                    section._wrapper.Visible = sectionMatch or anyElementMatch
-                    if sectionMatch then
-                        for _, el in ipairs(section._elements) do
-                            el.Visible = true
-                        end
+    local searchColsLayout = Instance.new("UIListLayout")
+    searchColsLayout.FillDirection = Enum.FillDirection.Horizontal
+    searchColsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    searchColsLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+    searchColsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    searchColsLayout.Padding = UDim.new(0, 12)
+    searchColsLayout.Parent = searchColsFrame
+
+    local searchLeftCol = newFrame({
+        Name = "SearchLeftCol",
+        BackgroundTransparency = 1,
+        Size = UDim2.new(0.5, -6, 0, 0),
+        Parent = searchColsFrame,
+        ZIndex = 15,
+    })
+    searchLeftCol.AutomaticSize = Enum.AutomaticSize.Y
+    makeListLayout(searchLeftCol, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 12)
+
+    local searchRightCol = newFrame({
+        Name = "SearchRightCol",
+        BackgroundTransparency = 1,
+        Size = UDim2.new(0.5, -6, 0, 0),
+        Parent = searchColsFrame,
+        ZIndex = 15,
+    })
+    searchRightCol.AutomaticSize = Enum.AutomaticSize.Y
+    makeListLayout(searchRightCol, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 12)
+
+    -- Tab badge pool (reused across search sessions)
+    local searchBadges = {} -- section -> badge frame
+
+    local function collectSearchableText(section)
+        -- Gather all searchable text: section title + element names/labels
+        local texts = { section._title or "" }
+        for _, el in ipairs(section._elements) do
+            table.insert(texts, el.Name or "")
+            for _, child in ipairs(el:GetChildren()) do
+                if child:IsA("TextLabel") or child:IsA("TextButton") then
+                    local t = child.Text
+                    if t and t ~= "" and t ~= "..." and #t < 100 then
+                        table.insert(texts, t)
                     end
                 end
             end
+        end
+        return table.concat(texts, " ")
+    end
+
+    local function sectionMatchesQuery(section, query)
+        local allText = string.lower(collectSearchableText(section))
+        return string.find(allText, query, 1, true) ~= nil
+    end
+
+    local function clearSearchResults()
+        -- Move sections back to their original parents and restore layout order
+        for section, info in pairs(searchOriginalParents) do
+            if type(section) == "table" and section._wrapper then
+                if section._wrapper.Parent then
+                    section._wrapper.Parent = info.parent
+                    section._wrapper.LayoutOrder = info.layoutOrder
+                end
+                -- Remove badge if it exists
+                if searchBadges[section] then
+                    pcall(function() searchBadges[section]:Destroy() end)
+                    searchBadges[section] = nil
+                end
+            elseif section == "_noResults" and info.frame then
+                pcall(function() info.frame:Destroy() end)
+            end
+        end
+        searchOriginalParents = {}
+    end
+
+    local function showSearchResults(query)
+        -- First, return everything to original positions
+        clearSearchResults()
+
+        -- Hide all sections first
+        for _, tabData in ipairs(allTabs) do
+            for _, section in ipairs(tabData._sections) do
+                section._wrapper.Visible = false
+            end
+        end
+
+        local colIndex = 0
+        local matchCount = 0
+
+        for _, tabData in ipairs(allTabs) do
+            for _, section in ipairs(tabData._sections) do
+                if sectionMatchesQuery(section, query) then
+                    -- Remember original parent and layout order
+                    searchOriginalParents[section] = {
+                        parent = section._wrapper.Parent,
+                        layoutOrder = section._wrapper.LayoutOrder,
+                    }
+
+                    -- Move section wrapper to search results
+                    local targetCol = (colIndex % 2 == 0) and searchLeftCol or searchRightCol
+                    section._wrapper.Parent = targetCol
+                    section._wrapper.LayoutOrder = colIndex + 1
+                    section._wrapper.Visible = true
+
+                    -- Ensure all elements visible
+                    for _, el in ipairs(section._elements) do
+                        el.Visible = true
+                    end
+
+                    -- Add tab name badge inside the section wrapper (before sectionInner)
+                    local badge = newFrame({
+                        Name = "TabBadge",
+                        BackgroundColor3 = Theme.AccentBG,
+                        Size = UDim2.new(0, 0, 0, 16),
+                        Parent = section._wrapper,
+                        ZIndex = 20,
+                    })
+                    badge.AutomaticSize = Enum.AutomaticSize.X
+                    makeCorner(badge, 3)
+                    makeStroke(badge, Theme.AccentDim, 1, 0.7)
+                    makePadding(badge, 3, 6, 3, 6)
+                    badge.LayoutOrder = -1
+
+                    local badgeLabel = newLabel({
+                        Text = string.upper(tabData._name or "Tab"),
+                        TextColor3 = Theme.Accent,
+                        Font = Enum.Font.GothamBold,
+                        TextSize = 8,
+                        Size = UDim2.new(0, 0, 1, 0),
+                        Parent = badge,
+                        ZIndex = 21,
+                    })
+                    badgeLabel.AutomaticSize = Enum.AutomaticSize.X
+                    badgeLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+                    searchBadges[section] = badge
+                    colIndex = colIndex + 1
+                    matchCount = matchCount + 1
+                end
+            end
+        end
+
+        -- Show "no results" if nothing matched
+        if matchCount == 0 then
+            local noResult = newFrame({
+                Name = "NoResults",
+                BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 0, 60),
+                Parent = searchLeftCol,
+                ZIndex = 15,
+            })
+            local noLabel = newLabel({
+                Text = "No results found for '" .. query .. "'",
+                TextColor3 = Theme.TextFaint,
+                Font = Enum.Font.GothamSemibold,
+                TextSize = 12,
+                Size = UDim2.new(1, 0, 1, 0),
+                Parent = noResult,
+                ZIndex = 15,
+            })
+            noLabel.TextXAlignment = Enum.TextXAlignment.Center
+            -- Track this as a special entry so we can clean it up
+            searchOriginalParents["_noResults"] = { frame = noResult }
+        end
+    end
+
+    local function exitSearchMode()
+        if not searchActive then return end
+        searchActive = false
+        searchScroll.Visible = false
+
+        -- Return all sections to their original parents
+        clearSearchResults()
+
+        -- Restore all sections visibility
+        for _, tabData in ipairs(allTabs) do
+            for _, section in ipairs(tabData._sections) do
+                section._wrapper.Visible = true
+                for _, el in ipairs(section._elements) do
+                    el.Visible = true
+                end
+            end
+        end
+
+        -- Restore the previously active tab
+        if searchPrevTab and searchPrevTab._page then
+            searchPrevTab._page.Visible = true
+        elseif Window._activeTab and Window._activeTab._page then
+            Window._activeTab._page.Visible = true
+        end
+
+        -- Restore breadcrumb
+        if Window._activeTab then
+            breadcrumbActive.Text = Window._activeTab._name or "Home"
+        end
+    end
+
+    searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+        local query = string.lower(searchBox.Text)
+
+        if query == "" then
+            exitSearchMode()
+        else
+            -- Enter search mode
+            if not searchActive then
+                searchActive = true
+                searchPrevTab = Window._activeTab
+
+                -- Hide current tab page
+                if Window._activeTab and Window._activeTab._page then
+                    Window._activeTab._page.Visible = false
+                end
+
+                -- Show search results page
+                searchScroll.Visible = true
+                breadcrumbActive.Text = "Search"
+            end
+
+            -- Update search results
+            showSearchResults(query)
+        end
+    end)
+
+    -- Also clear search when search box loses focus with empty text
+    searchBox.FocusLost:Connect(function()
+        if searchBox.Text == "" then
+            exitSearchMode()
         end
     end)
 
@@ -929,6 +1145,9 @@ function FriendshipLib:CreateWindow(config)
         ClipsDescendants = false,
     })
     makePadding(pagesContainer, 16, 16, 16, 16)
+
+    -- Now that pagesContainer exists, set search results page parent
+    searchScroll.Parent = pagesContainer
 
     -- Footer / Status bar
     local footer = newFrame({
@@ -1223,6 +1442,7 @@ function FriendshipLib:CreateWindow(config)
         Tab._window       = self
         Tab._sectionOrder = 0
         Tab._sections     = {}
+        Tab._name         = name
 
         function Tab:_setActive(active)
             if active then
@@ -1257,6 +1477,11 @@ function FriendshipLib:CreateWindow(config)
         end
 
         navBtn.MouseButton1Click:Connect(function()
+            -- Exit search mode if active
+            if searchActive then
+                searchBox.Text = ""
+                -- exitSearchMode will be called by the Text changed signal
+            end
             if self._activeTab then
                 self._activeTab:_setActive(false)
             end
