@@ -361,7 +361,7 @@ function FriendshipLib:_initNotifContainer()
         ZIndex = 100,
     })
 
-    local layout = makeListLayout(container, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Right, 8)
+    local layout = makeListLayout(container, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Right, 6)
     layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
     layout.SortOrder = Enum.SortOrder.LayoutOrder
 
@@ -381,119 +381,122 @@ function FriendshipLib:Notify(config)
     self._notifCount = (self._notifCount or 0) + 1
     local order = self._notifCount
 
-    local card = newFrame({
-        Name = "Notif_" .. order,
-        BackgroundColor3 = Color3.fromRGB(15, 16, 19),
-        Size = UDim2.new(1, 0, 0, 0),
-        BackgroundTransparency = 0,
-        Parent = self._notifContainer,
-        ZIndex = 101,
-    })
-    card.LayoutOrder = order
+    local card = Instance.new("Frame")
+    card.Name = "Notif_" .. order
+    card.BackgroundColor3 = Color3.fromRGB(15, 16, 19)
+    card.BorderSizePixel = 0
+    card.Size = UDim2.new(1, 0, 0, 0)
     card.AutomaticSize = Enum.AutomaticSize.Y
-    card.ClipsDescendants = false
-
+    card.ClipsDescendants = true
+    card.LayoutOrder = order
+    card.ZIndex = 101
+    card.Parent = self._notifContainer
     makeCorner(card, 6)
-    makeStroke(card, Theme.AccentDim, 1, 0.5)
+    local cardStroke = makeStroke(card, Theme.AccentDim, 1, 0.6)
 
-    local bar = newFrame({
-        Name = "AccentBar",
-        BackgroundColor3 = Theme.Accent,
-        Size = UDim2.new(0, 2, 1, 0),
-        Position = UDim2.new(0, 0, 0, 0),
-        Parent = card,
-        ZIndex = 102,
-    })
-    makeCorner(bar, 2)
+    -- Left accent bar
+    local bar = Instance.new("Frame")
+    bar.Name = "AccentBar"
+    bar.BackgroundColor3 = Theme.Accent
+    bar.BorderSizePixel = 0
+    bar.Size = UDim2.new(0, 2, 1, 0)
+    bar.ZIndex = 102
+    bar.Parent = card
+    makeCorner(bar, 1)
 
-    local inner = newFrame({
-        BackgroundTransparency = 1,
-        Size = UDim2.new(1, -16, 0, 0),
-        Position = UDim2.new(0, 10, 0, 0),
-        Parent = card,
-        ZIndex = 102,
-    })
+    -- Content area
+    local inner = Instance.new("Frame")
+    inner.BackgroundTransparency = 1
+    inner.Size = UDim2.new(1, -16, 0, 0)
+    inner.Position = UDim2.new(0, 10, 0, 0)
     inner.AutomaticSize = Enum.AutomaticSize.Y
-    makePadding(inner, 10, 6, 10, 4)
-    makeListLayout(inner, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 3)
+    inner.ZIndex = 102
+    inner.Parent = card
+    makePadding(inner, 10, 6, 14, 4)
+    makeListLayout(inner, Enum.FillDirection.Vertical, Enum.HorizontalAlignment.Left, 2)
 
-    local titleRow = newFrame({
-        BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 0, 14),
-        Parent = inner,
-        ZIndex = 102,
-    })
-    makeListLayout(titleRow, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Left, 6)
-    titleRow.AutomaticSize = Enum.AutomaticSize.XY
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Size = UDim2.new(1, 0, 0, 14)
+    titleLabel.Text = string.upper(title)
+    titleLabel.TextColor3 = Theme.TextFaint
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextSize = 9
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.ZIndex = 103
+    titleLabel.Parent = inner
 
-    local dotWrap = newFrame({
-        BackgroundTransparency = 1,
-        Size = UDim2.new(0, 6, 0, 14),
-        Parent = titleRow,
-        ZIndex = 103,
-    })
-    local dot = newFrame({
-        Name = "Dot",
-        BackgroundColor3 = Theme.Accent,
-        Size = UDim2.new(0, 6, 0, 6),
-        Parent = dotWrap,
-        ZIndex = 103,
-    })
-    dot.AnchorPoint = Vector2.new(0, 0.5)
-    makeCorner(dot, 99)
-
-    local titleLabel = newLabel({
-        Text = string.upper(title),
-        TextColor3 = Theme.TextFaint,
-        Font = Enum.Font.GothamBold,
-        TextSize = 9,
-        Size = UDim2.new(0, 0, 0, 14),
-        Parent = titleRow,
-        ZIndex = 103,
-    })
-    titleLabel.AutomaticSize = Enum.AutomaticSize.X
-
-    local contentLabel = newLabel({
-        Text = content,
-        TextColor3 = Theme.Text,
-        Font = Enum.Font.GothamSemibold,
-        TextSize = 12,
-        Size = UDim2.new(1, 0, 0, 0),
-        Parent = inner,
-        ZIndex = 102,
-    })
+    local contentLabel = Instance.new("TextLabel")
+    contentLabel.BackgroundTransparency = 1
+    contentLabel.Size = UDim2.new(1, 0, 0, 0)
     contentLabel.AutomaticSize = Enum.AutomaticSize.Y
+    contentLabel.Text = content
+    contentLabel.TextColor3 = Theme.Text
+    contentLabel.Font = Enum.Font.GothamSemibold
+    contentLabel.TextSize = 12
+    contentLabel.TextXAlignment = Enum.TextXAlignment.Left
     contentLabel.TextWrapped = true
+    contentLabel.ZIndex = 103
+    contentLabel.Parent = inner
 
-    local progressBG = newFrame({
-        BackgroundColor3 = Color3.fromRGB(255,255,255),
-        BackgroundTransparency = 0.95,
-        Size = UDim2.new(1, 0, 0, 2),
-        Position = UDim2.new(0, 0, 1, -2),
-        Parent = card,
-        ZIndex = 103,
-    })
-    local progressBar = newFrame({
-        BackgroundColor3 = Theme.Accent,
-        Size = UDim2.new(1, 0, 1, 0),
-        Parent = progressBG,
-        ZIndex = 104,
-    })
+    -- Progress bar
+    local progressBG = Instance.new("Frame")
+    progressBG.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    progressBG.BackgroundTransparency = 0.93
+    progressBG.BorderSizePixel = 0
+    progressBG.Size = UDim2.new(1, 0, 0, 1)
+    progressBG.Position = UDim2.new(0, 0, 1, -1)
+    progressBG.ZIndex = 104
+    progressBG.Parent = card
 
-    card.Position = UDim2.new(1, 20, 0, 0)
+    local progressBar = Instance.new("Frame")
+    progressBar.BackgroundColor3 = Theme.Accent
+    progressBar.BorderSizePixel = 0
+    progressBar.Size = UDim2.new(1, 0, 1, 0)
+    progressBar.ZIndex = 105
+    progressBar.Parent = progressBG
+
+    -- Collect all fade-able objects
+    local fadeTargets = {card, bar, titleLabel, contentLabel, progressBar, progressBG}
+
+    -- Appear: everything starts invisible, tween in together
+    card.Position = UDim2.new(0.2, 0, 0, 0)
     card.BackgroundTransparency = 1
-    tween(card, Theme.Medium, { BackgroundTransparency = 0 })
-    tween(card, Theme.Medium, { Position = UDim2.new(0, 0, 0, 0) })
+    cardStroke.Transparency = 1
+    bar.BackgroundTransparency = 1
+    titleLabel.TextTransparency = 1
+    contentLabel.TextTransparency = 1
+    progressBar.BackgroundTransparency = 1
+    progressBG.BackgroundTransparency = 1
 
+    task.defer(function()
+        tween(card, Theme.Medium, { BackgroundTransparency = 0, Position = UDim2.new(0, 0, 0, 0) })
+        tween(cardStroke, Theme.Medium, { Transparency = 0.6 })
+        tween(bar, Theme.Medium, { BackgroundTransparency = 0 })
+        tween(titleLabel, Theme.Medium, { TextTransparency = 0 })
+        tween(contentLabel, Theme.Medium, { TextTransparency = 0 })
+        tween(progressBar, Theme.Medium, { BackgroundTransparency = 0 })
+        tween(progressBG, Theme.Medium, { BackgroundTransparency = 0.93 })
+    end)
+
+    -- Progress bar countdown
     task.delay(0.3, function()
         tween(progressBar, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
             Size = UDim2.new(0, 0, 1, 0)
         })
     end)
 
+    -- Disappear: ALL elements fade simultaneously
+    local fadeOut = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+
     task.delay(duration + 0.3, function()
-        tween(card, Theme.Medium, { BackgroundTransparency = 1 })
-        tween(card, Theme.Medium, { Position = UDim2.new(1, 20, 0, 0) })
+        tween(card, fadeOut, { BackgroundTransparency = 1 })
+        tween(cardStroke, fadeOut, { Transparency = 1 })
+        tween(bar, fadeOut, { BackgroundTransparency = 1 })
+        tween(titleLabel, fadeOut, { TextTransparency = 1 })
+        tween(contentLabel, fadeOut, { TextTransparency = 1 })
+        tween(progressBar, fadeOut, { BackgroundTransparency = 1 })
+        tween(progressBG, fadeOut, { BackgroundTransparency = 1 })
         task.delay(0.35, function()
             card:Destroy()
         end)
@@ -1010,48 +1013,28 @@ function FriendshipLib:CreateWindow(config)
 
     local CR = 8 -- corner radius, must match mainWindow UICorner
 
-    local capTL = Instance.new("Frame")
-    capTL.Name = "Cap_TL"
-    capTL.BackgroundColor3 = Theme.BG_Window
-    capTL.BorderSizePixel = 0
-    capTL.Size = UDim2.new(0, CR, 0, CR)
-    capTL.Position = UDim2.new(0, 0, 0, 0)
-    capTL.ZIndex = 10
-    capTL.Parent = mainWindow
-    makeCorner(capTL, CR)
+    local function makeCap(name, pos)
+        local cap = Instance.new("Frame")
+        cap.Name = name
+        cap.BackgroundColor3 = Theme.BG_Window
+        cap.BorderSizePixel = 0
+        cap.Size = UDim2.new(0, CR, 0, CR)
+        cap.Position = pos
+        cap.ZIndex = 10
+        cap.Parent = mainWindow
+        makeCorner(cap, CR)
+        makeStroke(cap, Color3.fromRGB(255,255,255), 1, 0.9)
+        return cap
+    end
 
-    local capTR = Instance.new("Frame")
-    capTR.Name = "Cap_TR"
-    capTR.BackgroundColor3 = Theme.BG_Window
-    capTR.BorderSizePixel = 0
-    capTR.Size = UDim2.new(0, CR, 0, CR)
-    capTR.Position = UDim2.new(1, -CR, 0, 0)
-    capTR.ZIndex = 10
-    capTR.Parent = mainWindow
-    makeCorner(capTR, CR)
+    makeCap("Cap_TL", UDim2.new(0, 0, 0, 0))
+    makeCap("Cap_TR", UDim2.new(1, -CR, 0, 0))
+    makeCap("Cap_BL", UDim2.new(0, 0, 1, -CR))
+    makeCap("Cap_BR", UDim2.new(1, -CR, 1, -CR))
 
-    local capBL = Instance.new("Frame")
-    capBL.Name = "Cap_BL"
-    capBL.BackgroundColor3 = Theme.BG_Window
-    capBL.BorderSizePixel = 0
-    capBL.Size = UDim2.new(0, CR, 0, CR)
-    capBL.Position = UDim2.new(0, 0, 1, -CR)
-    capBL.ZIndex = 10
-    capBL.Parent = mainWindow
-    makeCorner(capBL, CR)
-
-    local capBR = Instance.new("Frame")
-    capBR.Name = "Cap_BR"
-    capBR.BackgroundColor3 = Theme.BG_Window
-    capBR.BorderSizePixel = 0
-    capBR.Size = UDim2.new(0, CR, 0, CR)
-    capBR.Position = UDim2.new(1, -CR, 1, -CR)
-    capBR.ZIndex = 10
-    capBR.Parent = mainWindow
-    makeCorner(capBR, CR)
-
-    -- Make header draggable
+    -- Make header and brand area draggable
     makeDraggable(mainWindow, header)
+    makeDraggable(mainWindow, brandArea)
 
     -- Toggle visibility keybind
     UserInputService.InputBegan:Connect(function(input, gameProcessed)
@@ -1391,7 +1374,7 @@ function FriendshipLib:CreateWindow(config)
                 return Section._elemOrder
             end
 
-            -- ── HELPER: Element with hover effect ──
+            -- ── HELPER: Element container ──
             local function makeElement(height)
                 local el = newFrame({
                     BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -1401,15 +1384,6 @@ function FriendshipLib:CreateWindow(config)
                     ZIndex = 8,
                 })
                 el.LayoutOrder = nextOrder()
-                makeCorner(el, 6)
-
-                el.MouseEnter:Connect(function()
-                    tween(el, Theme.Fast, { BackgroundTransparency = 0.98 })
-                end)
-                el.MouseLeave:Connect(function()
-                    tween(el, Theme.Fast, { BackgroundTransparency = 1 })
-                end)
-
                 table.insert(Section._elements, el)
                 return el
             end
