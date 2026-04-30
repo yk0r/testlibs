@@ -27,10 +27,7 @@
 local function getService(name)
     local ok, svc = pcall(function() return game:GetService(name) end)
     if ok then
-        if rawget(_G, "cloneref") then
-            return cloneref(svc)
-        end
-        return svc
+        return if (rawget(_G, "cloneref")) then cloneref(svc) else svc
     end
 end
 
