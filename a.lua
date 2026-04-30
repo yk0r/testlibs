@@ -1213,65 +1213,88 @@ function FriendshipLib:CreateWindow(config)
     mainWindow.Position = position
 
     -- ── CINEMATIC INTRO ──────────────────────────────────────
-    -- Phase 1: Two glowing vertical lines expand from center
-    -- Phase 2: Lines split apart, text revealed progressively (curtain effect)
-    -- Phase 3: Lines contract in place, text stays
-    -- Phase 4: Text fades out
-    -- Phase 5: Window fades in
+    -- Refined dual-line intro with soft glow & curtain text reveal
 
-    -- Left line (starts at center, will move left)
+    local LINE_H   = 120   -- line height when expanded
+    local LINE_GAP  = 70   -- how far each line drifts from center
+    local CORE_W    = 2
+    local GLOW_W    = 8
+    local halfH     = LINE_H / 2
+
+    -- Left core line
     local leftLine = Instance.new("Frame")
     leftLine.Name = "IntroLineLeft"
     leftLine.BackgroundColor3 = Theme.Accent
     leftLine.BorderSizePixel = 0
-    leftLine.Size = UDim2.new(0, 2, 0, 0)
+    leftLine.Size = UDim2.new(0, CORE_W, 0, 0)
     leftLine.Position = UDim2.new(0.5, -1, 0.5, 0)
     leftLine.ZIndex = 100
     leftLine.Parent = screenGui
 
+    -- Left soft glow (vertical fade via UIGradient)
     local leftGlow = Instance.new("Frame")
     leftGlow.Name = "IntroGlowLeft"
     leftGlow.BackgroundColor3 = Theme.Accent
-    leftGlow.BackgroundTransparency = 0.6
     leftGlow.BorderSizePixel = 0
-    leftGlow.Size = UDim2.new(0, 12, 0, 0)
-    leftGlow.Position = UDim2.new(0.5, -6, 0.5, 0)
+    leftGlow.Size = UDim2.new(0, GLOW_W, 0, 0)
+    leftGlow.Position = UDim2.new(0.5, -4, 0.5, 0)
     leftGlow.ZIndex = 99
     leftGlow.Parent = screenGui
 
-    -- Right line (starts at center, will move right)
+    local leftGlowGrad = Instance.new("UIGradient")
+    leftGlowGrad.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 1),
+        NumberSequenceKeypoint.new(0.15, 0.55),
+        NumberSequenceKeypoint.new(0.5, 0.25),
+        NumberSequenceKeypoint.new(0.85, 0.55),
+        NumberSequenceKeypoint.new(1, 1),
+    })
+    leftGlowGrad.Rotation = 90
+    leftGlowGrad.Parent = leftGlow
+
+    -- Right core line
     local rightLine = Instance.new("Frame")
     rightLine.Name = "IntroLineRight"
     rightLine.BackgroundColor3 = Theme.Accent
     rightLine.BorderSizePixel = 0
-    rightLine.Size = UDim2.new(0, 2, 0, 0)
+    rightLine.Size = UDim2.new(0, CORE_W, 0, 0)
     rightLine.Position = UDim2.new(0.5, -1, 0.5, 0)
     rightLine.ZIndex = 100
     rightLine.Parent = screenGui
 
+    -- Right soft glow
     local rightGlow = Instance.new("Frame")
     rightGlow.Name = "IntroGlowRight"
     rightGlow.BackgroundColor3 = Theme.Accent
-    rightGlow.BackgroundTransparency = 0.6
     rightGlow.BorderSizePixel = 0
-    rightGlow.Size = UDim2.new(0, 12, 0, 0)
-    rightGlow.Position = UDim2.new(0.5, -6, 0.5, 0)
+    rightGlow.Size = UDim2.new(0, GLOW_W, 0, 0)
+    rightGlow.Position = UDim2.new(0.5, -4, 0.5, 0)
     rightGlow.ZIndex = 99
     rightGlow.Parent = screenGui
 
-    -- Text reveal container: ClipsDescendants masks the text
-    -- Starts at width 0 (nothing visible), grows as lines split apart
+    local rightGlowGrad = Instance.new("UIGradient")
+    rightGlowGrad.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 1),
+        NumberSequenceKeypoint.new(0.15, 0.55),
+        NumberSequenceKeypoint.new(0.5, 0.25),
+        NumberSequenceKeypoint.new(0.85, 0.55),
+        NumberSequenceKeypoint.new(1, 1),
+    })
+    rightGlowGrad.Rotation = 90
+    rightGlowGrad.Parent = rightGlow
+
+    -- Text reveal container (curtain mask, starts at width 0)
     local textReveal = Instance.new("Frame")
     textReveal.Name = "TextReveal"
     textReveal.BackgroundTransparency = 1
     textReveal.AnchorPoint = Vector2.new(0.5, 0)
-    textReveal.Size = UDim2.new(0, 0, 0, 30)
-    textReveal.Position = UDim2.new(0.5, 0, 0.5, -15)
+    textReveal.Size = UDim2.new(0, 0, 0, 26)
+    textReveal.Position = UDim2.new(0.5, 0, 0.5, -13)
     textReveal.ClipsDescendants = true
     textReveal.ZIndex = 101
     textReveal.Parent = screenGui
 
-    -- Title text (centered inside reveal container, ".Lua" in accent color)
+    -- Title text (".Lua" in accent color, centered inside reveal)
     local introText = Instance.new("TextLabel")
     introText.Name = "IntroText"
     local titlePrefix = title:match("^([^%.]+)") or title
@@ -1280,55 +1303,56 @@ function FriendshipLib:CreateWindow(config)
     introText.TextColor3 = Color3.fromRGB(255, 255, 255)
     introText.RichText = true
     introText.Font = Enum.Font.GothamBold
-    introText.TextSize = 22
+    introText.TextSize = 18
     introText.BackgroundTransparency = 1
     introText.AnchorPoint = Vector2.new(0.5, 0)
-    introText.Size = UDim2.new(0, 300, 0, 30)
+    introText.Size = UDim2.new(0, 300, 0, 26)
     introText.Position = UDim2.new(0.5, 0, 0, 0)
     introText.ZIndex = 102
     introText.Parent = textReveal
 
-    local IntroExpand   = TweenInfo.new(0.5,  Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-    local IntroSplit    = TweenInfo.new(0.6,  Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-    local IntroContract = TweenInfo.new(0.5,  Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-    local IntroTextOut  = TweenInfo.new(0.5,  Enum.EasingStyle.Exponential, Enum.EasingDirection.In)
-    local IntroFadeIn   = TweenInfo.new(0.5,  Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+    -- Snappy easing: each phase is short & purposeful
+    local IntroExpand   = TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+    local IntroSplit    = TweenInfo.new(0.4,  Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+    local IntroContract = TweenInfo.new(0.2,  Enum.EasingStyle.Quad,  Enum.EasingDirection.In)
+    local IntroTextOut  = TweenInfo.new(0.25, Enum.EasingStyle.Sine,  Enum.EasingDirection.In)
+    local IntroFadeIn   = TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
     task.spawn(function()
-        -- Phase 1: Both lines expand vertically from center
-        tween(leftLine,  IntroExpand, { Size = UDim2.new(0, 2, 0, 200), Position = UDim2.new(0.5, -1, 0.5, -100) })
-        tween(leftGlow,  IntroExpand, { Size = UDim2.new(0, 12, 0, 200), Position = UDim2.new(0.5, -6, 0.5, -100) })
-        tween(rightLine, IntroExpand, { Size = UDim2.new(0, 2, 0, 200), Position = UDim2.new(0.5, -1, 0.5, -100) })
-        tween(rightGlow, IntroExpand, { Size = UDim2.new(0, 12, 0, 200), Position = UDim2.new(0.5, -6, 0.5, -100) })
-        task.wait(0.55)
+        -- Phase 1: Lines expand from center (0.25s)
+        tween(leftLine,  IntroExpand, { Size = UDim2.new(0, CORE_W, 0, LINE_H), Position = UDim2.new(0.5, -1, 0.5, -halfH) })
+        tween(leftGlow,  IntroExpand, { Size = UDim2.new(0, GLOW_W, 0, LINE_H), Position = UDim2.new(0.5, -4, 0.5, -halfH) })
+        tween(rightLine, IntroExpand, { Size = UDim2.new(0, CORE_W, 0, LINE_H), Position = UDim2.new(0.5, -1, 0.5, -halfH) })
+        tween(rightGlow, IntroExpand, { Size = UDim2.new(0, GLOW_W, 0, LINE_H), Position = UDim2.new(0.5, -4, 0.5, -halfH) })
+        task.wait(0.25)
 
-        -- Phase 2: Lines split apart, text reveal grows with them (curtain effect)
-        tween(leftLine,   IntroSplit, { Position = UDim2.new(0.5, -100, 0.5, -100) })
-        tween(leftGlow,   IntroSplit, { Position = UDim2.new(0.5, -106, 0.5, -100) })
-        tween(rightLine,  IntroSplit, { Position = UDim2.new(0.5, 98, 0.5, -100) })
-        tween(rightGlow,  IntroSplit, { Position = UDim2.new(0.5, 94, 0.5, -100) })
-        tween(textReveal, IntroSplit, { Size = UDim2.new(0, 196, 0, 30) })
-        task.wait(0.65)
+        -- Phase 2: Lines split apart + text curtain reveals (0.4s)
+        tween(leftLine,   IntroSplit, { Position = UDim2.new(0.5, -LINE_GAP - 1, 0.5, -halfH) })
+        tween(leftGlow,   IntroSplit, { Position = UDim2.new(0.5, -LINE_GAP - 4, 0.5, -halfH) })
+        tween(rightLine,  IntroSplit, { Position = UDim2.new(0.5, LINE_GAP - 1, 0.5, -halfH) })
+        tween(rightGlow,  IntroSplit, { Position = UDim2.new(0.5, LINE_GAP - 4, 0.5, -halfH) })
+        tween(textReveal, IntroSplit, { Size = UDim2.new(0, LINE_GAP * 2 - 4, 0, 26) })
+        task.wait(0.35)
 
-        -- Phase 3: Lines contract in place (height → 0), text stays visible
-        tween(leftLine,   IntroContract, { Position = UDim2.new(0.5, -100, 0.5, 0), Size = UDim2.new(0, 2, 0, 0) })
-        tween(leftGlow,   IntroContract, { Position = UDim2.new(0.5, -106, 0.5, 0), Size = UDim2.new(0, 12, 0, 0) })
-        tween(rightLine,  IntroContract, { Position = UDim2.new(0.5, 98, 0.5, 0), Size = UDim2.new(0, 2, 0, 0) })
-        tween(rightGlow,  IntroContract, { Position = UDim2.new(0.5, 94, 0.5, 0), Size = UDim2.new(0, 12, 0, 0) })
-        task.wait(1.0)
+        -- Phase 3: Lines contract in place (0.2s)
+        tween(leftLine,   IntroContract, { Position = UDim2.new(0.5, -LINE_GAP - 1, 0.5, 0), Size = UDim2.new(0, CORE_W, 0, 0) })
+        tween(leftGlow,   IntroContract, { Position = UDim2.new(0.5, -LINE_GAP - 4, 0.5, 0), Size = UDim2.new(0, GLOW_W, 0, 0) })
+        tween(rightLine,  IntroContract, { Position = UDim2.new(0.5, LINE_GAP - 1, 0.5, 0), Size = UDim2.new(0, CORE_W, 0, 0) })
+        tween(rightGlow,  IntroContract, { Position = UDim2.new(0.5, LINE_GAP - 4, 0.5, 0), Size = UDim2.new(0, GLOW_W, 0, 0) })
+        task.wait(0.25)
 
-        -- Phase 4: Text fades out
+        -- Phase 4: Text fades out (overlaps with window)
         tween(introText, IntroTextOut, { TextTransparency = 1 })
-        task.wait(0.45)
+        task.wait(0.15)
 
-        -- Cleanup intro elements
+        -- Cleanup
         leftLine:Destroy()
         leftGlow:Destroy()
         rightLine:Destroy()
         rightGlow:Destroy()
         textReveal:Destroy()
 
-        -- Phase 5: Window fades in after intro is completely gone
+        -- Phase 5: Window fades in
         mainWindow.Visible = true
         tween(mainWindow, IntroFadeIn, { BackgroundTransparency = 0 })
     end)
